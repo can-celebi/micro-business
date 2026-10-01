@@ -278,3 +278,12 @@ html.mobile details.answer .answer-body { position: static; width: auto; margin-
 html.mobile details.answer summary { font-size: 0.9em; padding: 0.4em 1em; }
 table.console.calc { font-size: 0.75em; }
 html.mobile table.console.calc { font-size: 0.55em; }
+
+/* small aligned table inside answer boxes */
+table.mini { border-collapse: collapse; font-size: 0.55em; margin-top: 0.6em; width: 100%; background: var(--p-yellow); }
+table.mini th, table.mini td { border: 1px solid #e0dcc0; padding: 0.25em 0.35em; text-align: center; font-weight: 400; }
+table.mini th { text-align: left; color: var(--dim); white-space: nowrap; }
+table.mini td.pass { background: var(--p-green); }
+table.mini td.fail { background: var(--p-pink); }
+html.mobile table.mini { font-size: 0.7em; }
+html.mobile table.mini th, html.mobile table.mini td { padding: 0.25em 0.15em; }
