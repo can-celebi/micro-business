@@ -1,4 +1,4 @@
-// Interactive pieces for the slides: live polls and personalise-prompt boxes.
+// Interactive pieces for the slides: live polls (stored as git refs in a GitHub data repo) and personalise-prompt boxes.
 //
 // Poll markup:
 //   <div class="poll" data-poll="L01-c2-subscribe" data-type="choice" data-options="yes,no"></div>
@@ -7,44 +7,85 @@
 //   <details class="prompt"><summary>personalise</summary><pre>…prompt…</pre></details>
 (function () {
   const cfg = window.MICRO_CONFIG || {};
-  const ENDPOINT = cfg.pollEndpoint || '';
-  const SESSION = cfg.session || '';
+  const GH = cfg.github || {};
+  const TOKEN = (GH.tokenParts || []).length ? atob(GH.tokenParts.join('')) : '';
+  const SESSION = cfg.session || 'default';
+  const API = 'https://api.github.com/repos/' + GH.owner + '/' + GH.repo;
 
   function store(key, val) { try { localStorage.setItem(key, val); } catch (e) {} }
   function load(key) { try { return localStorage.getItem(key); } catch (e) { return null; } }
 
   let CID = load('micro-cid');
   if (!CID) {
-    CID = Math.random().toString(36).slice(2) + Date.now().toString(36);
+    CID = Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
     store('micro-cid', CID);
   }
 
-  async function submit(poll, value) {
-    const payload = { poll: poll, value: value, client: CID, session: SESSION };
-    if (!ENDPOINT) {
+  // Each answer is stored as its own git ref (a branch name) in the data repo:
+  //   refs/heads/v/<session>/<poll>/<ts>--<client>--<value>
+  // Separate refs never conflict (one shared file would, with ~90 people voting at
+  // once), and results are a single API call. tools/export_polls.py turns them into JSON files.
+  const safe = v => String(v).replace(/[^A-Za-z0-9.-]/g, '_').replace(/\.+$/, '').slice(0, 40);
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  const headers = () => ({ 'Authorization': 'Bearer ' + TOKEN, 'Accept': 'application/vnd.github+json' });
+  let headSha = null;
+
+  async function baseSha() {
+    if (headSha) return headSha;
+    const r = await fetch(API + '/git/ref/heads/' + (GH.branch || 'main'), { headers: headers(), cache: 'no-store' });
+    headSha = (await r.json()).object.sha;
+    return headSha;
+  }
+
+  async function submit(poll, value, onRetry) {
+    const ts = Date.now();
+    if (!TOKEN) {
       const all = JSON.parse(load('micro-poll-' + poll) || '{}');
-      all[CID] = { value: value, time: new Date().toISOString() };
+      all[CID] = { value: value, time: new Date(ts).toISOString() };
       store('micro-poll-' + poll, JSON.stringify(all));
       return;
     }
-    // text/plain avoids a CORS preflight; Apps Script still receives the body
-    await fetch(ENDPOINT, {
-      method: 'POST', mode: 'no-cors',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify(payload)
-    });
+    const ref = 'refs/heads/v/' + SESSION + '/' + poll + '/' + ts + '--' + CID + '--' + safe(value);
+    for (let attempt = 0; attempt < 10; attempt++) {
+      try {
+        const r = await fetch(API + '/git/refs', {
+          method: 'POST', headers: headers(),
+          body: JSON.stringify({ ref: ref, sha: await baseSha() })
+        });
+        if (r.status === 201) return;
+        // under load GitHub can answer 422 without creating the ref: check before trusting it
+        if (r.status === 422) {
+          const g = await fetch(API + '/git/' + ref, { headers: headers(), cache: 'no-store' });
+          if (g.status === 200) return;
+        }
+        const ra = r.headers.get('retry-after');
+        if (ra) await sleep(1000 * Number(ra));
+      } catch (e) { /* network hiccup: retry */ }
+      if (onRetry) onRetry(attempt + 1);
+      await sleep(Math.min(30000, 800 * 2 ** attempt) * (0.5 + Math.random()));
+    }
+    throw new Error('could not save');
   }
 
   async function results(poll) {
-    if (!ENDPOINT) {
+    if (!TOKEN) {
       const all = JSON.parse(load('micro-poll-' + poll) || '{}');
       const responses = Object.values(all);
-      return { poll: poll, mode: 'local demo (no endpoint)', n: responses.length, responses: responses };
+      return { poll: poll, mode: 'local demo (no token)', n: responses.length, responses: responses };
     }
-    const url = ENDPOINT + '?poll=' + encodeURIComponent(poll) +
-      '&session=' + encodeURIComponent(SESSION) + '&_=' + Date.now();
-    const r = await fetch(url);
-    return r.json();
+    const prefix = 'refs/heads/v/' + SESSION + '/' + poll + '/';
+    const r = await fetch(API + '/git/matching-refs/heads/v/' + SESSION + '/' + poll + '/', { headers: headers(), cache: 'no-store' });
+    const refs = await r.json();
+    const latest = {};
+    (Array.isArray(refs) ? refs : []).forEach(x => {
+      const parts = x.ref.slice(prefix.length).split('--');
+      if (parts.length < 3) return;
+      const ts = Number(parts[0]), client = parts[1], raw = parts.slice(2).join('--');
+      const value = raw !== '' && isFinite(Number(raw)) ? Number(raw) : raw;
+      if (!latest[client] || latest[client].ts < ts) latest[client] = { ts: ts, value: value };
+    });
+    const responses = Object.values(latest).map(x => ({ value: x.value, time: new Date(x.ts).toISOString() }));
+    return { poll: poll, session: SESSION, n: responses.length, responses: responses };
   }
 
   function el(tag, cls, text) {
@@ -69,7 +110,7 @@
   function renderChoice(box, data, options) {
     const counts = {};
     options.forEach(o => counts[o] = 0);
-    data.responses.forEach(r => { if (r.value in counts) counts[r.value]++; });
+    data.responses.forEach(r => { const o = options.find(x => safe(x) === String(r.value)); if (o) counts[o]++; });
     const max = Math.max(1, ...Object.values(counts));
     options.forEach(o => box.appendChild(bar(o, counts[o], max)));
   }
@@ -110,7 +151,7 @@
       go.onclick = async () => {
         if (f.value === '' || !isFinite(Number(f.value))) { status.textContent = 'enter a number'; return; }
         status.textContent = '…';
-        try { await submit(poll, Number(f.value)); status.textContent = 'saved_'; }
+        try { await submit(poll, Number(f.value), n => status.textContent = 'busy, retry ' + n + '…'); status.textContent = 'saved_'; }
         catch (e) { status.textContent = 'not saved (offline?)'; }
       };
       f.addEventListener('keydown', ev => { if (ev.key === 'Enter') go.click(); ev.stopPropagation(); });
@@ -124,7 +165,7 @@
           input.querySelectorAll('.btn').forEach(x => x.classList.remove('chosen'));
           b.classList.add('chosen');
           status.textContent = '…';
-          try { await submit(poll, o); status.textContent = 'saved_'; }
+          try { await submit(poll, o, n => status.textContent = 'busy, retry ' + n + '…'); status.textContent = 'saved_'; }
           catch (e) { status.textContent = 'not saved (offline?)'; }
         };
         input.appendChild(b);
@@ -182,6 +223,8 @@
     };
     d.appendChild(b);
   }
+
+  window.MicroPoll = { submit: submit, results: results };
 
   function init() {
     document.querySelectorAll('.poll').forEach(initPoll);
