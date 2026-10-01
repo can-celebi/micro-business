@@ -8,6 +8,6 @@ window.MICRO_CONFIG = {
     owner: "can-celebi",
     repo: "micro-business-data",
     branch: "main",
-    tokenParts: []
+    tokenParts: ["Z2l0aHViX3BhdF8xMUFOWkFDN1EwY0hGaTE4MWJP", "SEpCX1RuSm41NjdEbldndnFGTDg5SlJkNWtFdVlZ", "RkNnYmxOU0d5d2gyaEdZTFRJV0FHTjc3SVN0THJ3ZUJD"]
   }
 };
