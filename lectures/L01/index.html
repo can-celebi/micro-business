@@ -7,7 +7,7 @@
 <title>Micro L01 Introduction</title>
 <link rel="stylesheet" href="../../vendor/reveal/reset.css">
 <link rel="stylesheet" href="../../vendor/reveal/reveal.css">
-<link rel="stylesheet" href="../../assets/css/console-light.css?v=20261001e">
+<link rel="stylesheet" href="../../assets/css/console-light.css?v=20261001f">
 </head>
 <body>
 <div class="reveal"><div class="slides">
@@ -108,7 +108,7 @@
 
 <section>
   <h2>pass or fail?</h2>
-  <table class="console" id="passfail">
+  <table class="console step-table" id="passfail">
     <thead>
       <tr><th>student</th><th>problem sets</th><th>midterm</th><th>final</th><th>total</th><th>exam avg</th><th class="verdict">?</th></tr>
     </thead>
@@ -265,7 +265,35 @@ A, B, C: exactly 50 exam avg, pass. D: total too low (no problem sets). E, I: ex
 
 <!-- ============ PART 2: CONCEPTS (built topic by topic; see 02_overview-html/L01_plan…) ============ -->
 
-<!-- concept 1: scarcity (to build) -->
+<!-- concept 1: scarcity -->
+<section>
+  <h2>scarcity</h2>
+  <div class="center" style="margin-top:8%">
+    <div class="big">more wanted than there is</div>
+    <div class="def">A resource is scarce when people want more of it than there is at a price of zero, so using it one way means not using it another way.</div>
+  </div>
+  <div class="rows" style="margin-top:2.2em">
+    <div class="k fragment" data-fragment-index="1">gpus</div><div class="v fragment" data-fragment-index="1">labs queue for H100s</div>
+    <div class="k fragment" data-fragment-index="2">electricity</div><div class="v fragment" data-fragment-index="2">data centres</div>
+    <div class="k fragment" data-fragment-index="3">water</div><div class="v fragment" data-fragment-index="3">cooling</div>
+    <div class="k fragment" data-fragment-index="4">silicon</div><div class="v fragment" data-fragment-index="4">wafer capacity</div>
+    <div class="k fragment" data-fragment-index="5">memory</div><div class="v fragment" data-fragment-index="5">RAM shortage</div>
+  </div>
+  <aside class="notes">The AI boom runs on scarce inputs. If they were free, everyone would want more than exists.</aside>
+</section>
+
+<section>
+  <h2>scarcity</h2>
+  <p class="sub">for AI</p>
+  <div class="big">scarcest input?</div>
+  <div class="poll" data-poll="L01-c1-scarcest" data-type="choice" data-options="gpus,electricity,water,silicon,memory"></div>
+  <details class="prompt"><summary>personalise</summary><pre>Personalize this concept using what you know about me.
+Based on everything you know about me from our past conversations, give me a 1–2 sentence example of economic scarcity from my own life, using the basic concept of economic scarcity from an introductory microeconomics class. Choose an example that is genuinely specific to my life rather than a generic example. Make clear what scarce resource I face, what choice I make, and what alternative use of that resource I have to give up. Do not explain the concept abstractly—make it concrete and personal to me.
+
+(Your chatbot can draw? Add: "Then draw a simple picture of it.")</pre></details>
+  <aside class="notes">No right answer: a discussion starter. LIVE personalise prompt #1: give 2 minutes.</aside>
+</section>
+
 
 <!-- concept 2: cost–benefit -->
 <section>
@@ -327,12 +355,254 @@ Teaser for lecture 2: this sorted picture IS a demand curve.</aside>
 </section>
 
 
+<!-- concept 4: explicit vs implicit cost -->
+<section>
+  <h2>explicit vs implicit cost</h2>
+  <div class="center" style="margin-top:8%">
+    <div class="big">money paid + what you give up</div>
+    <div class="def">Explicit costs are money you pay; implicit costs are the value of what you give up without paying money.</div>
+  </div>
+  <div class="rows" style="margin-top:2.2em">
+    <div class="k fragment" data-fragment-index="1">you</div><div class="v fragment" data-fragment-index="1">€20 subscription <span class="dim">+ hours learning the tool</span></div>
+    <div class="k fragment" data-fragment-index="2">founder</div><div class="v fragment" data-fragment-index="2">GPU rent <span class="dim">+ forgone Google salary</span></div>
+    <div class="k fragment" data-fragment-index="3">research</div><div class="v fragment" data-fragment-index="3">API bill <span class="dim">+ your time checking outputs</span></div>
+    <div class="k fragment" data-fragment-index="4">firm</div><div class="v fragment" data-fragment-index="4">chatbot licence <span class="dim">+ staff time</span></div>
+  </div>
+  <aside class="notes">Black = explicit (money paid). Grey = implicit (what you give up without paying).</aside>
+</section>
+
+<section>
+  <h2>explicit vs implicit cost</h2>
+  <p class="sub">ai hackathon weekend · train €40 · hostel €60 · you skip a €100 side job</p>
+  <div class="big">total cost?</div>
+  <div class="poll" data-poll="L01-c4-hackathon" data-type="choice" data-options="€100,€160,€200"></div>
+  <details class="prompt"><summary>personalise</summary><pre>Personalize this concept using what you know about me.
+Based on everything you know about me from our past conversations, give me a 1–2 sentence example of explicit versus implicit costs from my own life, using the basic concept of explicit versus implicit costs from an introductory microeconomics class. Choose an example that is genuinely specific to my life rather than a generic example. Make clear a choice I make, the explicit costs I pay with money, and the implicit costs I bear without paying money. Do not explain the concept abstractly—make it concrete and personal to me.
+
+(Your chatbot can draw? Add: "Then draw a simple picture of it.")</pre></details>
+  <aside class="notes">Answer €200 = €40 + €60 explicit + €100 implicit (the side job you give up; assume you are indifferent to the job itself). Same structure as Moodle quiz Q2 (ski weekend).</aside>
+</section>
+
+<!-- concept 5: opportunity cost -->
+<section>
+  <h2>opportunity cost</h2>
+  <div class="center" style="margin-top:8%">
+    <div class="big">the best alternative you give up</div>
+    <div class="def">The value of the best alternative you give up when you choose.</div>
+  </div>
+  <div class="rows" style="margin-top:2.2em">
+    <div class="k fragment" data-fragment-index="1">tsmc wafer</div><div class="v fragment" data-fragment-index="1">Nvidia GPUs <span class="dim">or</span> iPhone chips</div>
+    <div class="k fragment" data-fragment-index="2">gpu-hour</div><div class="v fragment" data-fragment-index="2">train the next model <span class="dim">or</span> serve users</div>
+    <div class="k fragment" data-fragment-index="3">data centre site</div><div class="v fragment" data-fragment-index="3">AI <span class="dim">or</span> crypto mining</div>
+    <div class="k fragment" data-fragment-index="4">your evening</div><div class="v fragment" data-fragment-index="4">problem set <span class="dim">or</span> side job</div>
+  </div>
+  <aside class="notes">Every use of a scarce resource has an opportunity cost: the next-best use.</aside>
+</section>
+
+<section>
+  <h2>opportunity cost</h2>
+  <p class="sub">free ticket to an AI conference tonight · a friend offers €50 for it · a meetup you prefer costs €25</p>
+  <div class="big">sell it?</div>
+  <div class="poll" data-poll="L01-c5-ticket" data-type="choice" data-options="yes,no"></div>
+  <details class="prompt"><summary>personalise</summary><pre>Personalize this concept using what you know about me.
+Based on everything you know about me from our past conversations, give me a 1–2 sentence example of opportunity cost from my own life, using the basic concept of opportunity cost from an introductory microeconomics class. Choose an example that is genuinely specific to my life rather than a generic example. Make clear a choice I make, the best alternative I give up, and what that alternative is worth to me. Do not explain the concept abstractly—make it concrete and personal to me.
+
+(Your chatbot can draw? Add: "Then draw a simple picture of it.")</pre></details>
+  <aside class="notes">Answer yes. The ticket was free, but going costs you the €50 you could sell it for. Sell: +€50 − €25 = +€25 and you go to the event you prefer. PS1 Q1 has the same structure. LIVE personalise prompt #2.</aside>
+</section>
+
+<!-- concept 6: opportunity cost of money -->
+<section>
+  <h2>opportunity cost of money</h2>
+  <div class="center" style="margin-top:8%">
+    <div class="big">money at 0% still costs you</div>
+    <div class="def">Money used one way gives up the interest or return it could earn elsewhere.</div>
+  </div>
+  <div class="rows" style="margin-top:2.2em">
+    <div class="k fragment" data-fragment-index="1">friend's ai start-up</div><div class="v fragment" data-fragment-index="1">€10,000 at 0%</div>
+    <div class="k fragment" data-fragment-index="2">nvidia</div><div class="v fragment" data-fragment-index="2">prepaying TSMC</div>
+    <div class="k fragment" data-fragment-index="3">you</div><div class="v fragment" data-fragment-index="3">cash on a current account</div>
+    <div class="k fragment" data-fragment-index="4">you</div><div class="v fragment" data-fragment-index="4">a GPU instead of saving</div>
+  </div>
+  <aside class="notes">Even an interest-free loan to someone who surely pays back is not free: you lose the interest. PS1 Q2 (Mr Schmidt) needs exactly this.</aside>
+</section>
+
+<section>
+  <h2>opportunity cost of money</h2>
+  <p class="sub">lend €10,000 interest-free for a year · your bank pays 3%</p>
+  <div class="big">cost to you?</div>
+  <div class="poll" data-poll="L01-c6-loan" data-type="number" data-unit="€"></div>
+  <details class="prompt"><summary>personalise</summary><pre>Personalize this concept using what you know about me.
+Based on everything you know about me from our past conversations, give me a 1–2 sentence example of the opportunity cost of money from my own life, using the basic concept of the opportunity cost of money from an introductory microeconomics class. Choose an example that is genuinely specific to my life rather than a generic example. Make clear money I hold, lend or spend, and the interest or return I give up per year by doing so (with a rough number). Do not explain the concept abstractly—make it concrete and personal to me.
+
+(Your chatbot can draw? Add: "Then draw a simple picture of it.")</pre></details>
+  <aside class="notes">Answer €300 = 3% × €10,000. Moodle quiz Q3 has the same structure.</aside>
+</section>
+
+<!-- concept 7: sunk cost -->
+<section>
+  <h2>sunk cost</h2>
+  <div class="center" style="margin-top:8%">
+    <div class="big">already paid, can't get back → ignore it</div>
+    <div class="def">A cost already paid that you cannot get back, whatever you decide now, so it should not affect the decision.</div>
+  </div>
+  <div class="rows" style="margin-top:2.2em">
+    <div class="k fragment" data-fragment-index="1">gpu</div><div class="v fragment" data-fragment-index="1">bought; a better one comes out</div>
+    <div class="k fragment" data-fragment-index="2">lab</div><div class="v fragment" data-fragment-index="2">€100m training run that disappoints</div>
+    <div class="k fragment" data-fragment-index="3">you</div><div class="v fragment" data-fragment-index="3">prepaid AI subscription; a better free tool appears</div>
+    <div class="k fragment" data-fragment-index="4">firm</div><div class="v fragment" data-fragment-index="4">half-built data centre</div>
+  </div>
+  <aside class="notes">Only future costs and benefits matter for decisions.</aside>
+</section>
+
+<section>
+  <h2>sunk cost</h2>
+  <p class="sub">you bought GPU A for €2,000 · you can resell it for €1,200</p>
+  <div class="big">how much is sunk?</div>
+  <div class="poll" data-poll="L01-c7-gpu" data-type="number" data-unit="€"></div>
+  <details class="prompt"><summary>personalise</summary><pre>Personalize this concept using what you know about me.
+Based on everything you know about me from our past conversations, give me a 1–2 sentence example of a sunk cost from my own life, using the basic concept of a sunk cost from an introductory microeconomics class. Choose an example that is genuinely specific to my life rather than a generic example. Make clear a cost I have already paid and cannot get back, the decision I face now, and why that cost should not affect it. Do not explain the concept abstractly—make it concrete and personal to me.
+
+(Your chatbot can draw? Add: "Then draw a simple picture of it.")</pre></details>
+  <aside class="notes">Answer €800 = €2,000 − €1,200 (the €1,200 you can still get back is NOT sunk). Follow-up: GPU B costs €1,800 → switching costs €1,800 − €1,200 = €600 → switch iff B is worth more than €600 extra to you. "If only I had known" does not matter. LIVE personalise prompt #3.</aside>
+</section>
+
+<!-- concept 8: marginal vs average -->
+<section>
+  <h2>marginal vs average</h2>
+  <div class="center" style="margin-top:8%">
+    <div class="big">one more · per unit</div>
+    <div class="def">Marginal = what one more unit adds to the total; average = the total divided by the number of units.</div>
+  </div>
+  <div class="rows" style="margin-top:2.2em">
+    <div class="k fragment" data-fragment-index="1">data centre</div><div class="v fragment" data-fragment-index="1">revenue of one more rack</div>
+    <div class="k fragment" data-fragment-index="2">developer</div><div class="v fragment" data-fragment-index="2">cost of one more API call</div>
+    <div class="k fragment" data-fragment-index="3">you</div><div class="v fragment" data-fragment-index="3">value of one more prompt</div>
+    <div class="k fragment" data-fragment-index="4">you</div><div class="v fragment" data-fragment-index="4">one more study hour</div>
+  </div>
+  <aside class="notes">Decisions are about the next unit, so they need the marginal value, not the average.</aside>
+</section>
+
+<section>
+  <h2>marginal vs average</h2>
+  <p class="sub">gpu racks in a small data centre · each rack costs €100 per day</p>
+  <table class="console step-table" style="width:70%">
+    <thead><tr><th>racks</th><th>revenue / day</th><th>average</th><th>marginal</th></tr></thead>
+    <tbody>
+      <tr class="fragment pf-row" data-fragment-index="1"><td>1</td><td>€300</td><td>€300</td><td>€300</td></tr>
+      <tr class="fragment pf-row" data-fragment-index="2"><td>2</td><td>€520</td><td>€260</td><td>€220</td></tr>
+      <tr class="fragment pf-row" data-fragment-index="3"><td>3</td><td>€660</td><td>€220</td><td>€140</td></tr>
+      <tr class="fragment pf-row" data-fragment-index="4"><td>4</td><td>€720</td><td>€180</td><td class="mark-fail">?</td></tr>
+    </tbody>
+  </table>
+  <div class="fragment" data-fragment-index="5">
+    <div class="rows" style="margin-top:0.8em"><div class="k">rack 4</div><div class="v">marginal revenue?</div></div>
+  <div class="poll" data-poll="L01-c8-rack4" data-type="number" data-unit="€"></div>
+  </div>
+  <details class="prompt"><summary>personalise</summary><pre>Personalize this concept using what you know about me.
+Based on everything you know about me from our past conversations, give me a 1–2 sentence example of marginal versus average benefit from my own life, using the basic concept of marginal versus average benefit from an introductory microeconomics class. Choose an example that is genuinely specific to my life rather than a generic example. Make clear something I do in units, the average benefit per unit, and the benefit of the next unit. Do not explain the concept abstractly—make it concrete and personal to me.
+
+(Your chatbot can draw? Add: "Then draw a simple picture of it.")</pre></details>
+  <aside class="notes">Answer €60 = €720 − €660 &lt; €100 cost → run 3 racks, even though the average with 4 racks (€180) is above €100. Tom's fishing boats in PS1 Q4–5 are the same problem.</aside>
+</section>
+
+<!-- concept 9: MB >= MC -->
+<section>
+  <h2>marginal benefit ≥ marginal cost</h2>
+  <div class="center" style="margin-top:8%">
+    <div class="big">keep going while the next one is worth its cost</div>
+    <div class="def">Keep increasing an activity while the next unit adds at least as much benefit as it costs.</div>
+  </div>
+  <div class="rows" style="margin-top:2.2em">
+    <div class="k fragment" data-fragment-index="1">lab</div><div class="v fragment" data-fragment-index="1">one more GPU-hour?</div>
+    <div class="k fragment" data-fragment-index="2">ml</div><div class="v fragment" data-fragment-index="2">one more training epoch?</div>
+    <div class="k fragment" data-fragment-index="3">you</div><div class="v fragment" data-fragment-index="3">one more prompt revision?</div>
+    <div class="k fragment" data-fragment-index="4">you</div><div class="v fragment" data-fragment-index="4">one more study hour?</div>
+  </div>
+  <aside class="notes">The extra benefit usually falls with each unit; the cost per unit stays. Stop where they cross.</aside>
+</section>
+
+<section>
+  <h2>marginal benefit ≥ marginal cost</h2>
+  <p class="sub">gpu-hours at €2 each · hour 1 is worth €10 to you · each next hour is worth €1.50 less</p>
+  <div class="big">how many hours?</div>
+  <div class="poll" data-poll="L01-c9-hours" data-type="number"></div>
+  <details class="prompt"><summary>personalise</summary><pre>Personalize this concept using what you know about me.
+Based on everything you know about me from our past conversations, give me a 1–2 sentence example of the rule "keep going while marginal benefit ≥ marginal cost" from my own life, using the basic concept of the rule "keep going while marginal benefit ≥ marginal cost" from an introductory microeconomics class. Choose an example that is genuinely specific to my life rather than a generic example. Make clear an activity where each extra unit is worth less to me, what each unit costs me, and where I should stop. Do not explain the concept abstractly—make it concrete and personal to me.
+
+(Your chatbot can draw? Add: "Then draw a simple picture of it.")</pre></details>
+  <aside class="notes">Answer 6. Worth per hour: 10, 8.5, 7, 5.5, 4, 2.5, 1 → hour 6 (€2.50 ≥ €2) yes, hour 7 (€1 &lt; €2) no. Moodle quiz Q4 (golf holes) has the same structure.</aside>
+</section>
+
+<!-- concept 10: marginal pulls the average -->
+<section>
+  <h2>marginal pulls the average</h2>
+  <div class="center" style="margin-top:8%">
+    <div class="big">above pulls it up · below pulls it down</div>
+    <div class="def">A new value above the current average raises the average; a value below lowers it.</div>
+  </div>
+  <div class="rows" style="margin-top:2.2em">
+    <div class="k fragment" data-fragment-index="1">model</div><div class="v fragment" data-fragment-index="1">benchmark average</div>
+    <div class="k fragment" data-fragment-index="2">you</div><div class="v fragment" data-fragment-index="2">grade average</div>
+    <div class="k fragment" data-fragment-index="3">firm</div><div class="v fragment" data-fragment-index="3">average cost per query</div>
+    <div class="k fragment" data-fragment-index="4">class</div><div class="v fragment" data-fragment-index="4">average reservation price</div>
+  </div>
+  <aside class="notes">PS1 Q3 (the falling grade average) uses exactly this.</aside>
+</section>
+
+<section>
+  <h2>marginal pulls the average</h2>
+  <p class="sub">a model averages 80 on 4 tasks · it scores 60 on a 5th task</p>
+  <div class="big">new average?</div>
+  <div class="poll" data-poll="L01-c10-avg" data-type="number"></div>
+  <details class="prompt"><summary>personalise</summary><pre>Personalize this concept using what you know about me.
+Based on everything you know about me from our past conversations, give me a 1–2 sentence example of how a marginal value pulls an average up or down from my own life, using the basic concept of how a marginal value pulls an average up or down from an introductory microeconomics class. Choose an example that is genuinely specific to my life rather than a generic example. Make clear an average I care about, a new value I add, and whether and why it moves the average up or down. Do not explain the concept abstractly—make it concrete and personal to me.
+
+(Your chatbot can draw? Add: "Then draw a simple picture of it.")</pre></details>
+  <aside class="notes">Answer 76 = (4 × 80 + 60) / 5. 60 is below 80, so it pulls the average down.</aside>
+</section>
+
+<!-- concept 11: positive vs normative -->
+<section>
+  <h2>positive vs normative</h2>
+  <div class="center" style="margin-top:8%">
+    <div class="big">what is · what should be</div>
+    <div class="def">A positive statement says what is and can be checked with facts; a normative statement says what should be.</div>
+  </div>
+  <div class="rows" style="margin-top:2.2em">
+    <div class="k fragment" data-fragment-index="1">positive</div><div class="v fragment" data-fragment-index="1">can be checked with data</div>
+    <div class="k fragment" data-fragment-index="2">normative</div><div class="v fragment" data-fragment-index="2">a value judgement: "should", "too high", "fair"</div>
+  </div>
+  <aside class="notes">Economists try to keep the two apart: first what is, then what should be.</aside>
+</section>
+
+<section>
+  <h2>positive or normative?</h2>
+  <table class="console step-table">
+    <thead><tr><th style="text-align:left">statement</th><th class="verdict">?</th></tr></thead>
+    <tbody>
+      <tr class="fragment pf-row" data-fragment-index="1"><td style="text-align:left">AI data centres raise electricity prices.</td><td class="verdict pass fragment" data-fragment-index="2">positive</td></tr>
+      <tr class="fragment pf-row" data-fragment-index="3"><td style="text-align:left">Governments should limit AI's water use.</td><td class="verdict fail fragment" data-fragment-index="4">normative</td></tr>
+      <tr class="fragment pf-row" data-fragment-index="5"><td style="text-align:left">Chip export bans slow China's AI progress.</td><td class="verdict pass fragment" data-fragment-index="6">positive</td></tr>
+      <tr class="fragment pf-row" data-fragment-index="7"><td style="text-align:left">AI firms should pay artists whose work trains their models.</td><td class="verdict fail fragment" data-fragment-index="8">normative</td></tr>
+      <tr class="fragment pf-row" data-fragment-index="9"><td style="text-align:left">LLMs label texts as accurately as human coders.</td><td class="verdict pass fragment" data-fragment-index="10">positive</td></tr>
+      <tr class="fragment pf-row" data-fragment-index="11"><td style="text-align:left">Universities should ban ChatGPT in exams.</td><td class="verdict fail fragment" data-fragment-index="12">normative</td></tr>
+    </tbody>
+  </table>
+  <details class="prompt"><summary>personalise</summary><pre>Personalize this concept using what you know about me.
+Based on everything you know about me from our past conversations, give me a 1–2 sentence example of positive versus normative statements from my own life, using the basic concept of positive versus normative statements from an introductory microeconomics class. Choose an example that is genuinely specific to my life rather than a generic example. Make clear one positive and one normative statement about something I care about, and what makes each one positive or normative. Do not explain the concept abstractly—make it concrete and personal to me.
+
+(Your chatbot can draw? Add: "Then draw a simple picture of it.")</pre></details>
+  <aside class="notes">One statement at a time: the room calls it, then reveal. A positive statement can be false and still be positive (it can be checked). PS1 Q6 asks the same.</aside>
+</section>
+
 </div></div>
 
 <script src="../../vendor/reveal/reveal.js"></script>
 <script src="../../vendor/reveal/plugin/notes/notes.js"></script>
-<script src="../../assets/js/config.js?v=20261001e"></script>
-<script src="../../assets/js/interactive.js?v=20261001e"></script>
+<script src="../../assets/js/config.js?v=20261001f"></script>
+<script src="../../assets/js/interactive.js?v=20261001f"></script>
+<script src="../../assets/js/menu.js?v=20261001f"></script>
 <script>
   // phones (narrow screens): own layout, all steps visible, swipe between slides
   const MOBILE = Math.min(window.innerWidth, window.innerHeight) < 600 || window.innerWidth < 760;
@@ -351,12 +621,12 @@ Teaser for lecture 2: this sorted picture IS a demand curve.</aside>
     progress: true,
     plugins: [ RevealNotes ]
   });
-  // pass-or-fail table: only the current student is in focus, earlier rows fade
+  // step tables (pass/fail, racks, statements): only the current row is in focus, earlier rows fade
   function focusPassFail() {
-    const t = document.getElementById('passfail');
-    if (!t) return;
-    const shown = [...t.querySelectorAll('tr.pf-row.visible')];
-    shown.forEach((r, i) => r.classList.toggle('past', i < shown.length - 1));
+    document.querySelectorAll('table.step-table').forEach(t => {
+      const shown = [...t.querySelectorAll('tr.pf-row.visible')];
+      shown.forEach((r, i) => r.classList.toggle('past', i < shown.length - 1));
+    });
   }
   ['fragmentshown', 'fragmenthidden', 'slidechanged', 'ready'].forEach(e => Reveal.on(e, focusPassFail));
 </script>
