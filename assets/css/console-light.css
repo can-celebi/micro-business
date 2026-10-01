@@ -253,3 +253,26 @@ html.mobile #passfail .verdict { min-width: 0; }
 /* practice questions told as a short story, question last */
 .rows.story { margin-top: 1.2em; }
 .big.q { font-size: 1.25em; margin-top: 1em; }
+
+/* show-answer box on every practice question */
+details.answer { margin-top: 0.5em; }
+details.answer summary {
+  list-style: none; cursor: pointer; display: inline-block; font-size: 0.65em;
+  border: 1.5px solid var(--line); border-radius: 2px; padding: 0.2em 0.8em; background: var(--p-green);
+}
+details.answer summary::-webkit-details-marker { display: none; }
+details.answer summary::before { content: "[ "; color: var(--dim); }
+details.answer summary::after { content: " ]"; color: var(--dim); }
+details.answer .answer-body {
+  position: absolute; right: 0; top: 18%; width: 46%; z-index: 6;
+  background: #fff; border: 1.5px solid var(--line); border-radius: 2px; padding: 0.7em 0.9em;
+  box-shadow: 4px 4px 0 var(--p-green);
+}
+details.answer .ans { font-weight: 600; font-size: 1em; margin-bottom: 0.4em; }
+details.answer .why { font-size: 0.62em; line-height: 1.45; margin-bottom: 0.3em; }
+details.answer pre.math {
+  font-family: var(--mono); font-size: 0.55em; line-height: 1.5; margin: 0.6em 0 0; padding: 0.5em;
+  background: var(--p-yellow); box-shadow: none; width: 100%; white-space: pre; overflow-x: auto;
+}
+html.mobile details.answer .answer-body { position: static; width: auto; margin-top: 0.6em; }
+html.mobile details.answer summary { font-size: 0.9em; padding: 0.4em 1em; }
