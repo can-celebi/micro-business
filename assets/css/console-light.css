@@ -88,14 +88,14 @@ html, body { background: var(--bg); }
 /* console table */
 table.console {
   border-collapse: collapse;
-  font-size: 0.68em;
+  font-size: 0.85em;
   margin-top: 0.6em;
   width: 100%;
 }
 table.console th, table.console td {
   border: none;
   border-bottom: 1px solid #e3e3e3;
-  padding: 0.28em 0.6em;
+  padding: 0.22em 0.6em;
   text-align: right;
 }
 table.console th { color: var(--dim); font-weight: 400; border-bottom: 1.5px solid var(--line); }
