@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>Micro L01 Introduction</title>
+<link rel="stylesheet" href="../../vendor/reveal/reset.css">
+<link rel="stylesheet" href="../../vendor/reveal/reveal.css">
+<link rel="stylesheet" href="../../assets/css/console-light.css">
+</head>
+<body>
+<div class="reveal"><div class="slides">
+
+<!-- ============ ITEM 0: THE CLASS ============ -->
+
+<section>
+  <div class="title-block">
+    <div class="t">microeconomics<span class="cursor"></span></div>
+    <div class="s">040184 · ws 2026/27 · lecture 1</div>
+    <div class="a">can çelebi <span class="dim">· university of vienna</span></div>
+  </div>
+  <aside class="notes">Welcome. Part 1: how the class works. Part 2: thinking like an economist.</aside>
+</section>
+
+<section>
+  <h2>who am i</h2>
+  <div class="rows">
+    <div class="k">undergrad</div><div class="v">Middlebury College</div>
+    <div class="k">master</div><div class="v">University of Nottingham</div>
+    <div class="k">phd</div><div class="v">University of Mannheim <span class="dim">· Yale</span></div>
+    <div class="k">research</div><div class="v">Max Planck Institute for Intelligent Systems</div>
+    <div class="k">now</div><div class="v">University of Vienna</div>
+  </div>
+  <div class="rows fragment">
+    <div class="k">teaching</div><div class="v">micro <span class="dim">· Middlebury · Mannheim · Yale · Max Planck · Vienna</span></div>
+  </div>
+  <aside class="notes">One year at Yale during the PhD. Taught micro everywhere except Nottingham.</aside>
+</section>
+
+<section>
+  <h2>the week</h2>
+  <div class="boxes">
+    <div class="box pink"><span class="k">mon 12:00</span><span class="v">problem set due</span></div>
+    <div class="box yellow"><span class="k">wed 16:45</span><span class="v">tutorial</span></div>
+    <div class="box green"><span class="k">wed 18:30</span><span class="v">lecture</span></div>
+    <div class="box green"><span class="k">thu 18:30</span><span class="v">lecture</span></div>
+  </div>
+  <div class="rows fragment">
+    <div class="k">tutor</div><div class="v">Mari Edilian</div>
+  </div>
+  <aside class="notes">Tutorial right before the Wednesday lecture. First tutorial: Wed 14.10, HS 9. Rooms change some weeks, see u:find / Moodle.</aside>
+</section>
+
+<section>
+  <h2>problem sets</h2>
+  <div class="boxes">
+    <div class="box fragment"><span class="k">moodle</span><span class="v">pdf</span></div>
+    <div class="arrow fragment" data-fragment-index="1">→</div>
+    <div class="box fragment" data-fragment-index="1"><span class="k">groups ok</span><span class="v">solve</span></div>
+    <div class="arrow fragment" data-fragment-index="2">→</div>
+    <div class="box yellow fragment" data-fragment-index="2"><span class="k">moodle · on your own</span><span class="v">quiz</span></div>
+    <div class="arrow fragment" data-fragment-index="3">→</div>
+    <div class="box fragment" data-fragment-index="3"><span class="k">automatic</span><span class="v">graded</span></div>
+    <div class="arrow fragment" data-fragment-index="4">→</div>
+    <div class="box green fragment" data-fragment-index="4"><span class="k">wed 16:45</span><span class="v">tutorial</span></div>
+  </div>
+  <aside class="notes">Download the PDF from Moodle. Solve it, together is fine. Enter your answers in the Moodle quiz before Monday 12:00: sometimes multiple choice, sometimes a number. Everyone submits their own. Graded automatically. Solved together with Mari on Wednesday.</aside>
+</section>
+
+<section>
+  <h2>grading</h2>
+  <div class="boxes">
+    <div class="box"><span class="k">problem sets</span><span class="v big">15%</span></div>
+    <div class="box yellow"><span class="k">midterm</span><span class="v big">40%</span></div>
+    <div class="box pink"><span class="k">final</span><span class="v big">45%</span></div>
+  </div>
+  <div class="fragment">
+    <p class="small dim" style="margin-top:1.6em">to pass, both:</p>
+    <div class="rows" style="margin-top:0.4em">
+      <div class="k">1</div><div class="v">total ≥ 50%</div>
+      <div class="k">2</div><div class="v">(midterm + final) / 2 ≥ 50%</div>
+    </div>
+  </div>
+  <aside class="notes">Two conditions, both needed. Problem sets cannot rescue weak exams.</aside>
+</section>
+
+<section>
+  <h2>pass or fail?</h2>
+  <table class="console">
+    <thead>
+      <tr><th>student</th><th>problem sets</th><th>midterm</th><th>final</th><th>total</th><th>exam avg</th><th class="verdict">?</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>A</td><td>100</td><td>100</td><td>0</td>
+        <td class="fragment" data-fragment-index="1">55.0</td><td class="fragment" data-fragment-index="1">50.0</td><td class="verdict pass fragment" data-fragment-index="1">pass</td></tr>
+      <tr><td>B</td><td>100</td><td>10</td><td>90</td>
+        <td class="fragment" data-fragment-index="2">59.5</td><td class="fragment" data-fragment-index="2">50.0</td><td class="verdict pass fragment" data-fragment-index="2">pass</td></tr>
+      <tr><td>C</td><td>100</td><td>60</td><td>40</td>
+        <td class="fragment" data-fragment-index="3">57.0</td><td class="fragment" data-fragment-index="3">50.0</td><td class="verdict pass fragment" data-fragment-index="3">pass</td></tr>
+      <tr><td>D</td><td>0</td><td>60</td><td>40</td>
+        <td class="fragment mark-fail" data-fragment-index="4">42.0</td><td class="fragment" data-fragment-index="4">50.0</td><td class="verdict fail fragment" data-fragment-index="4">fail</td></tr>
+      <tr><td>E</td><td>100</td><td>50</td><td>45</td>
+        <td class="fragment" data-fragment-index="5">55.3</td><td class="fragment mark-fail" data-fragment-index="5">47.5</td><td class="verdict fail fragment" data-fragment-index="5">fail</td></tr>
+      <tr><td>F</td><td>60</td><td>55</td><td>50</td>
+        <td class="fragment" data-fragment-index="6">53.5</td><td class="fragment" data-fragment-index="6">52.5</td><td class="verdict pass fragment" data-fragment-index="6">pass</td></tr>
+      <tr><td>G</td><td>20</td><td>55</td><td>52</td>
+        <td class="fragment mark-fail" data-fragment-index="7">48.4</td><td class="fragment" data-fragment-index="7">53.5</td><td class="verdict fail fragment" data-fragment-index="7">fail</td></tr>
+      <tr><td>H</td><td>100</td><td>90</td><td>30</td>
+        <td class="fragment" data-fragment-index="8">64.5</td><td class="fragment" data-fragment-index="8">60.0</td><td class="verdict pass fragment" data-fragment-index="8">pass</td></tr>
+      <tr><td>I</td><td>100</td><td>40</td><td>58</td>
+        <td class="fragment" data-fragment-index="9">57.1</td><td class="fragment mark-fail" data-fragment-index="9">49.0</td><td class="verdict fail fragment" data-fragment-index="9">fail</td></tr>
+      <tr><td>J</td><td>80</td><td>88</td><td>90</td>
+        <td class="fragment" data-fragment-index="10">87.7</td><td class="fragment" data-fragment-index="10">89.0</td><td class="verdict pass fragment" data-fragment-index="10">pass</td></tr>
+    </tbody>
+  </table>
+  <aside class="notes">Scores in %. Let the room vote on each row, then press → to reveal.
+total = 0.15·PS + 0.40·mid + 0.45·final; exam avg = (mid + final)/2.
+A, B, C: exactly 50 exam avg, pass. D: total too low (no problem sets). E, I: exam avg below 50, problem sets don't save you. G: exams fine, total too low. J: grade 1 (above 87).</aside>
+</section>
+
+<section>
+  <h2>dates</h2>
+  <div class="rows">
+    <div class="k">problem set 1</div><div class="v">mon 12.10 · 12:00</div>
+    <div class="k">deregistration</div><div class="v">until wed 14.10</div>
+    <div class="k">midterm</div><div class="v">thu 19.11 · 18:30 <span class="dim">· hs 6 / 14 / 1</span></div>
+    <div class="k">final</div><div class="v">thu 28.01 · 18:30 <span class="dim">· hs 6 / 14 / 4 / 15 / 16</span></div>
+    <div class="k">aids</div><div class="v">none</div>
+  </div>
+  <aside class="notes">Midterm is 7 weeks from today. Exam rooms may still be adjusted; Moodle has the final word.</aside>
+</section>
+
+<section>
+  <h2>retake</h2>
+  <div class="rows">
+    <div class="k">when</div><div class="v">february <span class="dim">· tbd</span></div>
+    <div class="k">format</div><div class="v">harder · open questions</div>
+    <div class="k">who</div><div class="v">≥ 1 exam taken + problem sets handed in</div>
+  </div>
+  <aside class="notes">Skipped the midterm, wrote the final: eligible, and vice versa. You need to have taken at least one exam and handed in your problem sets. I need to see you being active.</aside>
+</section>
+
+<section>
+  <h2>where &amp; how</h2>
+  <div class="rows">
+    <div class="k">slides</div><div class="v">can-celebi.github.io/micro-business</div>
+    <div class="k">problem sets</div><div class="v">moodle</div>
+    <div class="k">book</div><div class="v">Frank · <i>Microeconomics and Behavior</i> <span class="dim">· optional</span></div>
+    <div class="k">e-mail</div><div class="v">can.celebi@univie.ac.at <span class="dim">· weekends</span></div>
+  </div>
+  <aside class="notes">You don't need to buy the book. I will cover every concept you need for the problem sets and the exams. Understand the class and the problem sets and you'll be fine.
+E-mails get answered on weekends, so plan ahead, unless it's urgent.</aside>
+</section>
+
+<section>
+  <h2>ai</h2>
+  <div class="center" style="margin-top:20%">
+    <div class="big">use LLMs.</div>
+    <div class="dim fragment" style="margin-top:0.8em">learning is your call.</div>
+  </div>
+</section>
+
+<!-- ============ PART 2: CONCEPTS (to be built topic by topic) ============ -->
+
+</div></div>
+
+<script src="../../vendor/reveal/reveal.js"></script>
+<script src="../../vendor/reveal/plugin/notes/notes.js"></script>
+<script>
+  Reveal.initialize({
+    hash: true,
+    width: 1280, height: 720, margin: 0.08,
+    center: false,
+    transition: 'none',
+    backgroundTransition: 'none',
+    slideNumber: 'c/t',
+    controls: false,
+    progress: true,
+    plugins: [ RevealNotes ]
+  });
+</script>
+</body>
+</html>

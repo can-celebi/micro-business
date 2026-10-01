@@ -1,0 +1,113 @@
+/* console-light: shared theme for micro-business slides and games.
+   Spec: MICRO-CAN/00_admin/STYLE_PREFERENCES.md (minimal, monospace, light, pastel). */
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,600;1,400&display=swap');
+
+:root {
+  --bg: #fdfdfb;
+  --ink: #111111;
+  --dim: #777777;
+  --faint: #bbbbbb;
+  --line: #222222;
+  --accent: #0074D9;
+  --good: #2ECC40;
+  --warn: #FFDC00;
+  --bad: #FF4136;
+  --p-green: #E6F5E6;
+  --p-yellow: #FFF9D0;
+  --p-pink: #FDE4E6;
+  --p-blue: #E4EFFA;
+  --mono: "IBM Plex Mono", "Courier New", monospace;
+  color-scheme: light;
+}
+
+html, body { background: var(--bg); }
+
+.reveal-viewport { background: var(--bg); }
+.reveal {
+  font-family: var(--mono);
+  font-size: 30px;
+  color: var(--ink);
+}
+.reveal .slides { text-align: left; }
+.reveal .slides section { height: 100%; }
+
+/* frame title: small, bold, top-left */
+.reveal h2 {
+  font-family: var(--mono);
+  font-size: 0.95em;
+  font-weight: 600;
+  margin: 0 0 0.15em 0;
+  color: var(--ink);
+  text-transform: lowercase;
+}
+.reveal h2::before { content: "> "; color: var(--dim); font-weight: 400; }
+.reveal .sub { color: var(--dim); font-style: italic; font-size: 0.65em; margin: 0 0 1.4em 0; }
+
+.reveal p, .reveal li { line-height: 1.4; }
+.dim { color: var(--dim); }
+.small { font-size: 0.6em; }
+.big { font-size: 1.6em; font-weight: 600; }
+.center { text-align: center; }
+.cursor::after { content: "_"; animation: blink 1s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+
+/* title slide */
+.title-block { position: absolute; top: 38%; left: 0; }
+.title-block .t { font-size: 1.5em; font-weight: 600; }
+.title-block .s { color: var(--dim); font-size: 0.7em; margin-top: 0.4em; }
+.title-block .a { margin-top: 2.2em; font-size: 0.75em; }
+
+/* label | statement rows */
+.rows { display: grid; grid-template-columns: max-content 1fr; gap: 0.55em 1.6em; margin-top: 1.6em; align-items: baseline; }
+.rows .k { color: var(--dim); font-size: 0.6em; }
+.rows .v { font-size: 0.8em; }
+
+/* pastel boxes */
+.boxes { display: flex; gap: 0.7em; margin-top: 1.4em; align-items: stretch; flex-wrap: nowrap; }
+.box {
+  border: 1.5px solid var(--line);
+  border-radius: 3px;
+  padding: 0.6em 0.7em;
+  flex: 1;
+  background: #fff;
+  min-width: 0;
+}
+.box .k { color: var(--dim); font-size: 0.55em; display: block; margin-bottom: 0.3em; }
+.box .v { font-weight: 600; font-size: 0.8em; }
+.box.green { background: var(--p-green); }
+.box.yellow { background: var(--p-yellow); }
+.box.pink { background: var(--p-pink); }
+.box.blue { background: var(--p-blue); }
+.arrow { align-self: center; color: var(--dim); font-size: 0.8em; }
+
+/* fragments: fade earlier focus instead of hiding (condorcet look) */
+.reveal .fragment.fade-dim.visible.current-fragment { opacity: 1; }
+.reveal .fragment.semi-fade-out { opacity: 1; }
+.reveal .fragment.semi-fade-out.visible { opacity: 0.2; }
+
+/* console table */
+table.console {
+  border-collapse: collapse;
+  font-size: 0.55em;
+  margin-top: 0.8em;
+  width: 100%;
+}
+table.console th, table.console td {
+  border: none;
+  border-bottom: 1px solid #e3e3e3;
+  padding: 0.28em 0.6em;
+  text-align: right;
+}
+table.console th { color: var(--dim); font-weight: 400; border-bottom: 1.5px solid var(--line); }
+table.console td:first-child, table.console th:first-child { text-align: left; }
+table.console .verdict { font-weight: 600; text-align: center; min-width: 5.5em; }
+.pass { background: var(--p-green); }
+.fail { background: var(--p-pink); }
+.why { color: var(--dim); font-weight: 400; font-size: 0.85em; }
+.mark-fail { color: var(--bad); font-weight: 600; }
+
+/* footer slide number */
+.reveal .slide-number {
+  background: transparent; color: var(--faint); font-family: var(--mono); font-size: 14px;
+}
+.reveal .progress { color: var(--faint); height: 2px; }
