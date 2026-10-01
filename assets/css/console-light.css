@@ -114,3 +114,60 @@ table.console .verdict { font-weight: 600; text-align: center; min-width: 5.5em;
 
 /* only the current row in focus */
 table.console tr.past { opacity: 0.22; }
+
+/* ---------- interactive: buttons, polls, prompts ---------- */
+.btn {
+  font-family: var(--mono); font-size: 0.6em;
+  background: #fff; color: var(--ink);
+  border: 1.5px solid var(--line); border-radius: 2px;
+  padding: 0.25em 0.9em; margin: 0 0.4em 0.4em 0; cursor: pointer;
+}
+.btn::before { content: "[ "; color: var(--dim); }
+.btn::after { content: " ]"; color: var(--dim); }
+.btn:hover { background: var(--p-blue); }
+.btn.chosen { background: var(--p-green); }
+.btn.ghost { border-color: #ccc; color: var(--dim); }
+
+.poll { margin-top: 1.2em; }
+.poll-input { display: flex; align-items: center; flex-wrap: wrap; gap: 0.2em; }
+.poll-input input {
+  font-family: var(--mono); font-size: 0.7em; width: 6em;
+  border: 1.5px solid var(--line); border-radius: 2px; padding: 0.2em 0.4em; margin-right: 0.5em;
+  background: #fff; color: var(--ink);
+}
+.poll-input .unit { font-size: 0.7em; margin-right: 0.3em; color: var(--dim); }
+.poll-status { font-size: 0.5em; color: var(--dim); margin-left: 0.6em; }
+.poll-controls { margin-top: 0.6em; }
+.poll-results { display: none; margin-top: 0.4em; }
+.poll-results.open { display: block; }
+.poll-results .dim { font-size: 0.5em; }
+.poll-results .small-line { margin-top: 0.4em; }
+
+.bar-row { display: grid; grid-template-columns: 4em 1fr 2.5em; gap: 0.6em; align-items: center; font-size: 0.55em; margin: 0.2em 0; }
+.bar-track { height: 0.9em; background: #f1f1ee; border: 1px solid #ddd; }
+.bar-fill { display: block; height: 100%; background: var(--p-green); border-right: 1.5px solid var(--line); }
+.bar-n { text-align: right; }
+
+.vbars { display: flex; align-items: flex-end; gap: 2px; height: 5em; border-bottom: 1.5px solid var(--line); max-width: 100%; }
+.vbar { flex: 1 1 0; min-width: 2px; max-width: 24px; background: #ddd; }
+.vbar.hit { background: var(--accent); opacity: 0.55; }
+
+.raw { margin-top: 0.5em; font-size: 0.45em; color: var(--dim); }
+.raw summary { cursor: pointer; }
+.raw pre { max-height: 9em; overflow: auto; background: #fff; border: 1px solid #e3e3e3; padding: 0.5em; font-family: var(--mono); box-shadow: none; width: 100%; }
+
+/* personalise prompt: collapsed button, bottom right */
+details.prompt { position: absolute; right: 0; bottom: 0; max-width: 62%; text-align: left; z-index: 5; }
+details.prompt summary {
+  list-style: none; cursor: pointer; font-size: 0.5em; display: inline-block; float: right;
+  border: 1.5px solid var(--line); border-radius: 2px; padding: 0.2em 0.8em; background: var(--p-yellow);
+}
+details.prompt summary::-webkit-details-marker { display: none; }
+details.prompt summary::before { content: "[ "; color: var(--dim); }
+details.prompt summary::after { content: " ]"; color: var(--dim); }
+details.prompt[open] { background: #fff; border: 1.5px solid var(--line); padding: 0.6em; }
+details.prompt[open] summary { float: none; margin-bottom: 0.5em; }
+details.prompt pre {
+  white-space: pre-wrap; font-family: var(--mono); font-size: 0.42em; line-height: 1.45;
+  box-shadow: none; margin: 0 0 0.5em 0; width: 100%; background: #fff; color: var(--ink);
+}
