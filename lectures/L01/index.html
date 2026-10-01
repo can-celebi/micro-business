@@ -7,7 +7,7 @@
 <title>Micro L01 Introduction</title>
 <link rel="stylesheet" href="../../vendor/reveal/reset.css">
 <link rel="stylesheet" href="../../vendor/reveal/reveal.css">
-<link rel="stylesheet" href="../../assets/css/console-light.css?v=20261001y">
+<link rel="stylesheet" href="../../assets/css/console-light.css?v=20261001z">
 </head>
 <body>
 <div class="reveal"><div class="slides">
@@ -257,7 +257,7 @@ A, B, C: exactly 50 exam avg, pass. D: total too low (no problem sets). E, I: ex
     <div><span class="dim">7</span> sunk cost</div>
     <div><span class="dim">8</span> marginal vs average</div>
     <div><span class="dim">9</span> marginal benefit ≥ marginal cost</div>
-    <div><span class="dim">10</span> marginal pulls the average</div>
+    <div><span class="dim">10</span> how averages move</div>
     <div><span class="dim">11</span> positive vs normative</div>
   </div>
   <aside class="notes">The whole evening at a glance: first how the class works, then eleven ways economists think about choices. All of them show up in problem set 1.</aside>
@@ -643,36 +643,42 @@ Based on everything you know about me from our past conversations, give me a 1�
   <aside class="notes">Answer 6: worth 10, 8.5, 7, 5.5, 4, 2.5, 1 → buy while worth ≥ €2. Moodle-quiz golf question has the same structure.</aside>
 </section>
 
-<!-- concept 10: marginal pulls the average -->
+<!-- concept 10: how averages move -->
 <section>
-  <h2>marginal pulls the average</h2>
-  <div class="center" style="margin-top:8%">
-    <div class="big">above pulls it up · below pulls it down</div>
-    <div class="def">A new value above the current average raises the average; a value below lowers it.</div>
+  <h2>how averages move</h2>
+  <div class="def" style="margin:0.4em 0 0; max-width:none">If your new grade is higher than your current average, the average goes up; if it is lower, it goes down.</div>
+  <table class="console step-table" style="width:86%">
+    <thead><tr><th>exam</th><th>grade</th><th>your average</th><th style="text-align:left">why</th></tr></thead>
+    <tbody>
+      <tr class="fragment pf-row" data-fragment-index="1"><td>1</td><td>90</td><td><b>90</b></td><td style="text-align:left" class="dim">first exam</td></tr>
+      <tr class="fragment pf-row" data-fragment-index="2"><td>2</td><td>70</td><td><b>80</b></td><td style="text-align:left" class="dim">70 is lower than 90 → down</td></tr>
+      <tr class="fragment pf-row" data-fragment-index="3"><td>3</td><td>95</td><td><b>85</b></td><td style="text-align:left" class="dim">95 is higher than 80 → up</td></tr>
+      <tr class="fragment pf-row" data-fragment-index="4"><td>4</td><td>85</td><td><b>85</b></td><td style="text-align:left" class="dim">same as the average → no change</td></tr>
+    </tbody>
+  </table>
+  <div class="rows" style="margin-top:1.2em">
+    <div class="k fragment" data-fragment-index="5">your friends</div><div class="v fragment" data-fragment-index="5">a very tall friend joins → the group's average height goes up</div>
+    <div class="k fragment" data-fragment-index="6">your subscriptions</div><div class="v fragment" data-fragment-index="6">you add a free app → the average price per subscription goes down</div>
   </div>
-  <div class="rows" style="margin-top:2.2em">
-    <div class="k fragment" data-fragment-index="1">model</div><div class="v fragment" data-fragment-index="1">benchmark average</div>
-    <div class="k fragment" data-fragment-index="2">you</div><div class="v fragment" data-fragment-index="2">grade average</div>
-    <div class="k fragment" data-fragment-index="3">firm</div><div class="v fragment" data-fragment-index="3">average cost per query</div>
-    <div class="k fragment" data-fragment-index="4">class</div><div class="v fragment" data-fragment-index="4">average reservation price</div>
-  </div>
-  <aside class="notes">PS1 Q3 (the falling grade average) uses exactly this.</aside>
+  <aside class="notes">Averages after each exam: 90; (90+70)/2 = 80; (90+70+95)/3 = 85; (90+70+95+85)/4 = 85. The new grade is the "marginal" value: it moves the average toward itself. PS1 Q3 (falling course average) uses exactly this.</aside>
 </section>
 
 <section>
-  <h2>marginal pulls the average</h2>
+  <h2>how averages move</h2>
   <div class="rows story">
-    <div class="k fragment" data-fragment-index="1">an ai model</div><div class="v fragment" data-fragment-index="1">is tested on 4 tasks · average score 80 out of 100</div>
-    <div class="k fragment" data-fragment-index="2">a 5th task</div><div class="v fragment" data-fragment-index="2">is added · the model scores 60 on it</div>
+    <div class="k fragment" data-fragment-index="1">after 4 exams</div><div class="v fragment" data-fragment-index="1">your average grade is 80</div>
+    <div class="k fragment" data-fragment-index="2">exam 5</div><div class="v fragment" data-fragment-index="2">you score 60</div>
   </div>
-  <div class="big q fragment" data-fragment-index="3">new average score?</div>
+  <div class="big q fragment" data-fragment-index="3">your new average?</div>
   <div class="poll fragment" data-fragment-index="3" data-poll="L01-c10-avg" data-type="number"></div>
-  <details class="answer"><summary>show answer</summary><div class="answer-body"><div class="ans">76</div><div class="why">60 is below the old average of 80, so it pulls the average down.</div><pre class="math">(4 × 80 + 60) / 5 = 380 / 5 = 76</pre></div></details>
+  <details class="answer"><summary>show answer</summary><div class="answer-body"><div class="ans">76</div><div class="why">60 is lower than your average of 80, so your average goes down.</div><pre class="math">4 exams × 80 = 320 points
+320 + 60 = 380 points in 5 exams
+380 / 5 = 76</pre></div></details>
   <details class="prompt"><summary>personalise</summary><pre>Personalize this concept using what you know about me.
 Based on everything you know about me from our past conversations, give me a 1–2 sentence example of how a marginal value pulls an average up or down from my own life, using the basic concept of how a marginal value pulls an average up or down from an introductory microeconomics class. Choose an example that is genuinely specific to my life rather than a generic example. Make clear an average I care about, a new value I add, and whether and why it moves the average up or down. Do not explain the concept abstractly—make it concrete and personal to me.
 
 (Your chatbot can draw? Add: "Then draw a simple picture of it.")</pre></details>
-  <aside class="notes">Answer 76 = (4 × 80 + 60) / 5. 60 is below 80, so it pulls the average down.</aside>
+  <aside class="notes">Answer 76. Trick: an average of 80 over 4 exams means 320 points in total.</aside>
 </section>
 
 <!-- concept 11: positive vs normative -->
@@ -753,9 +759,9 @@ Based on everything you know about me from our past conversations, give me a 1�
 
 <script src="../../vendor/reveal/reveal.js"></script>
 <script src="../../vendor/reveal/plugin/notes/notes.js"></script>
-<script src="../../assets/js/config.js?v=20261001y"></script>
-<script src="../../assets/js/interactive.js?v=20261001y"></script>
-<script src="../../assets/js/menu.js?v=20261001y"></script>
+<script src="../../assets/js/config.js?v=20261001z"></script>
+<script src="../../assets/js/interactive.js?v=20261001z"></script>
+<script src="../../assets/js/menu.js?v=20261001z"></script>
 <script>
   // phones (narrow screens): own layout, all steps visible, swipe between slides
   const MOBILE = Math.min(window.innerWidth, window.innerHeight) < 600 || window.innerWidth < 760;
