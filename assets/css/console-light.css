@@ -292,3 +292,4 @@ html.mobile table.mini th, html.mobile table.mini td { padding: 0.25em 0.15em; }
 html.print-pdf .nav-bar, html.print-pdf .menu-panel, html.print-pdf details.prompt,
 html.print-pdf .poll, html.print-pdf details.answer summary { display: none !important; }
 html.print-pdf details.answer .answer-body { position: static; width: auto; margin-top: 0.6em; box-shadow: none; }
+.today-mark { color: var(--accent); font-size: 0.8em; margin-left: 0.6em; }
