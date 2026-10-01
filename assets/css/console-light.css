@@ -276,3 +276,5 @@ details.answer pre.math {
 }
 html.mobile details.answer .answer-body { position: static; width: auto; margin-top: 0.6em; }
 html.mobile details.answer summary { font-size: 0.9em; padding: 0.4em 1em; }
+table.console.calc { font-size: 0.75em; }
+html.mobile table.console.calc { font-size: 0.55em; }
