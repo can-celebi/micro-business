@@ -301,3 +301,11 @@ html.print-pdf details.answer .answer-body { position: static; width: auto; marg
 .rows.summary .v { font-size: 0.88em; }
 .qr-slide .big { text-align: center; }
 html.mobile .qr-slide .big { font-size: 1.3em; }
+
+/* "about you" survey summary in the slides */
+.sv-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.6em 1.4em; margin-top: 0.6em; }
+.sv-box { min-width: 0; }
+.sv-t { font-size: 0.55em; color: var(--dim); margin-bottom: 0.15em; }
+.sv-grid .bar-row { font-size: 0.5em; grid-template-columns: 9em 1fr 2.4em; margin: 0.1em 0; }
+html.mobile .sv-grid { grid-template-columns: 1fr; }
+html.mobile .sv-grid .bar-row { font-size: 0.8em; }
