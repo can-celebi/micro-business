@@ -90,7 +90,7 @@ table.console {
   border-collapse: collapse;
   font-size: 0.85em;
   margin-top: 0.6em;
-  width: 100%;
+  width: 96%;
 }
 table.console th, table.console td {
   border: none;
@@ -113,7 +113,8 @@ table.console .verdict { font-weight: 600; text-align: center; min-width: 5.5em;
 .reveal .progress { color: var(--faint); height: 2px; }
 
 /* only the current row in focus */
-table.console tr.past { opacity: 0.22; }
+.reveal table.console tr.fragment.visible.past { opacity: 0.22; }
+.reveal table.console tr.fragment:not(.visible) td { border-color: transparent; }
 
 /* ---------- interactive: buttons, polls, prompts ---------- */
 .btn {
@@ -201,7 +202,7 @@ html.mobile .rows .k { margin-top: 0.7em; }
 html.mobile .concept-list { columns: 1; }
 html.mobile table.console { font-size: 0.72em; }
 html.mobile table.console th, html.mobile table.console td { padding: 0.25em 0.3em; }
-html.mobile table.console tr.past { opacity: 1; }
+html.mobile .reveal table.console tr.fragment.visible.past { opacity: 1; }
 html.mobile .center[style] { margin-top: 18vh !important; }
 html.mobile details.prompt { position: static; max-width: 100%; margin-top: 1.4em; }
 html.mobile details.prompt summary { float: none; }
