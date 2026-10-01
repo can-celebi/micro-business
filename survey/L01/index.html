@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>About You</title>
+<link rel="stylesheet" href="../../assets/css/console-light.css?v=s1">
+<style>
+  body { margin: 0; font-family: var(--mono); color: var(--ink); background: var(--bg); }
+  main { max-width: 680px; margin: 0 auto; padding: 28px 16px 80px; }
+  h1 { font-size: 1.2rem; margin: 0; }
+  .s { color: var(--dim); font-size: .85rem; margin: .3rem 0 1.6rem; }
+  .q { margin: 0 0 1.3rem; }
+  .q .t { font-size: .95rem; margin-bottom: .45rem; }
+  .q .t .dim { font-size: .8rem; }
+  .opts { display: flex; flex-wrap: wrap; gap: 6px; }
+  .opt { font-family: var(--mono); font-size: .9rem; background: #fff; color: var(--ink);
+         border: 1.5px solid #bbb; border-radius: 2px; padding: 6px 12px; cursor: pointer; }
+  .opt.on { background: var(--p-green); border-color: var(--line); }
+  .likert .opt { min-width: 44px; }
+  .scale { display: flex; justify-content: space-between; font-size: .7rem; color: var(--dim); max-width: 300px; margin-top: 3px; }
+  input[type=number] { font-family: var(--mono); font-size: .95rem; width: 6em; padding: 6px; border: 1.5px solid #bbb; border-radius: 2px; }
+  .go { font-family: var(--mono); font-size: 1rem; padding: 10px 22px; background: var(--p-yellow);
+        border: 1.5px solid var(--line); border-radius: 2px; cursor: pointer; margin-top: .6rem; }
+  .msg { margin-top: .8rem; font-size: .9rem; }
+  .missing .t { color: var(--bad); }
+  a { color: var(--ink); }
+  /* results */
+  .res h2 { font-size: .95rem; margin: 1.4rem 0 .4rem; }
+  .res .bar-row { font-size: .85rem; grid-template-columns: 9em 1fr 2.5em; }
+</style>
+</head>
+<body>
+<main id="app">
+  <h1>&gt; tell me about yourself<span class="cursor"></span></h1>
+  <p class="s">anonymous · about 1 minute · microeconomics · lecture 1</p>
+  <form id="f"></form>
+  <button class="go" id="go" type="button">[ submit ]</button>
+  <div class="msg" id="msg"></div>
+</main>
+
+<script src="../../assets/js/config.js?v=s1"></script>
+<script src="../../assets/js/interactive.js?v=s1"></script>
+<script>
+// Anonymous intro survey. All answers of one student are packed into one short code
+// (one GitHub write per student): fields joined by "." in the order of Q below.
+const POLL = 'L01-survey';
+const LIK = ['1','2','3','4','5'];
+const Q = [
+  { id: 'age', t: 'age', type: 'number' },
+  { id: 'gender', t: 'gender', o: [['f','female'],['m','male'],['d','diverse'],['x','prefer not to say']] },
+  { id: 'from', t: 'where are you from?', o: [['at','Austria'],['de','Germany'],['eu','other EU'],['ot','outside the EU']] },
+  { id: 'prog', t: 'your programme', o: [['b','BWL'],['i','IBWL'],['o','other']] },
+  { id: 'first', t: 'first time taking this class?', o: [['y','yes'],['n','no']] },
+  { id: 'llm', t: 'do you use LLMs (ChatGPT etc.)?', o: [['y','yes'],['n','no']] },
+  { id: 'which', t: 'which one mostly?', o: [['cg','ChatGPT'],['ge','Gemini'],['cl','Claude'],['co','Copilot'],['ds','DeepSeek'],['ot','other'],['no','none']] },
+  { id: 'paid', t: 'do you pay for a subscription?', o: [['y','yes'],['n','no']] },
+  { id: 'grade', t: 'what grade do you expect?', o: [['1','1'],['2','2'],['3','3'],['4','4'],['p','just pass'],['u','not sure']] },
+  { id: 'attend', t: 'which lectures do you plan to attend?', o: [['a','all'],['s','some'],['n','none']] },
+  { id: 'device', t: 'what do you use in class?', o: [['l','laptop'],['t','tablet'],['p','phone'],['n','nothing']] },
+  { id: 'math', t: 'math (derivatives, optimisation): how comfortable?', o: LIK.map(x=>[x,x]), likert: ['not at all','very'] },
+  { id: 'k1', t: 'what do you know about … <b>cost–benefit analysis</b>', o: LIK.map(x=>[x,x]), likert: ['nothing','know it well'] },
+  { id: 'k2', t: '… <b>reservation price</b>', o: LIK.map(x=>[x,x]), likert: ['nothing','know it well'] },
+  { id: 'k3', t: '… <b>opportunity cost</b>', o: LIK.map(x=>[x,x]), likert: ['nothing','know it well'] },
+  { id: 'k4', t: '… <b>marginal benefit and marginal cost</b>', o: LIK.map(x=>[x,x]), likert: ['nothing','know it well'] },
+  { id: 'k5', t: '… <b>sunk cost</b>', o: LIK.map(x=>[x,x]), likert: ['nothing','know it well'] },
+];
+
+const ans = {};
+const form = document.getElementById('f');
+
+function buildForm() {
+  Q.forEach(q => {
+    const d = document.createElement('div'); d.className = 'q' + (q.likert ? ' likert' : ''); d.id = 'q-' + q.id;
+    d.innerHTML = '<div class="t">' + q.t + '</div>';
+    if (q.type === 'number') {
+      const i = document.createElement('input'); i.type = 'number'; i.min = 15; i.max = 99; i.inputMode = 'numeric';
+      i.oninput = () => { ans[q.id] = i.value ? String(Math.round(+i.value)) : undefined; };
+      d.appendChild(i);
+    } else {
+      const box = document.createElement('div'); box.className = 'opts';
+      q.o.forEach(([code, label]) => {
+        const b = document.createElement('button'); b.type = 'button'; b.className = 'opt'; b.textContent = label;
+        b.onclick = () => { ans[q.id] = code; box.querySelectorAll('.opt').forEach(x => x.classList.toggle('on', x === b)); };
+        box.appendChild(b);
+      });
+      d.appendChild(box);
+      if (q.likert) d.insertAdjacentHTML('beforeend', '<div class="scale"><span>1 · ' + q.likert[0] + '</span><span>5 · ' + q.likert[1] + '</span></div>');
+    }
+    form.appendChild(d);
+  });
+}
+
+async function submit() {
+  const msg = document.getElementById('msg');
+  const missing = Q.filter(q => !ans[q.id]);
+  Q.forEach(q => document.getElementById('q-' + q.id).classList.toggle('missing', !ans[q.id]));
+  if (missing.length) { msg.textContent = 'please answer all questions (' + missing.length + ' missing, in red)'; return; }
+  const code = Q.map(q => ans[q.id]).join('.');
+  msg.textContent = 'saving…';
+  try {
+    await window.MicroPoll.submit(POLL, code, n => msg.textContent = 'busy, retry ' + n + '…');
+    msg.innerHTML = 'saved_ thank you! <br><a href="../../lectures/L01/#/course">→ back to the slides</a>';
+    document.getElementById('go').style.display = 'none';
+  } catch (e) { msg.textContent = 'not saved (offline?). please try again'; }
+}
+
+// results view: survey/L01/?results
+async function results() {
+  const app = document.getElementById('app');
+  app.innerHTML = '<h1>&gt; about you · results</h1><p class="s" id="n">loading…</p><div class="res" id="res"></div><button class="go" onclick="results()">[ refresh ]</button>';
+  const data = await window.MicroPoll.results(POLL);
+  const rows = data.responses.map(r => String(r.value).split('.')).filter(p => p.length === Q.length);
+  document.getElementById('n').textContent = 'n = ' + rows.length + ' students';
+  const res = document.getElementById('res');
+  Q.forEach((q, k) => {
+    const h = document.createElement('h2'); h.innerHTML = q.t; res.appendChild(h);
+    if (q.type === 'number') {
+      const v = rows.map(r => +r[k]).filter(x => isFinite(x)).sort((a, b) => a - b);
+      res.insertAdjacentHTML('beforeend', '<div class="dim">' + (v.length ? 'median ' + v[Math.floor((v.length - 1) / 2)] + ' · min ' + v[0] + ' · max ' + v[v.length - 1] : 'no answers yet') + '</div>');
+      return;
+    }
+    const counts = q.o.map(([c]) => rows.filter(r => r[k] === c).length);
+    const max = Math.max(1, ...counts);
+    q.o.forEach(([c, label], j) => {
+      res.insertAdjacentHTML('beforeend', '<div class="bar-row"><span class="bar-label">' + label + '</span><span class="bar-track"><span class="bar-fill" style="width:' + (100 * counts[j] / max) + '%"></span></span><span class="bar-n">' + counts[j] + '</span></div>');
+    });
+  });
+}
+
+if (/results/.test(location.search)) results(); else { buildForm(); document.getElementById('go').onclick = submit; }
+</script>
+</body>
+</html>

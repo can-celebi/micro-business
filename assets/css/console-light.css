@@ -299,3 +299,5 @@ html.print-pdf details.answer .answer-body { position: static; width: auto; marg
 .rows.summary { margin-top: 1em; gap: 0.45em 1.6em; }
 .rows.summary .k { font-size: 0.7em; }
 .rows.summary .v { font-size: 0.88em; }
+.qr-slide .big { text-align: center; }
+html.mobile .qr-slide .big { font-size: 1.3em; }
