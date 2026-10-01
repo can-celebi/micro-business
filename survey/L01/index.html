@@ -101,7 +101,7 @@ async function submit() {
   msg.textContent = 'saving…';
   try {
     await window.MicroPoll.submit(POLL, code, n => msg.textContent = 'busy, retry ' + n + '…');
-    msg.innerHTML = 'saved_ thank you! <br><a href="../../lectures/L01/#/course">→ back to the slides</a>';
+    msg.innerHTML = 'saved_ thank you! <br><a href="../../lectures/L01/#/aboutyou">→ back to the slides</a>';
     document.getElementById('go').style.display = 'none';
   } catch (e) { msg.textContent = 'not saved (offline?). please try again'; }
 }
