@@ -293,3 +293,6 @@ html.print-pdf .nav-bar, html.print-pdf .menu-panel, html.print-pdf details.prom
 html.print-pdf .poll, html.print-pdf details.answer summary { display: none !important; }
 html.print-pdf details.answer .answer-body { position: static; width: auto; margin-top: 0.6em; box-shadow: none; }
 .today-mark { color: var(--accent); font-size: 0.8em; margin-left: 0.6em; }
+
+/* side remarks inside a line (grey spans): smaller and lighter */
+.rows .v .dim, .box .v .dim, .def .dim, .big .dim, td .dim { font-size: 0.72em; color: #a3a3a3; }
