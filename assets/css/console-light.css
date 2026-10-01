@@ -209,3 +209,7 @@ html.mobile details.prompt summary { float: none; }
 html.mobile .qr-slide img { width: 70vw; height: 70vw; }
 html.mobile .btn { font-size: 1em; padding: 0.45em 1em; }
 html.mobile .poll-input input { font-size: 1em; width: 7em; }
+
+/* one-sentence definition under a concept's headline */
+.def { font-size: 0.7em; color: var(--dim); margin: 0.9em auto 0; max-width: 34em; line-height: 1.45; }
+html.mobile details.prompt summary { font-size: 0.9em; padding: 0.4em 1em; }
