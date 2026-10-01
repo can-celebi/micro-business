@@ -7,7 +7,7 @@
 <title>Micro L01 Introduction</title>
 <link rel="stylesheet" href="../../vendor/reveal/reset.css">
 <link rel="stylesheet" href="../../vendor/reveal/reveal.css">
-<link rel="stylesheet" href="../../assets/css/console-light.css?v=20261001u">
+<link rel="stylesheet" href="../../assets/css/console-light.css?v=20261001v">
 </head>
 <body>
 <div class="reveal"><div class="slides">
@@ -560,25 +560,44 @@ Based on everything you know about me from our past conversations, give me a 1�
 
 <section>
   <h2>marginal vs average</h2>
-  <p class="sub">a small data centre rents GPU racks to AI start-ups · running one rack costs €100 per day (power, staff) · revenue per day:</p>
-  <table class="console step-table" style="width:70%">
-    <thead><tr><th>racks</th><th>revenue / day</th><th>average</th><th>marginal</th></tr></thead>
+  <div class="rows story">
+    <div class="k fragment" data-fragment-index="1">a small data centre</div><div class="v fragment" data-fragment-index="1">rents out GPU racks to AI start-ups</div>
+    <div class="k fragment" data-fragment-index="2">each rack</div><div class="v fragment" data-fragment-index="2">costs €100 per day to run <span class="dim">(power, staff)</span></div>
+    <div class="k fragment" data-fragment-index="3">the more racks</div><div class="v fragment" data-fragment-index="3">the harder to find customers <span class="dim">→ each extra rack brings in less</span></div>
+  </div>
+  <div class="big q fragment" data-fragment-index="4">how many racks should it run?</div>
+  <aside class="notes">Set up the story only. Next slide: the numbers.</aside>
+</section>
+
+<section>
+  <h2>marginal vs average</h2>
+  <table class="console">
+    <thead><tr>
+      <th>racks</th>
+      <th class="fragment" data-fragment-index="1">total revenue<br><span class="dim">per day</span></th>
+      <th class="fragment" data-fragment-index="2">average<br><span class="dim">total ÷ racks</span></th>
+      <th class="fragment" data-fragment-index="3">marginal<br><span class="dim">total − previous</span></th>
+      <th class="fragment" data-fragment-index="4">cost<br><span class="dim">of that rack</span></th>
+    </tr></thead>
     <tbody>
-      <tr class="fragment pf-row" data-fragment-index="1"><td>1</td><td>€300</td><td>€300</td><td>€300</td></tr>
-      <tr class="fragment pf-row" data-fragment-index="2"><td>2</td><td>€520</td><td>€260</td><td>€220</td></tr>
-      <tr class="fragment pf-row" data-fragment-index="3"><td>3</td><td>€660</td><td>€220</td><td>€140</td></tr>
-      <tr class="fragment pf-row" data-fragment-index="4"><td>4</td><td>€720</td><td>€180</td><td class="mark-fail">?</td></tr>
+      <tr><td>1</td><td class="fragment" data-fragment-index="1">€300</td><td class="fragment" data-fragment-index="2">€300</td><td class="fragment" data-fragment-index="3">€300</td><td class="fragment" data-fragment-index="4">€100</td></tr>
+      <tr><td>2</td><td class="fragment" data-fragment-index="1">€520</td><td class="fragment" data-fragment-index="2">€260</td><td class="fragment" data-fragment-index="3">€220</td><td class="fragment" data-fragment-index="4">€100</td></tr>
+      <tr><td>3</td><td class="fragment" data-fragment-index="1">€660</td><td class="fragment" data-fragment-index="2">€220</td><td class="fragment" data-fragment-index="3">€140</td><td class="fragment" data-fragment-index="4">€100</td></tr>
+      <tr><td>4</td><td class="fragment" data-fragment-index="1">€720</td><td class="fragment" data-fragment-index="2">€180</td><td class="fragment" data-fragment-index="3"><span class="mark-fail">?</span></td><td class="fragment" data-fragment-index="4">€100</td></tr>
     </tbody>
   </table>
   <div class="fragment" data-fragment-index="5">
     <div class="rows" style="margin-top:0.8em"><div class="k">rack 4</div><div class="v">marginal revenue?</div></div>
-  <div class="poll" data-poll="L01-c8-rack4" data-type="number" data-unit="€"></div>
+    <div class="poll" data-poll="L01-c8-rack4" data-type="number" data-unit="€"></div>
+  </div>
+  <div class="fragment" data-fragment-index="6" style="margin-top:0.4em">
+    <b>run 3 racks</b> <span class="dim">· rack 4 adds €60 &lt; €100 · even though the average is €180</span>
   </div>
   <details class="prompt"><summary>personalise</summary><pre>Personalize this concept using what you know about me.
 Based on everything you know about me from our past conversations, give me a 1–2 sentence example of marginal versus average benefit from my own life, using the basic concept of marginal versus average benefit from an introductory microeconomics class. Choose an example that is genuinely specific to my life rather than a generic example. Make clear something I do in units, the average benefit per unit, and the benefit of the next unit. Do not explain the concept abstractly—make it concrete and personal to me.
 
 (Your chatbot can draw? Add: "Then draw a simple picture of it.")</pre></details>
-  <aside class="notes">Answer €60 = €720 − €660 &lt; €100 cost → run 3 racks, even though the average with 4 racks (€180) is above €100. Tom's fishing boats in PS1 Q4–5 are the same problem.</aside>
+  <aside class="notes">Revenue numbers are made up (like Tom's boats in PS1). Average = total ÷ racks (720 ÷ 4 = 180). Marginal = total − previous total (720 − 660 = 60). Each rack costs €100 → run a rack only if it adds more than €100: racks 1–3 yes (300, 220, 140), rack 4 no (60). Trap: average €180 &gt; €100 looks profitable.</aside>
 </section>
 
 <!-- concept 9: MB >= MC -->
@@ -723,9 +742,9 @@ Based on everything you know about me from our past conversations, give me a 1�
 
 <script src="../../vendor/reveal/reveal.js"></script>
 <script src="../../vendor/reveal/plugin/notes/notes.js"></script>
-<script src="../../assets/js/config.js?v=20261001u"></script>
-<script src="../../assets/js/interactive.js?v=20261001u"></script>
-<script src="../../assets/js/menu.js?v=20261001u"></script>
+<script src="../../assets/js/config.js?v=20261001v"></script>
+<script src="../../assets/js/interactive.js?v=20261001v"></script>
+<script src="../../assets/js/menu.js?v=20261001v"></script>
 <script>
   // phones (narrow screens): own layout, all steps visible, swipe between slides
   const MOBILE = Math.min(window.innerWidth, window.innerHeight) < 600 || window.innerWidth < 760;
