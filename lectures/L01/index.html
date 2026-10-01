@@ -7,7 +7,7 @@
 <title>Micro L01 Introduction</title>
 <link rel="stylesheet" href="../../vendor/reveal/reset.css">
 <link rel="stylesheet" href="../../vendor/reveal/reveal.css">
-<link rel="stylesheet" href="../../assets/css/console-light.css?v=20261001h">
+<link rel="stylesheet" href="../../assets/css/console-light.css?v=20261001i">
 </head>
 <body>
 <div class="reveal"><div class="slides">
@@ -358,17 +358,43 @@ Teaser for lecture 2: this sorted picture IS a demand curve.</aside>
 <!-- concept 4: explicit vs implicit cost -->
 <section>
   <h2>explicit vs implicit cost</h2>
-  <div class="center" style="margin-top:8%">
-    <div class="big">money paid + what you give up</div>
-    <div class="def">Explicit costs are money you pay; implicit costs are the value of what you give up without paying money.</div>
+  <div class="rows" style="margin-top:2.4em">
+    <div class="k fragment" data-fragment-index="1">explicit</div><div class="v fragment" data-fragment-index="1">money leaves your pocket <span class="dim">· a payment, a bill</span></div>
+    <div class="k fragment" data-fragment-index="2">implicit</div><div class="v fragment" data-fragment-index="2">no money changes hands, but you give up something valuable <span class="dim">· your time, your effort, what your own resources could earn</span></div>
+    <div class="k fragment" data-fragment-index="3">economic cost</div><div class="v fragment" data-fragment-index="3"><b>explicit + implicit</b></div>
   </div>
-  <div class="rows" style="margin-top:2.2em">
-    <div class="k fragment" data-fragment-index="1">you</div><div class="v fragment" data-fragment-index="1">€20 subscription <span class="dim">+ hours learning the tool</span></div>
-    <div class="k fragment" data-fragment-index="2">founder</div><div class="v fragment" data-fragment-index="2">GPU rent <span class="dim">+ forgone Google salary</span></div>
-    <div class="k fragment" data-fragment-index="3">research</div><div class="v fragment" data-fragment-index="3">API bill <span class="dim">+ your time checking outputs</span></div>
-    <div class="k fragment" data-fragment-index="4">firm</div><div class="v fragment" data-fragment-index="4">chatbot licence <span class="dim">+ staff time</span></div>
+  <aside class="notes">Implicit = mostly the time and effort you put in, or what your own money/equipment could have earned elsewhere.</aside>
+</section>
+
+<section>
+  <h2>explicit vs implicit cost</h2>
+  <p class="sub">Mia quits her €70,000 job at Google to run her own LLM start-up for a year · revenue €80,000</p>
+  <div class="boxes">
+    <div class="box">
+      <span class="k">explicit · she pays</span>
+      <div class="v fragment" data-fragment-index="1">cloud GPUs €30,000</div>
+      <div class="v fragment" data-fragment-index="2">office €12,000</div>
+    </div>
+    <div class="box yellow">
+      <span class="k">implicit · she gives up</span>
+      <div class="v fragment" data-fragment-index="3">Google salary €70,000</div>
+      <div class="v fragment" data-fragment-index="4">3% on her €20,000 savings €600</div>
+    </div>
   </div>
-  <aside class="notes">Black = explicit (money paid). Grey = implicit (what you give up without paying).</aside>
+  <div class="rows">
+    <div class="k fragment" data-fragment-index="5">accounting profit</div><div class="v fragment" data-fragment-index="5">80,000 − 42,000 = <b>€38,000</b> <span class="dim">· revenue − explicit</span></div>
+    <div class="k fragment" data-fragment-index="6">economic profit</div><div class="v fragment" data-fragment-index="6">80,000 − 112,600 = <b class="mark-fail">−€32,600</b> <span class="dim">· revenue − explicit − implicit</span></div>
+  </div>
+  <aside class="notes">The accountant sees a profit; the economist sees that Mia would be €32,600 better off staying at Google. Explicit 42,000; implicit 70,600; economic cost 112,600.</aside>
+</section>
+
+<section>
+  <h2>explicit vs implicit cost</h2>
+  <p class="sub">typical questions</p>
+  <div class="rows" style="margin-top:2em">
+    <div class="k fragment" data-fragment-index="1">problem set 1</div><div class="v fragment" data-fragment-index="1">a "free" ticket still costs the €50 you could sell it for</div>
+    <div class="k fragment" data-fragment-index="2">weekend trip</div><div class="v fragment" data-fragment-index="2">also costs the wages you give up</div>
+  </div>
 </section>
 
 <section>
@@ -397,6 +423,24 @@ Based on everything you know about me from our past conversations, give me a 1�
     <div class="k fragment" data-fragment-index="4">your evening</div><div class="v fragment" data-fragment-index="4">problem set <span class="dim">or</span> side job</div>
   </div>
   <aside class="notes">Every use of a scarce resource has an opportunity cost: the next-best use.</aside>
+</section>
+
+<section>
+  <h2>opportunity cost</h2>
+  <p class="sub">every cost is an opportunity cost</p>
+  <div class="boxes" style="margin-top:2em">
+    <div class="box fragment" data-fragment-index="1"><span class="k">explicit</span><span class="v">€ you pay</span><span class="k" style="margin-top:0.4em">= things you can't buy instead</span></div>
+    <div class="arrow fragment" data-fragment-index="2">+</div>
+    <div class="box yellow fragment" data-fragment-index="2"><span class="k">implicit</span><span class="v">time · effort · own resources</span><span class="k" style="margin-top:0.4em">= their best other use</span></div>
+    <div class="arrow fragment" data-fragment-index="3">=</div>
+    <div class="box green fragment" data-fragment-index="3"><span class="k">economic cost</span><span class="v">opportunity cost</span></div>
+  </div>
+  <div class="rows">
+    <div class="k fragment" data-fragment-index="4">implicit → opportunity cost?</div><div class="v fragment" data-fragment-index="4">always</div>
+    <div class="k fragment" data-fragment-index="5">opportunity cost → implicit?</div><div class="v fragment" data-fragment-index="5">no <span class="dim">· explicit costs count too</span></div>
+    <div class="k fragment" data-fragment-index="6">sunk cost?</div><div class="v fragment" data-fragment-index="6">not an opportunity cost <span class="dim">· nothing left to give up</span></div>
+  </div>
+  <aside class="notes">Every implicit cost is an opportunity cost; not every opportunity cost is implicit: the €20 you pay is €20 of other things you give up. Sunk costs are gone whatever you do: they are not part of any opportunity cost (preview of concept 7).</aside>
 </section>
 
 <section>
@@ -600,9 +644,9 @@ Based on everything you know about me from our past conversations, give me a 1�
 
 <script src="../../vendor/reveal/reveal.js"></script>
 <script src="../../vendor/reveal/plugin/notes/notes.js"></script>
-<script src="../../assets/js/config.js?v=20261001h"></script>
-<script src="../../assets/js/interactive.js?v=20261001h"></script>
-<script src="../../assets/js/menu.js?v=20261001h"></script>
+<script src="../../assets/js/config.js?v=20261001i"></script>
+<script src="../../assets/js/interactive.js?v=20261001i"></script>
+<script src="../../assets/js/menu.js?v=20261001i"></script>
 <script>
   // phones (narrow screens): own layout, all steps visible, swipe between slides
   const MOBILE = Math.min(window.innerWidth, window.innerHeight) < 600 || window.innerWidth < 760;
