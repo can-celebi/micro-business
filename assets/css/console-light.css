@@ -171,3 +171,9 @@ details.prompt pre {
   white-space: pre-wrap; font-family: var(--mono); font-size: 0.42em; line-height: 1.45;
   box-shadow: none; margin: 0 0 0.5em 0; width: 100%; background: #fff; color: var(--ink);
 }
+
+/* first slide of every lecture: QR + short link */
+.qr-slide { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; }
+.qr-slide img { width: 400px; height: 400px; margin: 0; border: none; box-shadow: none; background: transparent; }
+.qr-slide .qr-link { font-size: 0.85em; font-weight: 600; margin-top: 0.6em; }
+.qr-slide .small { margin-top: 0.4em; }
