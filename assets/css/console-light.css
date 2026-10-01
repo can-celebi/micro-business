@@ -111,3 +111,6 @@ table.console .verdict { font-weight: 600; text-align: center; min-width: 5.5em;
   background: transparent; color: var(--faint); font-family: var(--mono); font-size: 14px;
 }
 .reveal .progress { color: var(--faint); height: 2px; }
+
+/* only the current row in focus */
+table.console tr.past { opacity: 0.22; }
