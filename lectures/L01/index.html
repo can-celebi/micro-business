@@ -333,8 +333,14 @@ Teaser for lecture 2: this sorted picture IS a demand curve.</aside>
 <script src="../../assets/js/config.js"></script>
 <script src="../../assets/js/interactive.js"></script>
 <script>
+  // phones (narrow screens): own layout, all steps visible, swipe between slides
+  const MOBILE = Math.min(window.innerWidth, window.innerHeight) < 600 || window.innerWidth < 760;
+  if (MOBILE) document.documentElement.classList.add('mobile');
   Reveal.initialize({
     hash: true,
+    disableLayout: MOBILE,
+    fragments: !MOBILE,
+    touch: true,
     width: 1280, height: 720, margin: 0.08,
     center: false,
     transition: 'none',
