@@ -249,3 +249,7 @@ html.mobile .menu-panel a { padding: 9px 14px; white-space: normal; }
 
 html.mobile #passfail { font-size: 0.6em; }
 html.mobile #passfail .verdict { min-width: 0; }
+
+/* practice questions told as a short story, question last */
+.rows.story { margin-top: 1.2em; }
+.big.q { font-size: 1.25em; margin-top: 1em; }
