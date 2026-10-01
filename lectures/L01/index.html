@@ -7,7 +7,7 @@
 <title>Micro L01 Introduction</title>
 <link rel="stylesheet" href="../../vendor/reveal/reset.css">
 <link rel="stylesheet" href="../../vendor/reveal/reveal.css">
-<link rel="stylesheet" href="../../assets/css/console-light.css?v=20261001zd">
+<link rel="stylesheet" href="../../assets/css/console-light.css?v=20261001ze">
 </head>
 <body>
 <div class="reveal"><div class="slides">
@@ -560,7 +560,7 @@ Based on everything you know about me from our past conversations, give me a 1�
     <div class="def">marginal = what one more unit adds to the total<br>average = the total divided by the number of units</div>
   </div>
   <div class="rows" style="margin-top:2.2em">
-    <div class="k fragment" data-fragment-index="1">data centre</div><div class="v fragment" data-fragment-index="1">revenue of one more rack</div>
+    <div class="k fragment" data-fragment-index="1">café</div><div class="v fragment" data-fragment-index="1">sales from one more barista</div>
     <div class="k fragment" data-fragment-index="2">developer</div><div class="v fragment" data-fragment-index="2">cost of one more API call</div>
     <div class="k fragment" data-fragment-index="3">you</div><div class="v fragment" data-fragment-index="3">one more study hour</div>
   </div>
@@ -570,43 +570,43 @@ Based on everything you know about me from our past conversations, give me a 1�
 <section>
   <h2>marginal vs average</h2>
   <div class="rows story">
-    <div class="k fragment" data-fragment-index="1">you</div><div class="v fragment" data-fragment-index="1">rent out GPU racks · each rack goes to one start-up for a day</div>
-    <div class="k fragment" data-fragment-index="2">four start-ups</div><div class="v fragment" data-fragment-index="2">want a rack · they pay at most <b>€300, €220, €140, €60</b> per day</div>
-    <div class="k fragment" data-fragment-index="3">running a rack</div><div class="v fragment" data-fragment-index="3">costs you €100 per day <span class="dim">(power, staff)</span></div>
+    <div class="k fragment" data-fragment-index="1">you run</div><div class="v fragment" data-fragment-index="1">a small café on campus · one coffee machine</div>
+    <div class="k fragment" data-fragment-index="2">each barista</div><div class="v fragment" data-fragment-index="2">costs you €100 per day</div>
+    <div class="k fragment" data-fragment-index="3">you tracked</div><div class="v fragment" data-fragment-index="3">daily sales on days with 1, 2, 3 and 4 baristas working</div>
+    <div class="k fragment" data-fragment-index="4">more baristas</div><div class="v fragment" data-fragment-index="4">serve more people, but they share one machine <span class="dim">→ each extra one adds less</span></div>
   </div>
-  <div class="big q fragment" data-fragment-index="4">how many racks do you run?</div>
-  <aside class="notes">Each extra rack goes to the next start-up, who pays less. That's why each extra rack brings in less.</aside>
+  <div class="big q fragment" data-fragment-index="5">how many baristas should work?</div>
+  <aside class="notes">Diminishing returns: one machine, a crowded counter. Next slide: the numbers.</aside>
 </section>
 
 <section>
   <h2>marginal vs average</h2>
-  <p class="sub">each rack costs €100 per day</p>
+  <p class="sub">each barista costs €100 per day</p>
   <table class="console calc">
     <thead><tr>
-      <th>rack</th>
-      <th class="fragment" data-fragment-index="1">start-up pays</th>
-      <th class="fragment" data-fragment-index="2">total revenue<br><span class="dim">all racks so far</span></th>
-      <th class="fragment" data-fragment-index="3">average<br><span class="dim">total ÷ racks</span></th>
-      <th class="fragment" data-fragment-index="4">marginal<br><span class="dim">extra from this rack</span></th>
+      <th>baristas</th>
+      <th class="fragment" data-fragment-index="1">sales per day<br><span class="dim">you tracked</span></th>
+      <th class="fragment" data-fragment-index="2">average<br><span class="dim">sales ÷ baristas</span></th>
+      <th class="fragment" data-fragment-index="3">marginal<br><span class="dim">extra sales from this barista</span></th>
     </tr></thead>
     <tbody>
-      <tr><td>1</td><td class="fragment" data-fragment-index="1">€300</td><td class="fragment" data-fragment-index="2"><span class="dim">300 =</span> €300</td><td class="fragment" data-fragment-index="3"><span class="dim">300 ÷ 1 =</span> €300</td><td class="fragment" data-fragment-index="4"><span class="dim">300 − 0 =</span> €300</td></tr>
-      <tr><td>2</td><td class="fragment" data-fragment-index="1">€220</td><td class="fragment" data-fragment-index="2"><span class="dim">300 + 220 =</span> €520</td><td class="fragment" data-fragment-index="3"><span class="dim">520 ÷ 2 =</span> €260</td><td class="fragment" data-fragment-index="4"><span class="dim">520 − 300 =</span> €220</td></tr>
-      <tr><td>3</td><td class="fragment" data-fragment-index="1">€140</td><td class="fragment" data-fragment-index="2"><span class="dim">520 + 140 =</span> €660</td><td class="fragment" data-fragment-index="3"><span class="dim">660 ÷ 3 =</span> €220</td><td class="fragment" data-fragment-index="4"><span class="dim">660 − 520 =</span> €140</td></tr>
-      <tr><td>4</td><td class="fragment" data-fragment-index="1">€60</td><td class="fragment" data-fragment-index="2"><span class="dim">660 + 60 =</span> €720</td><td class="fragment" data-fragment-index="3"><span class="dim">720 ÷ 4 =</span> €180</td><td class="fragment" data-fragment-index="4"><span class="mark-fail">?</span></td></tr>
+      <tr><td>1</td><td class="fragment" data-fragment-index="1">€300</td><td class="fragment" data-fragment-index="2"><span class="dim">300 ÷ 1 =</span> €300</td><td class="fragment" data-fragment-index="3"><span class="dim">300 − 0 =</span> €300</td></tr>
+      <tr><td>2</td><td class="fragment" data-fragment-index="1">€520</td><td class="fragment" data-fragment-index="2"><span class="dim">520 ÷ 2 =</span> €260</td><td class="fragment" data-fragment-index="3"><span class="dim">520 − 300 =</span> €220</td></tr>
+      <tr><td>3</td><td class="fragment" data-fragment-index="1">€660</td><td class="fragment" data-fragment-index="2"><span class="dim">660 ÷ 3 =</span> €220</td><td class="fragment" data-fragment-index="3"><span class="dim">660 − 520 =</span> €140</td></tr>
+      <tr><td>4</td><td class="fragment" data-fragment-index="1">€720</td><td class="fragment" data-fragment-index="2"><span class="dim">720 ÷ 4 =</span> €180</td><td class="fragment" data-fragment-index="3"><span class="mark-fail">?</span></td></tr>
     </tbody>
   </table>
-  <div class="fragment" data-fragment-index="5">
-    <div class="rows" style="margin-top:0.8em"><div class="k">rack 4</div><div class="v">marginal revenue?</div></div>
-    <div class="poll" data-poll="L01-c8-rack4" data-type="number" data-unit="€"></div>
+  <div class="fragment" data-fragment-index="4">
+    <div class="rows" style="margin-top:0.8em"><div class="k">barista 4</div><div class="v">extra sales?</div></div>
+    <div class="poll" data-poll="L01-c8-barista4" data-type="number" data-unit="€"></div>
   </div>
-  <details class="answer"><summary>show answer</summary><div class="answer-body"><div class="ans">€60 → run 3 racks</div><div class="why">Rack 4 would go to the start-up that pays only €60, but it costs €100 to run.</div><div class="why">The average with 4 racks (€180) looks profitable, but decisions are about the next rack.</div><pre class="math">marginal = €720 − €660 = €60 (= what start-up 4 pays)
-€60 < €100 cost → do not run rack 4</pre></div></details>
+  <details class="answer"><summary>show answer</summary><div class="answer-body"><div class="ans">€60 → 3 baristas</div><div class="why">The 4th barista adds only €60 in sales but costs €100.</div><div class="why">The average (€180 per barista) looks fine, but decisions are about the next barista, not the average one.</div><pre class="math">marginal = €720 − €660 = €60
+€60 &lt; €100 cost → do not hire the 4th</pre></div></details>
   <details class="prompt"><summary>personalise</summary><pre>Personalize this concept using what you know about me.
 Based on everything you know about me from our past conversations, give me a 1–2 sentence example of marginal versus average benefit from my own life, using the basic concept of marginal versus average benefit from an introductory microeconomics class. Choose an example that is genuinely specific to my life rather than a generic example. Make clear something I do in units, the average benefit per unit, and the benefit of the next unit. Do not explain the concept abstractly—make it concrete and personal to me.
 
 (Your chatbot can draw? Add: "Then draw a simple picture of it.")</pre></details>
-  <aside class="notes">Rack n goes to start-up n, so the marginal revenue of a rack = what that start-up pays. Total = sum so far; average = total ÷ racks. Rack 4: marginal €60 &lt; €100 cost → run 3 racks, although the average with 4 racks is €180 &gt; €100.</aside>
+  <aside class="notes">Sales numbers are what you observed. Average = sales ÷ baristas; marginal = sales now − sales with one barista fewer. 4th barista: €60 &lt; €100 → 3 baristas, although the average with 4 is €180 &gt; €100. Same logic as Tom's boats in PS1.</aside>
 </section>
 
 <!-- concept 9: MB >= MC -->
@@ -758,9 +758,9 @@ Based on everything you know about me from our past conversations, give me a 1�
 
 <script src="../../vendor/reveal/reveal.js"></script>
 <script src="../../vendor/reveal/plugin/notes/notes.js"></script>
-<script src="../../assets/js/config.js?v=20261001zd"></script>
-<script src="../../assets/js/interactive.js?v=20261001zd"></script>
-<script src="../../assets/js/menu.js?v=20261001zd"></script>
+<script src="../../assets/js/config.js?v=20261001ze"></script>
+<script src="../../assets/js/interactive.js?v=20261001ze"></script>
+<script src="../../assets/js/menu.js?v=20261001ze"></script>
 <script>
   // phones (narrow screens): own layout, all steps visible, swipe between slides
   const MOBILE = Math.min(window.innerWidth, window.innerHeight) < 600 || window.innerWidth < 760;
@@ -779,7 +779,7 @@ Based on everything you know about me from our past conversations, give me a 1�
     progress: true,
     plugins: [ RevealNotes ]
   });
-  // step tables (pass/fail, racks, statements): only the current row is in focus, earlier rows fade
+  // step tables (pass/fail, grades, statements): only the current row is in focus, earlier rows fade
   function focusPassFail() {
     document.querySelectorAll('table.step-table').forEach(t => {
       const shown = [...t.querySelectorAll('tr.pf-row.visible')];
