@@ -227,6 +227,11 @@
   window.MicroPoll = { submit: submit, results: results };
 
   function init() {
+    // PDF export (?print-pdf): show answers, polls become plain text
+    if (/print-pdf/.test(location.search)) {
+      document.querySelectorAll('details.answer').forEach(d => d.open = true);
+      return;
+    }
     document.querySelectorAll('.poll').forEach(initPoll);
     document.querySelectorAll('details.prompt').forEach(initPrompt);
   }

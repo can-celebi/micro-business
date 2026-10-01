@@ -287,3 +287,8 @@ table.mini td.pass { background: var(--p-green); }
 table.mini td.fail { background: var(--p-pink); }
 html.mobile table.mini { font-size: 0.7em; }
 html.mobile table.mini th, html.mobile table.mini td { padding: 0.25em 0.15em; }
+
+/* PDF export (?print-pdf): no buttons, answers inline */
+html.print-pdf .nav-bar, html.print-pdf .menu-panel, html.print-pdf details.prompt,
+html.print-pdf .poll, html.print-pdf details.answer summary { display: none !important; }
+html.print-pdf details.answer .answer-body { position: static; width: auto; margin-top: 0.6em; box-shadow: none; }
