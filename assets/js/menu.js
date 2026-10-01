@@ -52,7 +52,17 @@
     document.addEventListener('keydown', e => { if (e.key === 'Escape') panel.classList.remove('open'); });
     Reveal.on('slidechanged', mark);
 
-    document.body.appendChild(btn);
+    // bottom-left bar: [ menu ] always; [ ← ] [ → ] shown on phones (CSS)
+    const bar = document.createElement('div');
+    bar.className = 'nav-bar';
+    const prev = document.createElement('button');
+    prev.className = 'nav-btn'; prev.textContent = '←';
+    prev.onclick = e => { e.stopPropagation(); Reveal.prev(); prev.blur(); };
+    const next = document.createElement('button');
+    next.className = 'nav-btn'; next.textContent = '→';
+    next.onclick = e => { e.stopPropagation(); Reveal.next(); next.blur(); };
+    bar.appendChild(btn); bar.appendChild(prev); bar.appendChild(next);
+    document.body.appendChild(bar);
     document.body.appendChild(panel);
   }
   Reveal.on('ready', build);
