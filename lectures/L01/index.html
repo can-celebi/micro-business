@@ -7,7 +7,7 @@
 <title>Micro L01 Introduction</title>
 <link rel="stylesheet" href="../../vendor/reveal/reset.css">
 <link rel="stylesheet" href="../../vendor/reveal/reveal.css">
-<link rel="stylesheet" href="../../assets/css/console-light.css?v=20261001zq">
+<link rel="stylesheet" href="../../assets/css/console-light.css?v=20261002a">
 </head>
 <body>
 <div class="reveal"><div class="slides">
@@ -254,6 +254,13 @@ A, B, C: exactly 50 exam avg, pass. D: total too low (no problem sets). E: exam 
   <div class="poll-controls" style="margin-top:0.4em"><button class="btn ghost" id="sv-show">results</button><button class="btn ghost" id="sv-refresh" style="display:none">refresh</button> <span class="dim small" id="sv-n"></span></div>
   <div class="sv-grid" id="sv-grid"></div>
   <aside class="notes">Live results of the anonymous survey (S01). Full view: /survey/L01/?results.</aside>
+</section>
+
+<section id="whoyouare">
+  <h2>who you are</h2>
+  <div class="poll-controls" style="margin-top:0.4em"><button class="btn ghost" id="sv2-show">results</button><button class="btn ghost" id="sv2-refresh" style="display:none">refresh</button> <span class="dim small" id="sv2-n"></span></div>
+  <div class="sv-grid" id="sv2-grid"></div>
+  <aside class="notes">Demographics from the anonymous survey (S01).</aside>
 </section>
 
 <section>
@@ -766,9 +773,9 @@ Based on everything you know about me from our past conversations, give me a 1�
 
 <script src="../../vendor/reveal/reveal.js"></script>
 <script src="../../vendor/reveal/plugin/notes/notes.js"></script>
-<script src="../../assets/js/config.js?v=20261001zq"></script>
-<script src="../../assets/js/interactive.js?v=20261001zq"></script>
-<script src="../../assets/js/menu.js?v=20261001zq"></script>
+<script src="../../assets/js/config.js?v=20261002a"></script>
+<script src="../../assets/js/interactive.js?v=20261002a"></script>
+<script src="../../assets/js/menu.js?v=20261002a"></script>
 <script>
   // phones (narrow screens): own layout, all steps visible, swipe between slides
   const MOBILE = Math.min(window.innerWidth, window.innerHeight) < 600 || window.innerWidth < 760;
@@ -796,36 +803,58 @@ Based on everything you know about me from our past conversations, give me a 1�
     });
   }
   ['fragmentshown', 'fragmenthidden', 'slidechanged', 'ready'].forEach(e => Reveal.on(e, focusPassFail));
-  // "about you" slide: live summary of the anonymous survey (field order = survey/L01/index.html)
+  // "about you" + "who you are" slides: live summaries of the anonymous survey
+  // (field order = survey/L01/index.html)
   (function () {
     const F = ['age','gender','from','prog','first','llm','which','paid','grade','attend','device','math','k1','k2','k3','k4','k5'];
-    const SHOW = [
-      ['use LLMs', 'llm', [['y','yes'],['n','no']]],
-      ['pay for one', 'paid', [['y','yes'],['n','no']]],
-      ['which one', 'which', [['cg','ChatGPT'],['ge','Gemini'],['cl','Claude'],['co','Copilot'],['ds','DeepSeek'],['ot','other'],['no','none']]],
-      ['expected grade', 'grade', [['1','1'],['2','2'],['3','3'],['4','4'],['p','pass'],['u','not sure']]],
-      ['attend', 'attend', [['a','all'],['s','some'],['n','none']]],
-    ];
     const KN = [['k1','cost–benefit'],['k2','reservation price'],['k3','opportunity cost'],['k4','MB vs MC'],['k5','sunk cost']];
+    const PANELS = {
+      'sv': [
+        ['use LLMs', 'llm', [['y','yes'],['n','no']]],
+        ['pay for one', 'paid', [['y','yes'],['n','no']]],
+        ['which one', 'which', [['cg','ChatGPT'],['ge','Gemini'],['cl','Claude'],['co','Copilot'],['ds','DeepSeek'],['ot','other'],['no','none']]],
+        ['expected grade', 'grade', [['1','1'],['2','2'],['3','3'],['4','4'],['p','pass'],['u','not sure']]],
+        ['attend', 'attend', [['a','all'],['s','some'],['n','none']]],
+        'knowledge'
+      ],
+      'sv2': [
+        'age',
+        ['gender', 'gender', [['f','female'],['m','male'],['d','diverse'],['x','no answer']]],
+        ['from', 'from', [['at','Austria'],['de','Germany'],['eu','other EU'],['ot','outside EU']]],
+        ['programme', 'prog', [['i','IBWL'],['b','BWL'],['o','other']]],
+        ['first time here', 'first', [['y','yes'],['n','no']]],
+        ['device in class', 'device', [['t','tablet'],['l','laptop'],['p','phone'],['n','nothing']]]
+      ]
+    };
     function bars(title, pairs) {
       const max = Math.max(1, ...pairs.map(p => p[1]));
       return '<div class="sv-box"><div class="sv-t">' + title + '</div>' + pairs.map(([l, v, txt]) =>
         '<div class="bar-row"><span class="bar-label">' + l + '</span><span class="bar-track"><span class="bar-fill" style="width:' + (100 * v / max) + '%"></span></span><span class="bar-n">' + (txt || v) + '</span></div>').join('') + '</div>';
     }
-    async function draw() {
-      const grid = document.getElementById('sv-grid');
+    async function draw(id) {
+      const grid = document.getElementById(id + '-grid');
       grid.innerHTML = '<div class="dim small">loading…</div>';
       try {
         const data = await window.MicroPoll.results('L01-survey');
         const rows = data.responses.map(r => String(r.value).split('.')).filter(p => p.length === F.length);
-        document.getElementById('sv-n').textContent = 'n = ' + rows.length;
-        let html = SHOW.map(([t, f, opts]) => { const k = F.indexOf(f); return bars(t, opts.map(([c, l]) => [l, rows.filter(r => r[k] === c).length])); }).join('');
-        html += bars('know it already? (avg 1–5)', KN.map(([f, l]) => { const k = F.indexOf(f); const v = rows.map(r => +r[k]).filter(x => x >= 1); const m = v.length ? v.reduce((a, b) => a + b, 0) / v.length : 0; return [l, m, m ? m.toFixed(1) : '–']; }));
-        grid.innerHTML = html;
+        document.getElementById(id + '-n').textContent = 'n = ' + rows.length;
+        grid.innerHTML = PANELS[id].map(item => {
+          if (item === 'knowledge') return bars('know it already? (avg 1–5)', KN.map(([f, l]) => { const k = F.indexOf(f); const v = rows.map(r => +r[k]).filter(x => x >= 1); const m = v.length ? v.reduce((a, b) => a + b, 0) / v.length : 0; return [l, m, m ? m.toFixed(1) : '–']; }));
+          if (item === 'age') {
+            const a = rows.map(r => +r[0]).filter(x => x >= 15 && x <= 99).sort((x, y) => x - y);
+            const med = a.length ? a[Math.floor((a.length - 1) / 2)] : '–';
+            const bins = [['≤ 19', x => x <= 19], ['20–21', x => x >= 20 && x <= 21], ['22–24', x => x >= 22 && x <= 24], ['25+', x => x >= 25]];
+            return bars('age · median ' + med, bins.map(([l, f]) => [l, a.filter(f).length]));
+          }
+          const [t, f, opts] = item; const k = F.indexOf(f);
+          return bars(t, opts.map(([c, l]) => [l, rows.filter(r => r[k] === c).length]));
+        }).join('');
       } catch (e) { grid.innerHTML = '<div class="dim small">could not load results</div>'; }
     }
-    const show = document.getElementById('sv-show'), ref = document.getElementById('sv-refresh');
-    if (show) { show.onclick = () => { ref.style.display = ''; draw(); }; ref.onclick = draw; }
+    ['sv', 'sv2'].forEach(id => {
+      const show = document.getElementById(id + '-show'), ref = document.getElementById(id + '-refresh');
+      if (show) { show.onclick = () => { ref.style.display = ''; draw(id); }; ref.onclick = () => draw(id); }
+    });
   })();
 </script>
 </body>
