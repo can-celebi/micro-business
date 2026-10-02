@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light">
 <title>About You</title>
-<link rel="stylesheet" href="../../assets/css/console-light.css?v=s1">
+<link rel="stylesheet" href="../../assets/css/console-light.css?v=s2">
 <style>
   body { margin: 0; font-family: var(--mono); color: var(--ink); background: var(--bg); }
   main { max-width: 680px; margin: 0 auto; padding: 28px 16px 80px; }
@@ -28,7 +28,7 @@
   a { color: var(--ink); }
   /* results */
   .res h2 { font-size: .95rem; margin: 1.4rem 0 .4rem; }
-  .res .bar-row { font-size: .85rem; grid-template-columns: 9em 1fr 2.5em; }
+  .res .bar-row { font-size: .85rem; grid-template-columns: 9em 1fr 5.5em; }
 </style>
 </head>
 <body>
@@ -40,8 +40,8 @@
   <div class="msg" id="msg"></div>
 </main>
 
-<script src="../../assets/js/config.js?v=s1"></script>
-<script src="../../assets/js/interactive.js?v=s1"></script>
+<script src="../../assets/js/config.js?v=s2"></script>
+<script src="../../assets/js/interactive.js?v=s2"></script>
 <script>
 // Anonymous intro survey. All answers of one student are packed into one short code
 // (one GitHub write per student): fields joined by "." in the order of Q below.
@@ -122,9 +122,10 @@ async function results() {
       return;
     }
     const counts = q.o.map(([c]) => rows.filter(r => r[k] === c).length);
-    const max = Math.max(1, ...counts);
+    const n = rows.length || 1;
     q.o.forEach(([c, label], j) => {
-      res.insertAdjacentHTML('beforeend', '<div class="bar-row"><span class="bar-label">' + label + '</span><span class="bar-track"><span class="bar-fill" style="width:' + (100 * counts[j] / max) + '%"></span></span><span class="bar-n">' + counts[j] + '</span></div>');
+      const pct = 100 * counts[j] / n;
+      res.insertAdjacentHTML('beforeend', '<div class="bar-row"><span class="bar-label">' + label + '</span><span class="bar-track"><span class="bar-fill" style="width:' + pct + '%"></span></span><span class="bar-n">' + Math.round(pct) + '% (' + counts[j] + ')</span></div>');
     });
   });
 }

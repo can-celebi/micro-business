@@ -144,10 +144,10 @@ table.console .verdict { font-weight: 600; text-align: center; min-width: 5.5em;
 .poll-results .dim { font-size: 0.65em; }
 .poll-results .small-line { margin-top: 0.4em; }
 
-.bar-row { display: grid; grid-template-columns: 4em 1fr 2.5em; gap: 0.6em; align-items: center; font-size: 0.7em; margin: 0.2em 0; }
+.bar-row { display: grid; grid-template-columns: 4em 1fr 5.2em; gap: 0.6em; align-items: center; font-size: 0.7em; margin: 0.2em 0; }
 .bar-track { height: 0.9em; background: #f1f1ee; border: 1px solid #ddd; }
 .bar-fill { display: block; height: 100%; background: var(--p-green); border-right: 1.5px solid var(--line); }
-.bar-n { text-align: right; }
+.bar-n { text-align: right; white-space: nowrap; }
 
 .vbars { display: flex; align-items: flex-end; gap: 2px; height: 5em; border-bottom: 1.5px solid var(--line); max-width: 100%; }
 .vbar { flex: 1 1 0; min-width: 2px; max-width: 24px; background: #ddd; }
@@ -306,6 +306,6 @@ html.mobile .qr-slide .big { font-size: 1.3em; }
 .sv-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.9em 1.4em; margin-top: 0.8em; }
 .sv-box { min-width: 0; }
 .sv-t { font-size: 0.7em; color: var(--dim); margin-bottom: 0.15em; }
-.sv-grid .bar-row { font-size: 0.62em; grid-template-columns: 8.5em 1fr 2.4em; margin: 0.15em 0; }
+.sv-grid .bar-row { font-size: 0.62em; grid-template-columns: 8.5em 1fr 5em; margin: 0.15em 0; }
 html.mobile .sv-grid { grid-template-columns: 1fr; }
 html.mobile .sv-grid .bar-row { font-size: 0.8em; }

@@ -95,15 +95,17 @@
     return e;
   }
 
-  function bar(label, value, max, cls) {
+  // bar length = share of all answers (n); label "57% (32)"
+  function bar(label, value, total, cls) {
     const row = el('div', 'bar-row');
     row.appendChild(el('span', 'bar-label', label));
     const track = el('span', 'bar-track');
     const fill = el('span', 'bar-fill ' + (cls || ''));
-    fill.style.width = (max > 0 ? (100 * value / max) : 0) + '%';
+    const pct = total > 0 ? 100 * value / total : 0;
+    fill.style.width = pct + '%';
     track.appendChild(fill);
     row.appendChild(track);
-    row.appendChild(el('span', 'bar-n', String(value)));
+    row.appendChild(el('span', 'bar-n', Math.round(pct) + '% (' + value + ')'));
     return row;
   }
 
@@ -111,8 +113,9 @@
     const counts = {};
     options.forEach(o => counts[o] = 0);
     data.responses.forEach(r => { const o = options.find(x => safe(x) === String(r.value)); if (o) counts[o]++; });
-    const max = Math.max(1, ...Object.values(counts));
-    options.forEach(o => box.appendChild(bar(o, counts[o], max)));
+    const n = Object.values(counts).reduce((a, b) => a + b, 0);
+    options.forEach(o => box.appendChild(bar(o, counts[o], n)));
+    box.appendChild(el('div', 'dim small-line', 'n = ' + n));
   }
 
   function renderNumber(box, data, unit, mark) {
