@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<meta name="robots" content="noindex">
+<title>Name Wheel</title>
+<link rel="stylesheet" href="../assets/css/console-light.css?v=w1">
+<style>
+  body { margin: 0; font-family: var(--mono); color: var(--ink); background: var(--bg); }
+  main { max-width: 1100px; margin: 0 auto; padding: 18px 16px 60px; }
+  h1 { font-size: 1.2rem; margin: 0 0 .2rem; }
+  .s { color: var(--dim); font-size: .8rem; margin: 0 0 1rem; }
+  .grid { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 24px; align-items: start; }
+  @media (max-width: 860px) { .grid { grid-template-columns: 1fr; } }
+  .wheelbox { position: relative; max-width: 560px; margin: 0 auto; }
+  canvas { width: 100%; height: auto; display: block; }
+  .pointer { position: absolute; top: -6px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 16px solid transparent; border-right: 16px solid transparent; border-top: 30px solid var(--ink); }
+  .name { text-align: center; font-size: 2.4rem; font-weight: 600; min-height: 3.2rem; margin: 14px 0 8px; }
+  .row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+  .b { font-family: var(--mono); font-size: 1.05rem; padding: 10px 20px; border: 1.5px solid var(--line); border-radius: 2px; cursor: pointer; background: #fff; }
+  .b.spin { background: var(--p-yellow); font-size: 1.3rem; padding: 12px 34px; }
+  .b.here { background: var(--p-green); } .b.away { background: var(--p-pink); }
+  .b:disabled { opacity: .35; cursor: default; }
+  .panel { border: 1.5px solid var(--line); border-radius: 2px; padding: 10px 12px; background: #fff; font-size: .8rem; }
+  .panel h3 { font-size: .85rem; margin: .2rem 0 .4rem; }
+  .panel textarea { width: 100%; min-height: 6em; font-family: var(--mono); font-size: .75rem; }
+  .log div { padding: 2px 0; border-bottom: 1px dotted #ddd; }
+  .ok { color: #2a7a2a; } .no { color: #b33; }
+  .small { font-size: .72rem; color: var(--dim); }
+  .link { background: none; border: none; color: var(--ink); text-decoration: underline; cursor: pointer; font-family: var(--mono); font-size: .75rem; padding: 0; }
+</style>
+</head>
+<body>
+<main>
+  <h1>&gt; who answers?<span class="cursor"></span></h1>
+  <p class="s" id="sub">the names stay in this browser only: nothing is uploaded</p>
+  <div class="grid">
+    <div>
+      <div class="wheelbox"><div class="pointer"></div><canvas id="c" width="900" height="900"></canvas></div>
+      <div class="name" id="name">&nbsp;</div>
+      <div class="row">
+        <button class="b spin" id="spin">[ spin ]</button>
+        <button class="b here" id="here" disabled>here ✓</button>
+        <button class="b away" id="away" disabled>not here ✗ · spin again</button>
+      </div>
+      <div class="row" style="margin-top:8px"><button class="link" id="undo">undo last</button></div>
+    </div>
+    <div>
+      <div class="panel">
+        <h3>this class · <span id="date"></span></h3>
+        <div id="counts" class="small"></div>
+        <div class="log" id="log"></div>
+        <div style="margin-top:8px"><button class="link" id="export">download this class (csv)</button> · <button class="link" id="newclass">start a new class</button></div>
+      </div>
+      <div class="panel" style="margin-top:12px">
+        <h3>the list</h3>
+        <div class="small" id="listinfo"></div>
+        <p class="small">Load the Moodle participants export (Participants → select all → download as CSV), or paste names, one per line.</p>
+        <input type="file" id="file" accept=".csv,.txt">
+        <textarea id="paste" placeholder="or paste names here, one per line"></textarea>
+        <button class="b" id="usepaste" style="font-size:.8rem;padding:4px 10px">use pasted names</button>
+        <p><button class="link" id="clear">remove the list from this browser</button></p>
+      </div>
+    </div>
+  </div>
+</main>
+<script>
+// Name wheel for cold-calling. Names are personal data: they are loaded by Can in class and kept ONLY in this
+// browser's localStorage (key wheel-names); nothing is sent anywhere. Per class (date) the page remembers who was
+// called: "here" and "not here" both leave the wheel for that class. Download the class as CSV for your records.
+const K = { names: 'wheel-names', cls: d => 'wheel-class-' + d };
+const ls = { get: k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } }, set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} } };
+const today = () => new Date().toISOString().slice(0, 10);
+let names = ls.get(K.names) || [];
+let day = ls.get('wheel-current') || today();
+let cls = ls.get(K.cls(day)) || [];      // [{name, status: 'here'|'away', t}]
+let current = null, angle = 0, spinning = false;
+const cv = document.getElementById('c'), ctx = cv.getContext('2d');
+const COLS = ['#E6F5E6', '#FFF9D0', '#FDE4E6', '#E4EFFA', '#F1E6FA', '#E6F3F5'];
+
+function remaining() { const done = new Set(cls.map(x => x.name)); return names.filter(n => !done.has(n)); }
+function save() { ls.set(K.cls(day), cls); ls.set('wheel-current', day); }
+
+function draw() {
+  const R = remaining(), W = cv.width, c = W / 2, r = W / 2 - 10;
+  ctx.clearRect(0, 0, W, W);
+  if (!R.length) { ctx.font = '600 40px IBM Plex Mono, monospace'; ctx.fillStyle = '#777'; ctx.textAlign = 'center'; ctx.fillText(names.length ? 'everyone has been called' : 'load the list →', c, c); return; }
+  const seg = 2 * Math.PI / R.length;
+  R.forEach((n, i) => {
+    const a0 = angle + i * seg;
+    ctx.beginPath(); ctx.moveTo(c, c); ctx.arc(c, c, r, a0, a0 + seg); ctx.closePath();
+    ctx.fillStyle = COLS[i % COLS.length]; ctx.fill(); ctx.strokeStyle = '#222'; ctx.lineWidth = R.length > 60 ? 0.5 : 1.5; ctx.stroke();
+    if (R.length <= 80) {
+      ctx.save(); ctx.translate(c, c); ctx.rotate(a0 + seg / 2); ctx.textAlign = 'right'; ctx.fillStyle = '#111';
+      const fs = Math.max(10, Math.min(28, 900 / R.length)); ctx.font = fs + 'px IBM Plex Mono, monospace';
+      ctx.fillText(n.length > 22 ? n.slice(0, 21) + '…' : n, r - 14, fs / 3); ctx.restore();
+    }
+  });
+  ctx.beginPath(); ctx.arc(c, c, 34, 0, 2 * Math.PI); ctx.fillStyle = '#fff'; ctx.fill(); ctx.strokeStyle = '#222'; ctx.lineWidth = 2; ctx.stroke();
+}
+function picked() {
+  // the pointer sits at the top (angle −π/2)
+  const R = remaining(), seg = 2 * Math.PI / R.length;
+  let a = (-Math.PI / 2 - angle) % (2 * Math.PI); if (a < 0) a += 2 * Math.PI;
+  return R[Math.floor(a / seg) % R.length];
+}
+function spin() {
+  const R = remaining(); if (spinning || !R.length) return;
+  spinning = true; current = null; setButtons();
+  document.getElementById('name').innerHTML = '&nbsp;';
+  const start = angle, total = 2 * Math.PI * (5 + Math.random() * 3) + Math.random() * 2 * Math.PI, dur = 4200, t0 = performance.now();
+  const ease = t => 1 - Math.pow(1 - t, 3);
+  (function step(now) {
+    const t = Math.min(1, (now - t0) / dur); angle = start + total * ease(t); draw();
+    if (t < 1) requestAnimationFrame(step);
+    else { spinning = false; current = picked(); document.getElementById('name').textContent = current; setButtons(); }
+  })(t0);
+}
+function mark(status) {
+  if (!current) return;
+  cls.push({ name: current, status: status, t: new Date().toLocaleTimeString('de-AT', { hour: '2-digit', minute: '2-digit' }) });
+  save(); current = null; render();
+  if (status === 'away') spin();
+}
+function setButtons() {
+  document.getElementById('spin').disabled = spinning || !remaining().length || !!current;
+  document.getElementById('here').disabled = !current; document.getElementById('away').disabled = !current;
+}
+function render() {
+  draw(); setButtons();
+  document.getElementById('date').textContent = day;
+  const here = cls.filter(x => x.status === 'here').length, away = cls.length - here;
+  document.getElementById('counts').textContent = `in the wheel: ${remaining().length} · here: ${here} · not here: ${away}`;
+  document.getElementById('log').innerHTML = cls.slice().reverse().map(x => `<div><span class="${x.status === 'here' ? 'ok' : 'no'}">${x.status === 'here' ? '✓' : '✗'}</span> ${x.name.replace(/</g, '&lt;')} <span class="small">${x.t}</span></div>`).join('');
+  document.getElementById('listinfo').textContent = names.length ? names.length + ' names loaded (only in this browser)' : 'no list loaded';
+  if (!current) document.getElementById('name').innerHTML = '&nbsp;';
+}
+function parseList(text) {
+  text = text.replace(/^﻿/, '');
+  const lines = text.split(/\r?\n/).filter(l => l.trim());
+  const split = l => { const out = []; let cur = '', q = false; for (const ch of l) { if (ch === '"') q = !q; else if ((ch === ',' || ch === ';' || ch === '\t') && !q) { out.push(cur.trim()); cur = ''; } else cur += ch; } out.push(cur.trim()); return out; };
+  const head = split(lines[0]).map(h => h.toLowerCase());
+  const fi = head.findIndex(h => /first ?name|vorname/.test(h)), la = head.findIndex(h => /last ?name|nachname|surname/.test(h)), gi = head.findIndex(h => /group|gruppe/.test(h));
+  if (fi >= 0 && la >= 0) {
+    let rows = lines.slice(1).map(split);
+    // Moodle export: keep only members of a group (drops teachers/tutors without a group), if groups exist
+    if (gi >= 0 && rows.some(r => (r[gi] || '').trim())) rows = rows.filter(r => (r[gi] || '').trim());
+    return rows.map(r => ((r[fi] || '') + ' ' + (r[la] || '')).trim()).filter(Boolean);
+  }
+  return lines.map(l => l.trim()).filter(Boolean);
+}
+function setNames(list) { names = [...new Set(list)]; ls.set(K.names, names); render(); }
+document.getElementById('file').onchange = e => { const f = e.target.files[0]; if (f) f.text().then(t => setNames(parseList(t))); };
+document.getElementById('usepaste').onclick = () => setNames(parseList(document.getElementById('paste').value));
+document.getElementById('clear').onclick = () => { try { localStorage.removeItem(K.names); } catch (e) {} names = []; render(); };
+document.getElementById('spin').onclick = spin;
+document.getElementById('here').onclick = () => mark('here');
+document.getElementById('away').onclick = () => mark('away');
+document.getElementById('undo').onclick = () => { if (spinning) return; if (current) { current = null; render(); return; } cls.pop(); save(); render(); };
+document.getElementById('newclass').onclick = () => { day = today(); if (ls.get(K.cls(day)) && cls.length && ls.get('wheel-current') === day) { /* same day: keep */ } cls = ls.get(K.cls(day)) || []; save(); render(); };
+document.getElementById('export').onclick = () => {
+  const csv = 'date,name,status,time\n' + cls.map(x => [day, '"' + x.name.replace(/"/g, '""') + '"', x.status === 'here' ? 'here' : 'not here', x.t].join(',')).join('\n');
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['﻿' + csv], { type: 'text/csv' })); a.download = 'wheel-' + day + '.csv'; a.click();
+};
+document.addEventListener('keydown', e => { if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') return; if (e.key === ' ') { e.preventDefault(); spin(); } if (e.key === 'y') mark('here'); if (e.key === 'n') mark('away'); });
+if (day !== today()) { day = today(); cls = ls.get(K.cls(day)) || []; save(); }
+render();
+</script>
+</body>
+</html>
