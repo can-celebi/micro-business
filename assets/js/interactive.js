@@ -3,13 +3,18 @@
 // Poll markup:
 //   <div class="poll" data-poll="L01-c2-subscribe" data-type="choice" data-options="yes,no"></div>
 //   <div class="poll" data-poll="L01-c3-resprice" data-type="number" data-unit="€" data-mark="20"></div>
+//   <div class="poll" data-poll="L02-ow-pc" data-type="text" data-max="300"></div>   (free text, e.g. own words)
+// Every choice/number poll gets a "no idea" button (data-noidea="off" to drop it).
+// After answering, the results open by themselves; [refresh] reloads them (no auto-update, on purpose).
 // Prompt markup:
 //   <details class="prompt"><summary>personalise</summary><pre>…prompt…</pre></details>
 (function () {
   const cfg = window.MICRO_CONFIG || {};
   const GH = cfg.github || {};
   const TOKEN = (GH.tokenParts || []).length ? atob(GH.tokenParts.join('')) : '';
-  const SESSION = cfg.session || 'default';
+  // ?test in the URL writes to session "test" (for load tests and rehearsals)
+  const SESSION = /[?&]test\b/.test(location.search) ? 'test' : (cfg.session || 'default');
+  const NOIDEA = 'no idea';
   const API = 'https://api.github.com/repos/' + GH.owner + '/' + GH.repo;
 
   function store(key, val) { try { localStorage.setItem(key, val); } catch (e) {} }
@@ -67,6 +72,91 @@
     throw new Error('could not save');
   }
 
+  // Free text (own-words answers, survey comments): one git blob per answer + one tag ref pointing to it:
+  //   refs/tags/t/<session>/<poll>/<ts>--<client>
+  // Two API calls, no write conflicts, any length / any characters. tools/export_text.py exports them.
+  async function submitText(poll, payload, onRetry) {
+    const ts = Date.now();
+    const content = JSON.stringify(Object.assign({ poll: poll, ts: ts, client: CID }, payload));
+    if (!TOKEN) { store('micro-text-' + poll + '-' + ts, content); return; }
+    const ref = 'refs/tags/t/' + SESSION + '/' + poll + '/' + ts + '--' + CID;
+    let blob = null;
+    for (let attempt = 0; attempt < 10; attempt++) {
+      try {
+        if (!blob) {
+          const b = await fetch(API + '/git/blobs', { method: 'POST', headers: headers(), body: JSON.stringify({ content: content, encoding: 'utf-8' }) });
+          if (b.status === 201) blob = (await b.json()).sha;
+        }
+        if (blob) {
+          const r = await fetch(API + '/git/refs', { method: 'POST', headers: headers(), body: JSON.stringify({ ref: ref, sha: blob }) });
+          if (r.status === 201) return;
+          if (r.status === 422) {
+            const g = await fetch(API + '/git/' + ref, { headers: headers(), cache: 'no-store' });
+            if (g.status === 200) return;
+          }
+        }
+      } catch (e) { /* retry */ }
+      if (onRetry) onRetry(attempt + 1);
+      await sleep(Math.min(30000, 800 * 2 ** attempt) * (0.5 + Math.random()));
+    }
+    throw new Error('could not save');
+  }
+
+  // count only (texts are read by the teacher page / export script, not shown on slides)
+  async function textCount(poll) {
+    if (!TOKEN) return { n: 0 };
+    const r = await fetch(API + '/git/matching-refs/tags/t/' + SESSION + '/' + poll + '/', { headers: headers(), cache: 'no-store' });
+    const refs = await r.json();
+    const clients = new Set((Array.isArray(refs) ? refs : []).map(x => x.ref.split('--').pop()));
+    return { n: clients.size };
+  }
+
+  // all latest texts of polls starting with prefix (teacher page): [{poll, client, ts, text, skipped, ...}]
+  async function textResults(prefix) {
+    const r = await fetch(API + '/git/matching-refs/tags/t/' + SESSION + '/' + prefix, { headers: headers(), cache: 'no-store' });
+    const refs = await r.json();
+    const latest = {};
+    (Array.isArray(refs) ? refs : []).forEach(x => {
+      const rest = x.ref.slice(('refs/tags/t/' + SESSION + '/').length);
+      const cut = rest.lastIndexOf('/'), poll = rest.slice(0, cut), parts = rest.slice(cut + 1).split('--');
+      const key = poll + '|' + parts[1], ts = Number(parts[0]);
+      if (!latest[key] || latest[key].ts < ts) latest[key] = { poll: poll, ts: ts, sha: x.object.sha };
+    });
+    const list = Object.values(latest), out = [];
+    for (let i = 0; i < list.length; i += 8) {
+      const chunk = await Promise.all(list.slice(i, i + 8).map(async it => {
+        try {
+          const b = await fetch(API + '/git/blobs/' + it.sha, { headers: headers(), cache: 'force-cache' });
+          const j = await b.json();
+          const txt = new TextDecoder().decode(Uint8Array.from(atob(j.content.replace(/\n/g, '')), c => c.charCodeAt(0)));
+          return JSON.parse(txt);
+        } catch (e) { return { poll: it.poll, ts: it.ts, text: '(could not read)' }; }
+      }));
+      out.push(...chunk);
+    }
+    return out;
+  }
+
+  // all choice/number answers of polls starting with prefix (teacher page): {poll: [{client, ts, value}]}
+  async function allResults(prefix) {
+    const base = 'refs/heads/v/' + SESSION + '/';
+    const r = await fetch(API + '/git/matching-refs/heads/v/' + SESSION + '/' + prefix, { headers: headers(), cache: 'no-store' });
+    const refs = await r.json();
+    const latest = {};
+    (Array.isArray(refs) ? refs : []).forEach(x => {
+      const rest = x.ref.slice(base.length), cut = rest.lastIndexOf('/');
+      const poll = rest.slice(0, cut), parts = rest.slice(cut + 1).split('--');
+      if (parts.length < 3) return;
+      const ts = Number(parts[0]), client = parts[1], raw = parts.slice(2).join('--');
+      const value = raw !== '' && isFinite(Number(raw)) ? Number(raw) : raw;
+      const k = poll + '|' + client;
+      if (!latest[k] || latest[k].ts < ts) latest[k] = { poll: poll, client: client, ts: ts, value: value };
+    });
+    const by = {};
+    Object.values(latest).forEach(x => (by[x.poll] = by[x.poll] || []).push(x));
+    return by;
+  }
+
   async function results(poll) {
     if (!TOKEN) {
       const all = JSON.parse(load('micro-poll-' + poll) || '{}');
@@ -111,16 +201,18 @@
 
   function renderChoice(box, data, options) {
     const counts = {};
+    if (options.indexOf(NOIDEA) < 0 && data.responses.some(r => String(r.value) === safe(NOIDEA))) options = options.concat([NOIDEA]);
     options.forEach(o => counts[o] = 0);
     data.responses.forEach(r => { const o = options.find(x => safe(x) === String(r.value)); if (o) counts[o]++; });
     const n = Object.values(counts).reduce((a, b) => a + b, 0);
-    options.forEach(o => box.appendChild(bar(o, counts[o], n)));
+    options.forEach(o => box.appendChild(bar(o, counts[o], n, o === NOIDEA ? 'noidea' : '')));
     box.appendChild(el('div', 'dim small-line', 'n = ' + n));
   }
 
   function renderNumber(box, data, unit, mark) {
     const vals = data.responses.map(r => Number(r.value)).filter(v => isFinite(v)).sort((a, b) => b - a);
-    if (!vals.length) { box.appendChild(el('div', 'dim', 'no answers yet')); return; }
+    const noIdea = data.responses.filter(r => String(r.value) === safe(NOIDEA)).length;
+    if (!vals.length) { box.appendChild(el('div', 'dim', 'no answers yet' + (noIdea ? ' · no idea: ' + noIdea : ''))); return; }
     const max = Math.max(...vals);
     const wrap = el('div', 'vbars');
     vals.forEach(v => {
@@ -133,6 +225,7 @@
     const mid = vals[Math.floor((vals.length - 1) / 2)];
     let line = 'n = ' + vals.length + ' · median ' + unit + mid;
     if (mark !== null) line += ' · ≥ ' + unit + mark + ': ' + vals.filter(v => v >= mark).length;
+    if (noIdea) line += ' · no idea: ' + noIdea;
     box.appendChild(el('div', 'dim small-line', line));
   }
 
@@ -142,6 +235,8 @@
     const unit = node.dataset.unit || '';
     const mark = node.dataset.mark !== undefined ? Number(node.dataset.mark) : null;
     const options = (node.dataset.options || '').split(',').map(s => s.trim()).filter(Boolean);
+    const withNoIdea = node.dataset.noidea !== 'off' && type !== 'text';
+    let afterSave = () => {};
 
     const input = el('div', 'poll-input');
     const status = el('span', 'poll-status');
@@ -154,13 +249,37 @@
       go.onclick = async () => {
         if (f.value === '' || !isFinite(Number(f.value))) { status.textContent = 'enter a number'; return; }
         status.textContent = '…';
-        try { await submit(poll, Number(f.value), n => status.textContent = 'busy, retry ' + n + '…'); status.textContent = 'saved_'; }
+        try { await submit(poll, Number(f.value), n => status.textContent = 'busy, retry ' + n + '…'); status.textContent = 'saved_'; afterSave(); }
         catch (e) { status.textContent = 'not saved (offline?)'; }
       };
       f.addEventListener('keydown', ev => { if (ev.key === 'Enter') go.click(); ev.stopPropagation(); });
       if (unit) input.appendChild(el('span', 'unit', unit));
       input.appendChild(f);
       input.appendChild(go);
+      if (withNoIdea) {
+        const ni = el('button', 'btn noidea', NOIDEA);
+        ni.onclick = async () => {
+          status.textContent = '…';
+          try { await submit(poll, NOIDEA, n => status.textContent = 'busy, retry ' + n + '…'); status.textContent = 'saved_'; afterSave(); }
+          catch (e) { status.textContent = 'not saved (offline?)'; }
+        };
+        input.appendChild(ni);
+      }
+    } else if (type === 'text') {
+      const max = Number(node.dataset.max || 300);
+      const f = el('textarea'); f.maxLength = max; f.rows = 2; f.placeholder = 'in your own words…';
+      const cnt = el('span', 'dim small-line', '0 / ' + max);
+      f.oninput = () => cnt.textContent = f.value.length + ' / ' + max;
+      f.addEventListener('keydown', ev => ev.stopPropagation());
+      const go = el('button', 'btn', 'submit'), skip = el('button', 'btn ghost', 'skip');
+      const send = async (payload) => {
+        status.textContent = '…';
+        try { await submitText(poll, payload, n => status.textContent = 'busy, retry ' + n + '…'); status.textContent = 'saved_'; afterSave(); }
+        catch (e) { status.textContent = 'not saved (offline?)'; }
+      };
+      go.onclick = () => { if (!f.value.trim()) { status.textContent = 'write something or skip'; return; } send({ text: f.value.trim(), skipped: false }); };
+      skip.onclick = () => send({ text: '', skipped: true });
+      input.appendChild(f); input.appendChild(cnt); input.appendChild(go); input.appendChild(skip);
     } else {
       options.forEach(o => {
         const b = el('button', 'btn', o);
@@ -168,11 +287,22 @@
           input.querySelectorAll('.btn').forEach(x => x.classList.remove('chosen'));
           b.classList.add('chosen');
           status.textContent = '…';
-          try { await submit(poll, o, n => status.textContent = 'busy, retry ' + n + '…'); status.textContent = 'saved_'; }
+          try { await submit(poll, o, n => status.textContent = 'busy, retry ' + n + '…'); status.textContent = 'saved_'; afterSave(); }
           catch (e) { status.textContent = 'not saved (offline?)'; }
         };
         input.appendChild(b);
       });
+      if (withNoIdea && options.indexOf(NOIDEA) < 0) {
+        const b = el('button', 'btn noidea', NOIDEA);
+        b.onclick = async () => {
+          input.querySelectorAll('.btn').forEach(x => x.classList.remove('chosen'));
+          b.classList.add('chosen');
+          status.textContent = '…';
+          try { await submit(poll, NOIDEA, n => status.textContent = 'busy, retry ' + n + '…'); status.textContent = 'saved_'; afterSave(); }
+          catch (e) { status.textContent = 'not saved (offline?)'; }
+        };
+        input.appendChild(b);
+      }
     }
     input.appendChild(status);
     node.appendChild(input);
@@ -192,11 +322,12 @@
       out.innerHTML = '';
       out.appendChild(el('div', 'dim', 'loading…'));
       try {
+        const viz = el('div', 'viz');
+        if (type === 'text') { const c = await textCount(poll); out.innerHTML = ''; viz.appendChild(el('div', 'dim small-line', c.n + ' answers so far (the texts are read after class)')); out.appendChild(viz); return; }
         const data = await results(poll);
         out.innerHTML = '';
-        const viz = el('div', 'viz');
         if (type === 'number') renderNumber(viz, data, unit, mark);
-        else renderChoice(viz, data, options);
+        else renderChoice(viz, data, withNoIdea && options.indexOf(NOIDEA) < 0 ? options.concat([NOIDEA]) : options);
         out.appendChild(viz);
         const raw = el('details', 'raw');
         raw.appendChild(el('summary', null, 'json'));
@@ -213,6 +344,8 @@
       if (open) draw();
     };
     refresh.onclick = draw;
+    // after your own answer: open the results once (no auto-update; [refresh] for new answers)
+    afterSave = () => { out.classList.add('open'); refresh.style.display = ''; draw(); };
   }
 
   function initPrompt(d) {
@@ -227,7 +360,7 @@
     d.appendChild(b);
   }
 
-  window.MicroPoll = { submit: submit, results: results };
+  window.MicroPoll = { submit: submit, results: results, submitText: submitText, textResults: textResults, allResults: allResults, session: SESSION, cid: CID };
 
   function init() {
     // PDF export (?print-pdf): show answers, polls become plain text

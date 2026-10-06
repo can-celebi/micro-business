@@ -309,3 +309,20 @@ html.mobile .qr-slide .big { font-size: 1.3em; }
 .sv-grid .bar-row { font-size: 0.62em; grid-template-columns: 8.5em 1fr 5em; margin: 0.15em 0; }
 html.mobile .sv-grid { grid-template-columns: 1fr; }
 html.mobile .sv-grid .bar-row { font-size: 0.8em; }
+
+/* "no idea" option, free-text polls (2026-10-06) */
+.btn.noidea { color: var(--dim); border-style: dashed; }
+.bar-fill.noidea { background: #eee; }
+.poll-input textarea { font-family: var(--mono); font-size: 0.75em; width: 100%; min-height: 3em; border: 1.5px solid #bbb; border-radius: 2px; padding: 0.3em; }
+html.mobile .poll-input textarea { font-size: 1em; }
+
+/* pulse menu (assets/js/pulse.js): a side button that opens a small panel */
+.pulse-btn { position: fixed; right: 14px; bottom: 14px; z-index: 50; font-family: var(--mono); font-size: 15px; background: var(--p-yellow); border: 1.5px solid var(--line); border-radius: 2px; padding: 6px 10px; cursor: pointer; }
+.pulse-panel { position: fixed; right: 14px; bottom: 56px; z-index: 51; width: min(340px, calc(100vw - 28px)); max-height: calc(100vh - 80px); overflow: auto; background: #fff; border: 1.5px solid var(--line); border-radius: 2px; padding: 10px 12px; font-family: var(--mono); font-size: 13px; color: var(--ink); box-shadow: 0 4px 16px rgba(0,0,0,.08); }
+.pulse-panel h3 { font-size: 14px; margin: 0 0 6px; }
+.pulse-panel .q { margin: 10px 0 4px; }
+.pulse-panel .scale { display: flex; gap: 4px; }
+.pulse-panel .scale button { flex: 1; font-family: var(--mono); font-size: 13px; padding: 5px 0; border: 1.5px solid #bbb; background: #fff; border-radius: 2px; cursor: pointer; }
+.pulse-panel .scale button.on { background: var(--p-green); border-color: var(--line); }
+.pulse-panel .ends { display: flex; justify-content: space-between; font-size: 11px; color: var(--dim); }
+.pulse-panel .st { font-size: 11px; color: var(--dim); margin-top: 8px; }
