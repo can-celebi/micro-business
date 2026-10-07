@@ -8,7 +8,7 @@ const LEC = process.argv[2] || 'L02';
 const SB = process.argv[3] || path.join(__dirname, '..', '..', '02_overview-html', 'W02_storyboard_v2_L02-L03.html');
 const h = fs.readFileSync(SB, 'utf8');
 const S = eval(h.slice(h.indexOf('const S = [') + 10, h.indexOf('// ---------- state')).trim().replace(/;\s*$/, ''));
-const V = '20261007a';
+const V = '20261007b';
 const NUM = { L02: 2, L03: 3 }[LEC];
 
 const esc = s => String(s);
@@ -265,7 +265,15 @@ ${out.join('\n\n')}
     });
   }
   // [show answer]: hidden until this person answered the slide's poll (everyone, teacher too: Can, 07.10)
-  document.addEventListener('micropoll:saved', e => { const s = e.target.closest('section'); if (s) s.querySelectorAll('.ans-wrap.wait').forEach(w => w.classList.remove('wait')); });
+  // after your own choice the solution opens by itself (Can, 07.10), under the results; [hide answer] folds it
+  document.addEventListener('micropoll:saved', e => {
+    const s = e.target.closest('section'); if (!s) return;
+    s.querySelectorAll('.ans-wrap').forEach(w => {
+      w.classList.remove('wait');
+      const card = w.querySelector('.ans-card'), b = w.querySelector('.ans-btn');
+      if (card && card.hidden) { card.hidden = false; b.textContent = 'hide answer ↑'; setTimeout(() => s.scrollTo({ top: s.scrollHeight }), 400); }
+    });
+  });
   document.addEventListener('click', e => {
     const b = e.target.closest('.ans-btn'); if (!b) return;
     const card = b.nextElementSibling, open = card.hidden;
