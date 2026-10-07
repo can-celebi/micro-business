@@ -16,7 +16,38 @@
   try { mine = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) {}
 
   const btn = document.createElement('button');
-  btn.className = 'pulse-btn'; btn.textContent = '◐ pulse'; btn.title = 'tell me how you are doing (anonymous)';
+  let bar = document.querySelector('.side-btns');
+  if (!bar) { bar = document.createElement('div'); bar.className = 'side-btns'; document.body.appendChild(bar); }
+  btn.className = 'side-btn pulse-btn'; btn.textContent = '◐ pulse'; btn.title = 'tell me how you are doing (anonymous)';
+  // teacher (?teacher in the URL): the same button shows the class pulse instead of asking
+  if (window.MicroPoll.teacher) {
+    const tp = document.createElement('div'); tp.className = 'pulse-panel'; tp.hidden = true;
+    const body = document.createElement('div'); const rf = document.createElement('button');
+    rf.className = 'btn ghost'; rf.textContent = 'refresh';
+    tp.innerHTML = '<h3>&gt; class pulse</h3>'; tp.appendChild(body); tp.appendChild(rf);
+    const draw = async () => {
+      body.innerHTML = '<div class="dim">loading…</div>';
+      try {
+        const all = await window.MicroPoll.allResults(LEC + '-pulse-');
+        body.innerHTML = ITEMS.map(it => {
+          const rows = all[LEC + '-pulse-' + it.id] || [];
+          if (!rows.length) return '<div class="q">' + it.q + ' <span class="dim">· no answers yet</span></div>';
+          const nums = rows.map(r => Number(r.value)).filter(isFinite);
+          if (nums.length) {
+            const m = nums.reduce((a, b) => a + b, 0) / nums.length;
+            return '<div class="q">' + it.q + '</div><div><b>' + m.toFixed(1) + '</b> <span class="dim">of 5 · ' + it.lo + ' 1 … 5 ' + it.hi + ' · n = ' + rows.length + '</span></div>';
+          }
+          const c = {}; rows.forEach(r => c[r.value] = (c[r.value] || 0) + 1);
+          return '<div class="q">' + it.q + '</div><div>' + it.o.map(o => o + ': <b>' + (c[String(o).replace(/[^A-Za-z0-9.-]/g, '_')] || 0) + '</b>').join(' · ') + '</div>';
+        }).join('') + '<div class="dim" style="font-size:11px;margin-top:6px">latest answer per student · whole lecture so far</div>';
+      } catch (e) { body.innerHTML = '<div class="dim">could not load</div>'; }
+    };
+    rf.onclick = draw;
+    btn.title = 'class pulse (teacher view)';
+    btn.onclick = () => { tp.hidden = !tp.hidden; if (!tp.hidden) draw(); };
+    bar.prepend(btn); document.body.appendChild(tp);
+    return;
+  }
   const panel = document.createElement('div');
   panel.className = 'pulse-panel'; panel.hidden = true;
   panel.innerHTML = '<h3>&gt; how are you doing?</h3><div class="dim" style="font-size:11px">anonymous · tap any time · you can change your answer</div>';
@@ -43,5 +74,5 @@
   // keys pressed in the panel must not move the slides
   panel.addEventListener('keydown', e => e.stopPropagation());
   btn.onclick = () => { panel.hidden = !panel.hidden; };
-  document.body.appendChild(btn); document.body.appendChild(panel);
+  bar.prepend(btn); document.body.appendChild(panel);
 })();

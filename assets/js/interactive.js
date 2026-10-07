@@ -21,6 +21,32 @@
   function store(key, val) { try { localStorage.setItem(key, val); } catch (e) {} }
   function load(key) { try { return localStorage.getItem(key); } catch (e) { return null; } }
 
+  // teacher mode, same deck and same link for everyone: press T on the teacher's laptop (remembered on that
+  // device, T again switches it off), or ?teacher in the URL. It adds class views: poll results without voting,
+  // the class pulse inputs hidden, the question list.
+  // ?teacher once (e.g. on the phone, no keyboard) switches it on for that device too
+  // Teacher mode needs the teacher code: its SHA-256 must match cfg.teacherHash (the code itself is never in
+  // the site). The device keeps the code, so it stays in teacher mode until T switches it off.
+  function sha256hex(str) {
+    const K = [0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2];
+    const b = new TextEncoder().encode(str), l = b.length, n = ((l + 9 + 63) >> 6) << 6, m = new Uint8Array(n);
+    m.set(b); m[l] = 0x80; const dv = new DataView(m.buffer); dv.setUint32(n - 4, l * 8); dv.setUint32(n - 8, Math.floor(l / 0x20000000));
+    let h = [0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19];
+    const w = new Uint32Array(64), r = (x, k) => (x >>> k) | (x << (32 - k));
+    for (let o = 0; o < n; o += 64) {
+      for (let i = 0; i < 16; i++) w[i] = dv.getUint32(o + 4 * i);
+      for (let i = 16; i < 64; i++) { const s0 = r(w[i-15],7) ^ r(w[i-15],18) ^ (w[i-15] >>> 3), s1 = r(w[i-2],17) ^ r(w[i-2],19) ^ (w[i-2] >>> 10); w[i] = (w[i-16] + s0 + w[i-7] + s1) >>> 0; }
+      let [a, bb, c, d, e, f, g, hh] = h;
+      for (let i = 0; i < 64; i++) {
+        const t1 = (hh + (r(e,6) ^ r(e,11) ^ r(e,25)) + ((e & f) ^ (~e & g)) + K[i] + w[i]) >>> 0, t2 = ((r(a,2) ^ r(a,13) ^ r(a,22)) + ((a & bb) ^ (a & c) ^ (bb & c))) >>> 0;
+        hh = g; g = f; f = e; e = (d + t1) >>> 0; d = c; c = bb; bb = a; a = (t1 + t2) >>> 0;
+      }
+      h = h.map((x, i) => (x + [a, bb, c, d, e, f, g, hh][i]) >>> 0);
+    }
+    return h.map(x => x.toString(16).padStart(8, '0')).join('');
+  }
+  const checkCode = code => !!cfg.teacherHash && sha256hex('micro-teacher:' + String(code || '').trim()) === cfg.teacherHash;
+  const TEACHER = checkCode(load('micro-teacher-code'));
   let CID = load('micro-cid');
   if (!CID) {
     CID = Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
@@ -136,6 +162,51 @@
       out.push(...chunk);
     }
     return out;
+  }
+
+  // delete one stored text (teacher: remove a chat message for everyone)
+  async function deleteText(poll, ts, client) {
+    const r = await fetch(API + '/git/refs/tags/t/' + SESSION + '/' + poll + '/' + ts + '--' + client, { method: 'DELETE', headers: headers() });
+    if (r.status !== 204 && r.status !== 422) throw new Error('could not delete');
+  }
+  // try a teacher code: right → remembered on this device
+  function teacherLogin(code) { if (!checkCode(code)) return false; store('micro-teacher-code', String(code).trim()); return true; }
+  function teacherLogout() { store('micro-teacher-code', ''); }
+
+  // raw text refs under a prefix (no blob downloads): [{poll, ts, client, sha}]
+  async function tagRefs(prefix) {
+    const base = 'refs/tags/t/' + SESSION + '/';
+    const r = await fetch(API + '/git/matching-refs/tags/t/' + SESSION + '/' + prefix, { headers: headers(), cache: 'no-store' });
+    const refs = await r.json();
+    return (Array.isArray(refs) ? refs : []).map(x => {
+      const rest = x.ref.slice(base.length), cut = rest.lastIndexOf('/'), parts = rest.slice(cut + 1).split('--');
+      return { poll: rest.slice(0, cut), ts: Number(parts[0]), client: parts[1], sha: x.object.sha };
+    });
+  }
+  // one stored text (JSON), cached on this device so each message is downloaded once
+  async function blob(sha) {
+    const k = 'micro-blob-' + sha, c = load(k);
+    if (c) { try { return JSON.parse(c); } catch (e) {} }
+    const b = await fetch(API + '/git/blobs/' + sha, { headers: headers(), cache: 'force-cache' });
+    const j = await b.json();
+    const txt = new TextDecoder().decode(Uint8Array.from(atob(j.content.replace(/\n/g, '')), ch => ch.charCodeAt(0)));
+    store(k, txt);
+    return JSON.parse(txt);
+  }
+
+  // every answer (not only the latest per person) of polls starting with prefix: {poll: [{client, ts, value}]}
+  async function allAnswers(prefix) {
+    const base = 'refs/heads/v/' + SESSION + '/';
+    const r = await fetch(API + '/git/matching-refs/heads/v/' + SESSION + '/' + prefix, { headers: headers(), cache: 'no-store' });
+    const refs = await r.json(), by = {};
+    (Array.isArray(refs) ? refs : []).forEach(x => {
+      const rest = x.ref.slice(base.length), cut = rest.lastIndexOf('/');
+      const poll = rest.slice(0, cut), parts = rest.slice(cut + 1).split('--');
+      if (parts.length < 3) return;
+      const raw = parts.slice(2).join('--');
+      (by[poll] = by[poll] || []).push({ client: parts[1], ts: Number(parts[0]), value: raw !== '' && isFinite(Number(raw)) ? Number(raw) : raw });
+    });
+    return by;
   }
 
   // all choice/number answers of polls starting with prefix (teacher page): {poll: [{client, ts, value}]}
@@ -343,11 +414,11 @@
     input.appendChild(status);
     node.appendChild(input);
 
+    // no [results] button for anyone (Can, 07.10): the only trigger is your own answer; then [refresh] appears.
     const controls = el('div', 'poll-controls');
     const show = el('button', 'btn ghost', 'results');
     const refresh = el('button', 'btn ghost', 'refresh');
     refresh.style.display = 'none';
-    controls.appendChild(show);
     controls.appendChild(refresh);
     node.appendChild(controls);
 
@@ -366,10 +437,12 @@
         else if (type === 'multi') renderMulti(viz, data, options);
         else renderChoice(viz, data, withNoIdea && options.indexOf(NOIDEA) < 0 ? options.concat([NOIDEA]) : options);
         out.appendChild(viz);
-        const raw = el('details', 'raw');
-        raw.appendChild(el('summary', null, 'json'));
-        raw.appendChild(el('pre', null, JSON.stringify(data, null, 2)));
-        out.appendChild(raw);
+        if (TEACHER) {
+          const raw = el('details', 'raw');
+          raw.appendChild(el('summary', null, 'json'));
+          raw.appendChild(el('pre', null, JSON.stringify(data, null, 2)));
+          out.appendChild(raw);
+        }
       } catch (e) {
         out.innerHTML = '';
         out.appendChild(el('div', 'dim', 'could not load results'));
@@ -382,7 +455,11 @@
     };
     refresh.onclick = draw;
     // after your own answer: open the results once (no auto-update; [refresh] for new answers)
-    afterSave = () => { out.classList.add('open'); refresh.style.display = ''; draw(); };
+    afterSave = () => {
+      out.classList.add('open'); refresh.style.display = ''; draw();
+      // tells the slide that this person has decided (the deck then shows its [show answer] button)
+      node.dispatchEvent(new CustomEvent('micropoll:saved', { bubbles: true, detail: { poll: poll } }));
+    };
   }
 
   function initPrompt(d) {
@@ -397,7 +474,7 @@
     d.appendChild(b);
   }
 
-  window.MicroPoll = { submit: submit, results: results, submitText: submitText, textResults: textResults, allResults: allResults, session: SESSION, cid: CID };
+  window.MicroPoll = { teacher: TEACHER, submit: submit, results: results, submitText: submitText, textResults: textResults, allResults: allResults, allAnswers: allAnswers, tagRefs: tagRefs, blob: blob, deleteText: deleteText, teacherLogin: teacherLogin, teacherLogout: teacherLogout, safe: safe, hasToken: !!TOKEN, session: SESSION, cid: CID };
 
   function init() {
     // PDF export (?print-pdf): show answers, polls become plain text

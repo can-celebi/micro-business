@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>Before We Start</title>
+<link rel="stylesheet" href="../../assets/css/console-light.css?v=s3">
+<style>
+  body { margin: 0; font-family: var(--mono); color: var(--ink); background: var(--bg); }
+  main { max-width: 680px; margin: 0 auto; padding: 28px 16px 80px; }
+  h1 { font-size: 1.2rem; margin: 0; }
+  h2 { font-size: .95rem; margin: 1.8rem 0 .2rem; border-top: 1.5px solid var(--line); padding-top: .7rem; }
+  .s { color: var(--dim); font-size: .85rem; margin: .3rem 0 1rem; }
+  .q { margin: 0 0 1.1rem; }
+  .q .t { font-size: .92rem; margin-bottom: .4rem; }
+  .opts { display: flex; flex-wrap: wrap; gap: 6px; }
+  .opt { font-family: var(--mono); font-size: .9rem; background: #fff; color: var(--ink); border: 1.5px solid #bbb; border-radius: 2px; padding: 6px 12px; cursor: pointer; }
+  .opt.on { background: var(--p-green); border-color: var(--line); }
+  .likert .opt { min-width: 44px; }
+  .scale { display: flex; justify-content: space-between; font-size: .7rem; color: var(--dim); max-width: 300px; margin-top: 3px; }
+  .chk { display: block; font-size: .88rem; margin: 6px 0; }
+  .diff { margin: 2px 0 10px 1.6em; }
+  textarea { font-family: var(--mono); font-size: .9rem; width: 100%; min-height: 4em; border: 1.5px solid #bbb; border-radius: 2px; padding: 6px; }
+  .go { font-family: var(--mono); font-size: 1rem; padding: 10px 22px; background: var(--p-yellow); border: 1.5px solid var(--line); border-radius: 2px; cursor: pointer; margin-top: .6rem; }
+  .msg { margin-top: .8rem; font-size: .9rem; }
+  .missing .t { color: var(--bad); }
+  a { color: var(--ink); }
+</style>
+</head>
+<body>
+<main id="app">
+  <h1>&gt; before we start<span class="cursor"></span></h1>
+  <p class="s">anonymous · about 2 minutes · microeconomics · lecture 2</p>
+  <div id="f"></div>
+  <button class="go" id="go" type="button">[ submit ]</button>
+  <div class="msg" id="msg"></div>
+</main>
+<script src="../../assets/js/config.js?v=s4"></script>
+<script src="../../assets/js/interactive.js?v=s4"></script>
+<script>
+// Opening survey L02. All answers go into ONE free-text record (git blob + tag ref, poll "L02-survey"),
+// read by teacher/?l=L02 and by the "before → after" slide. The end-of-class check uses the same concept ids.
+const POLL = 'L02-survey';
+const LIK = ['1','2','3','4','5'];
+const LAST = [['l1','scarcity'],['l2','cost–benefit'],['l3','reservation price'],['l4','explicit vs implicit cost'],['l5','opportunity cost'],['l6','opportunity cost of money (interest)'],['l7','sunk cost'],['l8','marginal vs average'],['l9','marginal benefit ≥ marginal cost'],['l10','positive vs normative']];
+const TODAY = [['alloc','allocation mechanisms'],['pc','perfect competition'],['barr','barriers to entry'],['dem','demand'],['invdem','inverse demand'],['sup','supply'],['invsup','inverse supply']];
+const ABOUT = [['crypto','do you own any crypto?',[['y','yes'],['n','no'],['x','prefer not to say']]],['mining','do you know what bitcoin mining is?',[['0','never heard of it'],['1','heard of it'],['2','could explain it']]],['bill','do you pay your own electricity bill?',[['y','yes'],['n','no'],['u','don\'t know']]]];
+const PSQ = [['q1','Q1 musical ticket (a)'],['q2','Q2 musical ticket (b)'],['q3','Q3 Mr Schmidt (a)'],['q4','Q4 Mr Schmidt (b)'],['q5','Q5 course average'],['q6','Q6 Tom\'s boats (a)'],['q7','Q7 Tom\'s boats (b)'],['q8','Q8 the car from your parents']];
+const ans = {}, f = document.getElementById('f');
+
+function likert(id, label, lo, hi) {
+  const d = document.createElement('div'); d.className = 'q likert'; d.id = 'q-' + id;
+  d.innerHTML = '<div class="t">' + label + '</div>';
+  const box = document.createElement('div'); box.className = 'opts';
+  LIK.forEach(v => { const b = document.createElement('button'); b.type = 'button'; b.className = 'opt'; b.textContent = v; b.onclick = () => { ans[id] = v; box.querySelectorAll('.opt').forEach(x => x.classList.toggle('on', x === b)); }; box.appendChild(b); });
+  d.appendChild(box); d.insertAdjacentHTML('beforeend', '<div class="scale"><span>1 · ' + lo + '</span><span>5 · ' + hi + '</span></div>');
+  return d;
+}
+function choice(id, label, opts) {
+  const d = document.createElement('div'); d.className = 'q'; d.id = 'q-' + id;
+  d.innerHTML = '<div class="t">' + label + '</div>';
+  const box = document.createElement('div'); box.className = 'opts';
+  opts.forEach(([c, l]) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'opt'; b.textContent = l; b.onclick = () => { ans[id] = c; box.querySelectorAll('.opt').forEach(x => x.classList.toggle('on', x === b)); }; box.appendChild(b); });
+  d.appendChild(box); return d;
+}
+function head(t, s) { f.insertAdjacentHTML('beforeend', '<h2>' + t + '</h2>' + (s ? '<p class="s">' + s + '</p>' : '')); }
+
+head('last class', 'how well do you understand these now?');
+LAST.forEach(([id, l]) => f.appendChild(likert(id, l, 'not at all', 'very well')));
+head('today', 'what do you already know about these? (we haven\'t done them yet: low numbers are normal)');
+TODAY.forEach(([id, l]) => f.appendChild(likert(id, l, 'nothing', 'know it well')));
+// 'about you' questions dropped (Can, G3 = B)
+head('streaming', 'the hall can stream the lecture live and record it: should we?');
+f.appendChild(likert('stream', 'how interested would you be in a live stream of the lecture?', 'not at all', 'very'));
+f.appendChild(choice('come', 'if the lecture is streamed and recorded, would you still come to the hall?', [['3','yes, always'],['2','most of the time'],['1','sometimes'],['0','rarely or never']]));
+head('problem set 1', 'due Mon 12.10, 12:00 · this helps us see what to repeat');
+f.appendChild(choice('ps', 'have you looked at problem set 1?', [['0','not yet'],['1','looked at it'],['2','started'],['3','done']]));
+const psBox = document.createElement('div'); psBox.className = 'q'; psBox.id = 'q-done';
+psBox.innerHTML = '<div class="t">which questions have you done? <span class="dim">(tick all; then rate how hard each was)</span></div>';
+PSQ.forEach(([id, l]) => {
+  const lab = document.createElement('label'); lab.className = 'chk';
+  const cb = document.createElement('input'); cb.type = 'checkbox';
+  lab.appendChild(cb); lab.appendChild(document.createTextNode(' ' + l)); psBox.appendChild(lab);
+  const df = likert('d' + id, 'how hard was it?', 'easy', 'very hard'); df.classList.add('diff'); df.hidden = true; psBox.appendChild(df);
+  cb.onchange = () => { df.hidden = !cb.checked; if (cb.checked) ans['did_' + id] = '1'; else { delete ans['did_' + id]; delete ans['d' + id]; } };
+});
+f.appendChild(psBox);
+f.insertAdjacentHTML('beforeend', '<div class="q"><div class="t">what was hard, if anything? <span class="dim">(optional · anonymous · max 300 characters)</span></div><textarea id="hard" maxlength="300"></textarea></div>');
+
+async function submit() {
+  const msg = document.getElementById('msg');
+  const need = [...LAST, ...TODAY].map(x => x[0]).concat(['stream', 'come', 'ps']);
+  PSQ.forEach(([id]) => { if (ans['did_' + id]) need.push('d' + id); });
+  const missing = need.filter(id => !ans[id]);
+  document.querySelectorAll('.q').forEach(d => d.classList.remove('missing'));
+  missing.forEach(id => { const d = document.getElementById('q-' + id); if (d) d.classList.add('missing'); });
+  if (missing.length) { msg.textContent = 'please answer all questions (' + missing.length + ' missing, in red)'; return; }
+  msg.textContent = 'saving…';
+  try {
+    await window.MicroPoll.submitText(POLL, { answers: ans, hard: document.getElementById('hard').value.trim() }, n => msg.textContent = 'busy, retry ' + n + '…');
+    msg.innerHTML = 'saved_ thank you! <br><a href="../../lectures/L02/index.html">→ back to the slides</a>';
+    document.getElementById('go').style.display = 'none';
+  } catch (e) { msg.textContent = 'not saved (offline?). please try again'; }
+}
+document.getElementById('go').onclick = submit;
+document.getElementById('hard').addEventListener('keydown', e => e.stopPropagation());
+</script>
+</body>
+</html>

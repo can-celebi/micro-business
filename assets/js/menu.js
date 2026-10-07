@@ -9,7 +9,7 @@
     panel.className = 'menu-panel';
 
     const home = document.createElement('a');
-    home.href = '../../';
+    home.href = '../../index.html';
     home.className = 'menu-home';
     home.textContent = '← all lectures';
     panel.appendChild(home);
