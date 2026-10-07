@@ -326,3 +326,25 @@ html.mobile .poll-input textarea { font-size: 1em; }
 .pulse-panel .scale button.on { background: var(--p-green); border-color: var(--line); }
 .pulse-panel .ends { display: flex; justify-content: space-between; font-size: 11px; color: var(--dim); }
 .pulse-panel .st { font-size: 11px; color: var(--dim); margin-top: 8px; }
+
+/* slider graph (assets/js/sd-graph.js) */
+.sd-slider { font-size: 0.55em; }
+.sd-slider svg { width: 100%; height: auto; display: block; }
+.sd-slider label { display: grid; grid-template-columns: 2em 1fr 4em; align-items: center; gap: 0.6em; margin: 0.25em 0; }
+.sd-slider label span { color: var(--dim); }
+.sd-slider .ro { margin-top: 0.5em; line-height: 1.6; font-size: 1.35em; }
+.sd-slider .ro .dim { font-size: 0.75em; }
+html.mobile .sd-slider { font-size: 0.85em; }
+
+/* guessing race (assets/js/mining-demo.js) */
+.mine-demo { font-size: 0.6em; margin-top: 0.6em; }
+.mine-demo .k { color: var(--dim); display: inline-block; width: 9em; }
+.mine-demo .md-block { border: 1.5px solid var(--line); background: var(--p-yellow); padding: 0.5em 0.8em; line-height: 1.6; }
+.mine-demo .md-hash { margin-top: 0.6em; font-size: 1.15em; }
+.mine-demo .md-hash code { font-family: var(--mono); word-break: break-all; }
+.mine-demo .md-z { background: var(--p-green); font-weight: 600; }
+.mine-demo .md-goal { margin: 0.3em 0 0.6em; }
+.mine-demo .md-st { margin-top: 0.5em; font-size: 1.1em; }
+.mine-demo.md-won .md-block { background: var(--p-green); }
+html.mobile .mine-demo { font-size: 0.85em; }
+.btn.go { background: var(--p-yellow); }

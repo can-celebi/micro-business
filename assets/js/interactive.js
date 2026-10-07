@@ -4,6 +4,7 @@
 //   <div class="poll" data-poll="L01-c2-subscribe" data-type="choice" data-options="yes,no"></div>
 //   <div class="poll" data-poll="L01-c3-resprice" data-type="number" data-unit="€" data-mark="20"></div>
 //   <div class="poll" data-poll="L02-ow-pc" data-type="text" data-max="300"></div>   (free text, e.g. own words)
+//   <div class="poll" data-poll="L02-q" data-type="multi" data-options="a,b,c"></div>   (tap all that apply, then submit)
 // Every choice/number poll gets a "no idea" button (data-noidea="off" to drop it).
 // After answering, the results open by themselves; [refresh] reloads them (no auto-update, on purpose).
 // Prompt markup:
@@ -209,6 +210,16 @@
     box.appendChild(el('div', 'dim small-line', 'n = ' + n));
   }
 
+  // multi: each answer is a string of letters (A = 1st option, B = 2nd …); bar = share of respondents who ticked it
+  function renderMulti(box, data, options) {
+    const letters = 'ABCDEFGHIJ';
+    const rows = data.responses.map(r => String(r.value)).filter(v => v !== safe(NOIDEA));
+    const n = data.responses.length;
+    options.forEach((o, i) => box.appendChild(bar(o, rows.filter(v => v.indexOf(letters[i]) >= 0).length, n)));
+    const ni = data.responses.length - rows.length;
+    box.appendChild(el('div', 'dim small-line', 'n = ' + n + ' · bars = share who ticked it' + (ni ? ' · no idea: ' + ni : '')));
+  }
+
   function renderNumber(box, data, unit, mark) {
     const vals = data.responses.map(r => Number(r.value)).filter(v => isFinite(v)).sort((a, b) => b - a);
     const noIdea = data.responses.filter(r => String(r.value) === safe(NOIDEA)).length;
@@ -255,6 +266,31 @@
       f.addEventListener('keydown', ev => { if (ev.key === 'Enter') go.click(); ev.stopPropagation(); });
       if (unit) input.appendChild(el('span', 'unit', unit));
       input.appendChild(f);
+      input.appendChild(go);
+      if (withNoIdea) {
+        const ni = el('button', 'btn noidea', NOIDEA);
+        ni.onclick = async () => {
+          status.textContent = '…';
+          try { await submit(poll, NOIDEA, n => status.textContent = 'busy, retry ' + n + '…'); status.textContent = 'saved_'; afterSave(); }
+          catch (e) { status.textContent = 'not saved (offline?)'; }
+        };
+        input.appendChild(ni);
+      }
+    } else if (type === 'multi') {
+      const letters = 'ABCDEFGHIJ', picked = new Set();
+      options.forEach((o, i) => {
+        const b = el('button', 'btn', o);
+        b.onclick = () => { if (picked.has(i)) { picked.delete(i); b.classList.remove('chosen'); } else { picked.add(i); b.classList.add('chosen'); } };
+        input.appendChild(b);
+      });
+      const go = el('button', 'btn go', 'submit');
+      go.onclick = async () => {
+        if (!picked.size) { status.textContent = 'tick at least one (or no idea)'; return; }
+        const v = [...picked].sort((a, b) => a - b).map(i => letters[i]).join('');
+        status.textContent = '…';
+        try { await submit(poll, v, n => status.textContent = 'busy, retry ' + n + '…'); status.textContent = 'saved_'; afterSave(); }
+        catch (e) { status.textContent = 'not saved (offline?)'; }
+      };
       input.appendChild(go);
       if (withNoIdea) {
         const ni = el('button', 'btn noidea', NOIDEA);
@@ -327,6 +363,7 @@
         const data = await results(poll);
         out.innerHTML = '';
         if (type === 'number') renderNumber(viz, data, unit, mark);
+        else if (type === 'multi') renderMulti(viz, data, options);
         else renderChoice(viz, data, withNoIdea && options.indexOf(NOIDEA) < 0 ? options.concat([NOIDEA]) : options);
         out.appendChild(viz);
         const raw = el('details', 'raw');
