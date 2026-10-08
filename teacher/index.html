@@ -119,6 +119,9 @@ async function draw() {
         const t = A.map(a => a.ui_more).filter(Boolean);
         if (t.length) { const d = document.createElement('details'); d.innerHTML = `<summary>what else would help (${t.length})</summary>` + t.map(x => `<div class="txt">${E(x)}</div>`).join(''); out.appendChild(d); }
       }
+      // messages to Mari (tutorial), from the opening survey (L03 on)
+      const mt = A.map(a => a.mari).filter(Boolean);
+      if (mt.length) { const d = document.createElement('details'); d.open = true; d.innerHTML = `<summary>messages to Mari (${mt.length})</summary>` + mt.map(x => `<div class="txt">${E(x)}</div>`).join(''); out.appendChild(d); }
       const hard = surv.map(s => s.hard).filter(Boolean);
       if (hard.length) { const d = document.createElement('details'); d.innerHTML = `<summary>what was hard in the problem set (${hard.length})</summary>` + hard.map(x => `<div class="txt">${E(x)}</div>`).join(''); out.appendChild(d); }
     }

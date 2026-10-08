@@ -96,6 +96,10 @@ f.appendChild(choice('ui_read', 'would you like reading material for each topic,
 const more = document.createElement('div'); more.className = 'q'; more.id = 'q-ui_more';
 more.innerHTML = '<div class="t">what else would help you? <span class="dim">(optional)</span></div><textarea id="ui_more" maxlength="300"></textarea>';
 f.appendChild(more);
+// a message to Mari (tutorial), optional (Can, 08.10): where do you struggle the most?
+const mari = document.createElement('div'); mari.className = 'q'; mari.id = 'q-mari';
+mari.innerHTML = '<h2>for Mari (tutorial)</h2><div class="t">a message to Mari: where do you struggle the most, what should the tutorial go over? <span class="dim">(optional)</span></div><textarea id="mari" maxlength="500"></textarea>';
+f.appendChild(mari);
 
 
 async function submit() {
@@ -112,6 +116,7 @@ async function submit() {
     const hardq = {};
     document.querySelectorAll('textarea.hq').forEach(t => { if (ans['did_' + t.dataset.q] && t.value.trim()) hardq[t.dataset.q] = t.value.trim(); });
     const um = document.getElementById('ui_more').value.trim(); if (um) ans.ui_more = um;
+    const mm = document.getElementById('mari').value.trim(); if (mm) ans.mari = mm;
     await window.MicroPoll.submitText(POLL, { answers: ans, hardq: hardq }, n => msg.textContent = 'busy, retry ' + n + '…');
     msg.innerHTML = 'saved_ thank you! <br><a href="../../lectures/L03/index.html">→ back to the slides</a>';
     document.getElementById('go').style.display = 'none';
