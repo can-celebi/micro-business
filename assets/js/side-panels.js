@@ -29,7 +29,9 @@
   const mk = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html !== undefined) e.innerHTML = html; return e; };
   const ls = { get: k => { try { return localStorage.getItem(k); } catch (e) { return null; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} } };
   const stop = el => el.addEventListener('keydown', e => e.stopPropagation());
-  const slideNo = () => window.Reveal && Reveal.getIndex ? String(Reveal.getIndex().h + 1) : '';
+  // the slide a message was sent from: its number (as on screen) + its fixed storyboard id (data-sid, survives rebuilds)
+  const slideNo = () => window.Reveal && Reveal.getIndices ? String(Reveal.getIndices().h + 1) : '';
+  const slideSid = () => { const c = window.Reveal && Reveal.getCurrentSlide && Reveal.getCurrentSlide(); return (c && (c.dataset.sid || (c.closest('section[data-sid]') || {}).dataset?.sid)) || ''; };
 
   // Teacher mode: T (or ?teacher in the URL, for phones) opens a code box; the right teacher code switches it on for
   // this device (remembered). In teacher mode, T switches it off again. Students without the code get nothing.
@@ -234,7 +236,7 @@
     if (!me.nick) { cst.textContent = 'please sign in first (👤, top right)'; openMe(); return; }
     send.disabled = true; cst.textContent = 'sending…';
     try {
-      await MP.submitText(LEC + '-ask-' + Date.now(), { text: q, nick: me.nick, slide: slideNo() }, n => cst.textContent = 'busy, retry ' + n + '…');
+      await MP.submitText(LEC + '-ask-' + Date.now(), { text: q, nick: me.nick, slide: slideNo(), sid: slideSid() }, n => cst.textContent = 'busy, retry ' + n + '…');
       // no local copy (its time stamp differs from the stored one, so it showed twice): reload from the store
       ta.value = ''; cst.textContent = 'sent_'; await loadChat(); setTimeout(loadChat, 3000);
     } catch (e) { cst.textContent = 'not sent (offline?)'; }
