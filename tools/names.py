@@ -116,8 +116,8 @@ def main():
             if json.loads(base64.b64decode(blob['content'])).get('status') == 'here':
                 present[stud].add(day)
             continue
-        kind = 'chat' if '-ask-' in poll else 'askdone' if '-askdone-' in poll else 'own words' if '-ow-' in poll else 'survey' if 'survey' in poll else 'text'
-        if kind != 'askdone':
+        kind = 'chat' if '-ask-' in poll else 'askdone' if '-askdone-' in poll else 'askhide' if '-askhide-' in poll else 'own words' if '-ow-' in poll else 'survey' if 'survey' in poll else 'text'
+        if kind not in ('askdone', 'askhide'):  # teacher marks, not student activity
             acts[client][kind] += 1
             lects[client].add(lec)
     base_h = f'refs/heads/v/{session}/'

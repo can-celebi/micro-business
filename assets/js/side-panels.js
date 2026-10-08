@@ -140,24 +140,28 @@
     let all;
     try { all = await MP.allAnswers(LEC + '-pulse-'); } catch (e) { graph.innerHTML = '<div class="dim">could not load</div>'; classBusy = false; return; }
     classBusy = false;
-    const series = ITEMS.map(it => ({ it: it, rows: (all[LEC + '-pulse-' + it.id] || []).filter(r => isFinite(r.value)).sort((a, b) => a.ts - b.ts) }));
+    // class time only (Can, 08.10): taps before 18:30 or after 20:00 of the lecture day are ignored
+    const win = MP.classWindow(LEC), inClass = r => !win || (r.ts >= win[0] && r.ts <= win[1]);
+    const series = ITEMS.map(it => ({ it: it, rows: (all[LEC + '-pulse-' + it.id] || []).filter(r => isFinite(r.value) && inClass(r)).sort((a, b) => a.ts - b.ts) }));
     const tsAll = series.flatMap(s => s.rows.map(r => r.ts));
-    if (!tsAll.length) { graph.innerHTML = '<div class="dim sp-note">the class, over time: no answers yet</div>'; return; }
-    const t0 = Math.min(...tsAll), t1 = Math.max(Date.now(), t0 + 60000), step = Math.max(60000, Math.ceil((t1 - t0) / 40 / 60000) * 60000);
+    if (!tsAll.length) { graph.innerHTML = '<div class="dim sp-note">the class, over time: ' + (win && Date.now() < win[0] ? 'starts at ' + hm(win[0]) : 'no answers yet') + '</div>'; return; }
+    const t0 = win ? win[0] : Math.min(...tsAll), t1 = win ? Math.max(Math.min(Date.now(), win[1]), Math.max(...tsAll)) : Math.max(Date.now(), t0 + 60000), step = Math.max(60000, Math.ceil((t1 - t0) / 40 / 60000) * 60000);
     const GW = 280, GH = 120, L = 18, R = 8, T = 6, B = 16;
     const x = t => L + (GW - L - R) * (t - t0) / (t1 - t0), y = v => T + (GH - T - B) * (5 - v) / 4;
     let svg = `<svg viewBox="0 0 ${GW} ${GH}" width="100%" role="img" aria-label="class pulse over time">`;
     [1, 2, 3, 4, 5].forEach(v => svg += `<line x1="${L}" x2="${GW - R}" y1="${y(v)}" y2="${y(v)}" stroke="#e6e6e1" stroke-width="1"/><text x="${L - 5}" y="${y(v) + 3.5}" font-size="9" text-anchor="end" fill="#888">${v}</text>`);
-    svg += `<text x="${L}" y="${GH - 3}" font-size="9" fill="#888">${hm(t0)}</text><text x="${GW - R}" y="${GH - 3}" font-size="9" fill="#888" text-anchor="end">now ${hm(Date.now())}</text>`;
+    svg += `<text x="${L}" y="${GH - 3}" font-size="9" fill="#888">${hm(t0)}</text><text x="${GW - R}" y="${GH - 3}" font-size="9" fill="#888" text-anchor="end">${t1 >= Date.now() - 60000 ? 'now ' : ''}${hm(t1)}</text>`;
     const legend = [];
     series.forEach(s => {
       if (!s.rows.length) return;
       const pts = [];
-      for (let t = t0; t <= t1 + 1; t += step) {
+      const times = []; for (let t = t0; t < t1; t += step) times.push(t); times.push(t1);  // always end exactly at t1
+      times.forEach(t => {
         const latest = {}; s.rows.forEach(r => { if (r.ts <= t) latest[r.client] = r.value; });
         const v = Object.values(latest);
-        if (v.length) { const m = v.reduce((a, b) => a + b, 0) / v.length; pts.push([x(Math.min(t, t1)), y(m), m, v.length]); }
-      }
+        if (v.length) { const m = v.reduce((a, b) => a + b, 0) / v.length; pts.push([x(t), y(m), m, v.length]); }
+      });
+      if (!pts.length) return;
       const p = pts[pts.length - 1];
       svg += `<polyline points="${pts.map(q => q[0].toFixed(1) + ',' + q[1].toFixed(1)).join(' ')}" fill="none" stroke="${s.it.col}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><circle cx="${p[0]}" cy="${p[1]}" r="3.5" fill="${s.it.col}" stroke="#fff" stroke-width="1.5"/>`;
       legend.push(`<span><i style="background:${s.it.col}"></i>${s.it.name} <b>${p[2].toFixed(1)}</b></span>`);
@@ -182,9 +186,11 @@
     try {
       const refs = await MP.tagRefs(LEC + '-ask');
       refs.filter(r => r.poll.startsWith(LEC + '-askdone-')).forEach(r => done.add(r.poll.slice((LEC + '-askdone-').length)));
+      // hidden by the teacher: a mark <LEC>-askhide-<id>; the message itself stays stored (Can: never delete)
+      refs.filter(r => r.poll.startsWith(LEC + '-askhide-')).forEach(r => gone.add(r.poll.slice((LEC + '-askhide-').length)));
       const have = new Set(chat.map(keyOf));
       const live = new Set(refs.map(r => r.ts + '-' + r.client));
-      chat = chat.filter(m => live.has(keyOf(m)));  // deleted by the teacher: gone for everyone
+      chat = chat.filter(m => live.has(keyOf(m)) && !gone.has(keyOf(m)));
       const fresh = refs.filter(r => r.poll.startsWith(LEC + '-ask-') && !have.has(r.ts + '-' + r.client) && !gone.has(r.ts + '-' + r.client));
       for (let i = 0; i < fresh.length; i += 8) {
         const got = await Promise.all(fresh.slice(i, i + 8).map(r => MP.blob(r.sha).then(j => Object.assign({ ts: r.ts, client: r.client }, j)).catch(() => null)));
@@ -201,19 +207,20 @@
     msgs.innerHTML = chat.length ? chat.map(m => {
       const k = keyOf(m), ans = done.has(k), own = m.client === MP.cid;
       return `<div class="chat-m${ans ? ' done' : ''}${own ? ' own' : ''}"><div class="chat-h"><b>${esc(m.nick || 'anonymous')}</b> <span class="dim">${hm(m.ts)}${m.slide ? ' · slide ' + esc(m.slide) : ''}${ans ? ' · ✓ answered' : ''}</span></div><div>${esc(m.text)}</div>` +
-        (MP.teacher ? (ans ? '' : `<button class="btn ghost" data-k="${k}">answered ✓</button>`) + `<button class="btn ghost del" data-d="${k}">delete</button>` : '') + '</div>';
+        (MP.teacher ? (ans ? '' : `<button class="btn ghost" data-k="${k}">answered ✓</button>`) + `<button class="btn ghost del" data-d="${k}">hide</button>` : '') + '</div>';
     }).join('') : '<div class="dim sp-note">no messages yet: ask anything</div>';
     msgs.querySelectorAll('button[data-k]').forEach(b => b.onclick = async () => {
       done.add(b.dataset.k); drawChat(); badge();
       try { await MP.submitText(LEC + '-askdone-' + b.dataset.k, { by: 'teacher' }); } catch (e) {}
     });
-    // delete: first tap asks, second tap removes the message for everyone (teacher only)
+    // hide: first tap asks, second tap hides the message on every screen (teacher only).
+    // Nothing is deleted: the message stays in the data repo, only a hide mark is added (export_text.py still gets it).
     msgs.querySelectorAll('button[data-d]').forEach(b => b.onclick = async () => {
-      if (!b.classList.contains('sure')) { b.classList.add('sure'); b.textContent = 'sure? delete'; return; }
+      if (!b.classList.contains('sure')) { b.classList.add('sure'); b.textContent = 'sure? hide'; return; }
       const m = chat.find(x => keyOf(x) === b.dataset.d); if (!m) return;
-      b.textContent = 'deleting…';
-      try { await MP.deleteText(m.poll || (LEC + '-ask-' + m.ts), m.ts, m.client); gone.add(keyOf(m)); chat = chat.filter(x => x !== m); drawChat(); }
-      catch (e) { b.textContent = 'could not delete'; }
+      b.textContent = 'hiding…';
+      try { await MP.submitText(LEC + '-askhide-' + b.dataset.d, { by: 'teacher' }); gone.add(b.dataset.d); chat = chat.filter(x => x !== m); drawChat(); }
+      catch (e) { b.textContent = 'could not hide'; }
     });
     if (atBottom || firstChat) msgs.scrollTop = msgs.scrollHeight;
     firstChat = false; badge();

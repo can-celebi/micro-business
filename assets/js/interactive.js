@@ -164,11 +164,21 @@
     return out;
   }
 
-  // delete one stored text (teacher: remove a chat message for everyone)
-  async function deleteText(poll, ts, client) {
-    const r = await fetch(API + '/git/refs/tags/t/' + SESSION + '/' + poll + '/' + ts + '--' + client, { method: 'DELETE', headers: headers() });
-    if (r.status !== 204 && r.status !== 422) throw new Error('could not delete');
+  // class window of a lecture: [start, end] in ms (18:30–20:00 Vienna time on its date, config.js), or null if unknown
+  function classWindow(lec) {
+    const day = (cfg.lectures || {})[lec], tt = cfg.classTime || ['18:30', '20:00'];
+    if (!day) return null;
+    const vienna = (hhmm) => {
+      const [y, mo, d] = day.split('-').map(Number), [h, mi] = hhmm.split(':').map(Number);
+      const guess = Date.UTC(y, mo - 1, d, h, mi);
+      // Vienna's offset from UTC at that moment (CET +1 / CEST +2), whatever the device's own time zone is
+      const p = {}; new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Vienna', hourCycle: 'h23', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
+        .formatToParts(new Date(guess)).forEach(x => p[x.type] = Number(x.value));
+      return guess - (Date.UTC(p.year, p.month - 1, p.day, p.hour, p.minute) - guess);
+    };
+    return [vienna(tt[0]), vienna(tt[1])];
   }
+  // no delete function on purpose (Can, 08.10): stored answers are never removed; the chat hides with a mark instead
   // try a teacher code: right → remembered on this device
   function teacherLogin(code) { if (!checkCode(code)) return false; store('micro-teacher-code', String(code).trim()); return true; }
   function teacherLogout() { store('micro-teacher-code', ''); }
@@ -474,7 +484,7 @@
     d.appendChild(b);
   }
 
-  window.MicroPoll = { teacher: TEACHER, submit: submit, results: results, submitText: submitText, textResults: textResults, allResults: allResults, allAnswers: allAnswers, tagRefs: tagRefs, blob: blob, deleteText: deleteText, teacherLogin: teacherLogin, teacherLogout: teacherLogout, safe: safe, hasToken: !!TOKEN, session: SESSION, cid: CID };
+  window.MicroPoll = { teacher: TEACHER, submit: submit, results: results, submitText: submitText, textResults: textResults, allResults: allResults, allAnswers: allAnswers, tagRefs: tagRefs, blob: blob, classWindow: classWindow, teacherLogin: teacherLogin, teacherLogout: teacherLogout, safe: safe, hasToken: !!TOKEN, session: SESSION, cid: CID };
 
   function init() {
     // PDF export (?print-pdf): show answers, polls become plain text

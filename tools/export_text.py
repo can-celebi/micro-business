@@ -4,6 +4,7 @@
 Each answer is a git blob + a tag ref  refs/tags/t/<session>/<poll>/<ts>--<client>  (see assets/js/interactive.js).
 Usage:  python tools/export_text.py ws26 L02-ow-      → MICRO-CAN/06_moodle/results_L02/own-words_L02.json
         python tools/export_text.py ws26 L02-survey   → MICRO-CAN/06_moodle/results_L02/survey_L02.json
+        python tools/export_text.py ws26 L03-ask-     → chat; every message, with "hidden": true if the teacher hid it
 Rows (Cevdet's format for own words): {session, lecture, concept, slide, browser, ts, text, skipped}
 All answers are kept (several per browser possible); the consumer uses the latest.
 Needs `gh auth login` (uses `gh auth token`).
@@ -36,6 +37,12 @@ def main():
         else:
             rec.update({"session": session, "lecture": lecture, "poll": poll, "browser": client, "ts": int(ts)})
             rows.append(rec)
+    if "-ask-" in prefix:  # chat: mark the messages the teacher hid in class (they are never deleted)
+        lec = prefix.split("-ask-")[0]
+        hidden = {x["ref"].rsplit("/", 2)[1][len(lec + "-askhide-"):]
+                  for x in api("/git/matching-refs/tags/t/%s/%s-askhide-" % (session, lec), token)}
+        for r in rows:
+            r["hidden"] = "%d-%s" % (r["ts"], r["browser"]) in hidden
     rows.sort(key=lambda r: r["ts"])
     lecture = prefix.split("-")[0]
     kind = "own-words" if "-ow" in prefix else prefix.split("-", 1)[1].rstrip("-") or "text"

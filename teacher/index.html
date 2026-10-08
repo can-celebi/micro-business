@@ -29,8 +29,8 @@
   <label><input type="checkbox" id="recent"> pulse: only the last 15 minutes</label>
   <div id="out"></div>
 </main>
-<script src="../assets/js/config.js?v=t1"></script>
-<script src="../assets/js/interactive.js?v=t1"></script>
+<script src="../assets/js/config.js?v=t2"></script>
+<script src="../assets/js/interactive.js?v=t2"></script>
 <script>
 // Teacher view for Can's phone: teacher/?l=L02. Nothing updates by itself: press [ refresh ].
 const L = (new URLSearchParams(location.search).get('l') || 'L02').toUpperCase();
@@ -60,13 +60,17 @@ async function draw() {
   out.innerHTML = '<p class="s">loading…</p>';
   const recent = document.getElementById('recent').checked, cutoff = Date.now() - 15 * 60 * 1000;
   try {
-    const [all, texts] = await Promise.all([MicroPoll.allResults(L + '-'), MicroPoll.textResults(L + '-')]);
+    const [all, texts, pulseAll] = await Promise.all([MicroPoll.allResults(L + '-'), MicroPoll.textResults(L + '-'), MicroPoll.allAnswers(L + '-pulse-')]);
+    // pulse: class time only (18:30–20:00 of the lecture day, config.js); each device's latest tap inside it
+    const win = MicroPoll.classWindow(L);
     out.innerHTML = '';
     document.getElementById('sub').textContent = L + ' · session ' + MicroPoll.session + ' · updated ' + hm(Date.now());
     // pulse
-    let h = document.createElement('div'); h.innerHTML = '<h2>pulse</h2>'; out.appendChild(h);
+    let h = document.createElement('div'); h.innerHTML = '<h2>pulse <span class="dim">· ' + (win ? hm(win[0]) + '–' + hm(win[1]) + ' only' : 'all taps') + '</span></h2>'; out.appendChild(h);
     PULSE.forEach(([id, name, opts, ends]) => {
-      let rows = all[L + '-pulse-' + id] || [];
+      const latest = {};
+      (pulseAll[L + '-pulse-' + id] || []).forEach(r => { if (win && (r.ts < win[0] || r.ts > win[1])) return; if (!latest[r.client] || latest[r.client].ts < r.ts) latest[r.client] = r; });
+      let rows = Object.values(latest);
       if (recent) rows = rows.filter(r => r.ts >= cutoff);
       const counts = {}; rows.forEach(r => counts[String(r.value)] = (counts[String(r.value)] || 0) + 1);
       const nums = rows.map(r => Number(r.value)).filter(isFinite);
