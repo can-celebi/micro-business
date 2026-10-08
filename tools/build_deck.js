@@ -16,13 +16,16 @@ const strip = s => String(s).replace(/<[^>]+>/g, '');
 const safeId = s => String(s).replace(/[^A-Za-z0-9-]/g, '-');
 
 // ---------- graphs ----------
-function svgSteps() {
+function svgSteps(g) {
   const W = 520, H = 300, L = 48, B = 34, T = 10, R = 14, pw = W - L - R, ph = H - T - B, qm = 42, pm = 60;
   const x = q => L + q / qm * pw, y = p => T + ph - p / pm * ph;
   const pts = [[60, 1], [50, 4], [40, 6], [30, 9], [25, 14], [20, 20], [15, 21], [10, 30], [5, 38], [0, 41]];
   let d = 'M' + x(0) + ',' + y(60), q0 = 0;
   pts.forEach(([p, n]) => { d += ' L' + x(q0) + ',' + y(p) + ' L' + x(n) + ',' + y(p); q0 = n; });
-  let s = `<svg class="graph" viewBox="0 0 ${W} ${H}" font-family="IBM Plex Mono,monospace" font-size="13"><line x1="${L}" y1="${T}" x2="${L}" y2="${T + ph}" stroke="#222"/><line x1="${L}" y1="${T + ph}" x2="${L + pw}" y2="${T + ph}" stroke="#222"/><path d="${d}" fill="none" stroke="#0074D9" stroke-width="3"/>`;
+  let s = `<svg class="graph" viewBox="0 0 ${W} ${H}" font-family="IBM Plex Mono,monospace" font-size="13"><line x1="${L}" y1="${T}" x2="${L}" y2="${T + ph}" stroke="#222"/><line x1="${L}" y1="${T + ph}" x2="${L + pw}" y2="${T + ph}" stroke="#222"/>`;
+  // bars: true (Kemal, 08.10): the class's 41 answers as faded bars behind the staircase (one bar = one of you)
+  if (g && g.bars) CLASS_VALS.forEach((v, i) => { const vv = Math.min(v, pm); s += `<rect x="${x(i) + 0.5}" y="${y(vv)}" width="${x(i + 1) - x(i) - 1}" height="${T + ph - y(vv)}" fill="#0074D9" opacity="0.15"/>`; });
+  s += `<path d="${d}" fill="none" stroke="#0074D9" stroke-width="3"/>`;
   [0, 20, 40, 60].forEach(p => s += `<text x="${L - 6}" y="${y(p) + 4}" text-anchor="end" fill="#777">€${p}</text>`);
   [0, 10, 20, 30, 40].forEach(q => s += `<text x="${x(q)}" y="${T + ph + 18}" text-anchor="middle" fill="#777">${q}</text>`);
   s += `<circle cx="${x(20)}" cy="${y(20)}" r="5" fill="#111"/><text x="${x(20) + 10}" y="${y(20) - 8}">20 buy at €20</text><text x="${L + pw}" y="${T + ph + 32}" text-anchor="end" fill="#777">how many of you buy</text></svg>`;
@@ -78,6 +81,11 @@ function svgStairs(g) {
   if (g.price != null) s += `<line x1="${L}" y1="${y(g.price)}" x2="${L + pw}" y2="${y(g.price)}" stroke="#111" stroke-dasharray="6 4"/><text x="${L - 6}" y="${y(g.price) + 4}" text-anchor="end">${u}${g.price}</text>`;
   s += `<text x="${L + pw}" y="${T + ph + 34}" text-anchor="end" fill="#777">${g.xlabel || 'Q'}</text>`;
   if (g.ylabel) s += `<text x="${L}" y="${T - 8}" fill="#777">${g.ylabel}</text>`;
+  // fit: {p0, s} (Kemal, 08.10): one more click draws the straight demand line through the bars (Q in units)
+  if (g.fit) {
+    const q1 = Math.min(n + 0.3, g.fit.s < 0 ? -g.fit.p0 / g.fit.s : n + 0.3), p1 = g.fit.p0 + g.fit.s * q1;
+    s += `<g class="fragment fitstep"><line x1="${x(0)}" y1="${y(g.fit.p0)}" x2="${x(q1)}" y2="${y(p1)}" stroke="#111" stroke-width="3"/><text x="${L + pw}" y="${T + 4}" text-anchor="end" font-weight="600">demand: P = ${fmt(g.fit.p0)} − ${fmt(-g.fit.s)}Q</text></g>`;
+  }
   return s + '</svg>';
 }
 // the class's reservation prices as bars, the units that buy at a price solid; prices [..] = buttons to pick a price
@@ -143,7 +151,7 @@ function graph(g) {
   if (!g) return '';
   if (g.type === 'market') return svgMarket(g);
   if (g.type === 'lines' && g.anim) return agraphHTML(animSpec(g), 'frag', 'ag' + (++AG));
-  if (g.type === 'steps') return svgSteps();
+  if (g.type === 'steps') return svgSteps(g);
   if (g.type === 'lines') return svgLines(g);
   if (g.type === 'stairs') return svgStairs(g);
   if (g.type === 'classdemand') return svgClassDemand(g);
@@ -192,7 +200,7 @@ function answerHTML(ans, extraTbl, hasPoll) {
   if (!ans) return '';
   // the answer sits on the slide itself, in its own green card below the question (no pop-up).
   // [show answer] appears only after this person has answered the poll on the slide (for everyone).
-  return `<div class="ans-wrap${hasPoll ? ' wait' : ''}"><button class="btn ans-btn">show answer ↓</button><div class="ans-card" hidden><div class="ans-label">answer</div><div class="ans">${ans.a}</div>` + (ans.w || []).map(w => `<div class="why">${w}</div>`).join('') + (extraTbl ? miniTable(extraTbl) : '') + (ans.m ? `<pre class="math">${ans.m}</pre>` : '') + (ans.graph ? `<div class="ans-graph">${graph(ans.graph)}</div>` : '') + (ans.agraph ? `<div class="ans-graph ans-ag">${agraphHTML(ans.agraph, 'card', 'ag' + (++AG))}</div>` : '') + '</div></div>';
+  return `<div class="ans-wrap${hasPoll ? ' wait' : ''}"><button class="btn ans-btn">show answer ↓</button><div class="ans-card" hidden><div class="ans-label">answer</div><div class="ans">${ans.a}</div>` + (ans.w || []).map(w => `<div class="why">${w}</div>`).join('') + (extraTbl ? miniTable(extraTbl) : '') + (ans.m ? `<pre class="math">${ans.m}</pre>` : '') + (ans.graph ? `<div class="ans-graph">${graph(ans.graph).replace('class="fragment fitstep"', 'class="fitstep"')}</div>` : '') + (ans.agraph ? `<div class="ans-graph ans-ag">${agraphHTML(ans.agraph, 'card', 'ag' + (++AG))}</div>` : '') + '</div></div>';
 }
 function pollHTML(p, frag, type, cls) {
   if (!p || !p.o || !p.o.length) return '';
@@ -267,7 +275,9 @@ function slideBody(s) {
   if (hasRows) { body += plain ? linesHTML(s.rows, k) : rowsHTML(s.rows, k, s.q ? 'story' : ''); k += s.rows.filter(r => r[0] !== '' || r[1] !== '').length; }
   if (!isEx && s.tbl && !s.ans) { body += tableHTML(s.tbl, false, k); }
   if (g) {
-    body += `<div class="gwrap">${g}</div>`;
+    // a fitted line on a staircase (fit): one more click
+    const gg = /fragment fitstep/.test(g) ? g.replace('class="fragment fitstep"', `class="fragment fitstep" data-fragment-index="${++k}"`) : g;
+    body += `<div class="gwrap">${gg}${s.below ? `<div class="below">${s.below}</div>` : ''}</div>`;
     // an animated graph: one more click plays it
     if (aid) { k++; body += `<span class="fragment gstep" data-g="${aid}" data-fragment-index="${k}"></span>`; }
   }
@@ -356,6 +366,7 @@ const html = `<!doctype html>
   .gwrap { display: flex; flex-direction: column; align-items: center; margin-top: 0.5em; }
   .gwrap > svg.graph, .gwrap .agraph svg.graph, .gwrap .cd-pick svg.graph { height: 380px; width: auto; max-width: 100%; }
   .gwrap > .hbars, .gwrap > .floor-embed, .gwrap > .graph-desc, .gwrap > .sd-slider { width: 100%; }
+  .gwrap .below { font-size: 0.55em; color: var(--dim); text-align: center; margin-top: 0.3em; }
   .plain-lines { margin-top: 0.7em; }
   .plain-lines .pl { font-size: 0.75em; line-height: 1.4; margin: 0.15em 0; }
   .plain-lines .pl b { font-weight: 600; color: var(--dim); }
