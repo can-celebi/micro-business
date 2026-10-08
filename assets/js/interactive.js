@@ -328,7 +328,7 @@
     const mark = node.dataset.mark !== undefined ? Number(node.dataset.mark) : null;
     const options = (node.dataset.options || '').split(',').map(s => s.trim()).filter(Boolean);
     const withNoIdea = node.dataset.noidea !== 'off' && type !== 'text';
-    let afterSave = () => {};
+    let afterSave = () => {}, sliderVal = null, setSlider = null;
 
     const input = el('div', 'poll-input');
     const status = el('span', 'poll-status');
@@ -357,6 +357,24 @@
         };
         input.appendChild(ni);
       }
+    } else if (type === 'slider') {
+      // slider (Cevdet, 08.10): starts with no value (no thumb), so an untouched slider is never read as an answer;
+      // [save] stores the number (same ref format as number polls). Students see no class results.
+      const mn = Number(node.dataset.min || 0), mx = Number(node.dataset.max || 100), st = Number(node.dataset.step || 10);
+      const f = el('input', 'slider untouched'); f.type = 'range'; f.min = mn; f.max = mx; f.step = st; f.value = mn;
+      const shown = el('span', 'slider-val', '–'), go = el('button', 'btn', 'save');
+      setSlider = v => { f.value = v; f.classList.remove('untouched'); shown.textContent = f.value + unit; sliderVal = Number(f.value); };
+      f.oninput = () => setSlider(f.value);
+      f.addEventListener('keydown', ev => ev.stopPropagation());
+      node.setAttribute('data-prevent-swipe', '');
+      go.onclick = async () => {
+        if (sliderVal === null) { status.textContent = 'move the slider first'; return; }
+        status.textContent = '…';
+        try { await submit(poll, sliderVal, n => status.textContent = 'busy, retry ' + n + '…'); status.textContent = 'saved_'; afterSave(); }
+        catch (e) { status.textContent = 'not saved (offline?)'; }
+      };
+      input.appendChild(el('span', 'dim slider-end', mn + unit)); input.appendChild(f); input.appendChild(el('span', 'dim slider-end', mx + unit));
+      input.appendChild(shown); input.appendChild(go);
     } else if (type === 'multi') {
       const letters = 'ABCDEFGHIJ', picked = new Set();
       options.forEach((o, i) => {
@@ -440,10 +458,11 @@
       out.appendChild(el('div', 'dim', 'loading…'));
       try {
         const viz = el('div', 'viz');
+        if (type === 'slider' && !TEACHER) { out.innerHTML = ''; viz.appendChild(el('div', 'dim small-line', 'your answer: ' + sliderVal + unit + ' · saved')); out.appendChild(viz); return; }
         if (type === 'text') { const c = await textCount(poll); out.innerHTML = ''; viz.appendChild(el('div', 'dim small-line', c.n + ' answers so far (the texts are read after class)')); out.appendChild(viz); return; }
         const data = await results(poll);
         out.innerHTML = '';
-        if (type === 'number') renderNumber(viz, data, unit, mark);
+        if (type === 'number' || type === 'slider') renderNumber(viz, data, unit, mark);
         else if (type === 'multi') renderMulti(viz, data, options);
         else renderChoice(viz, data, withNoIdea && options.indexOf(NOIDEA) < 0 ? options.concat([NOIDEA]) : options);
         out.appendChild(viz);
@@ -470,16 +489,17 @@
     const VK = 'micro-voted-' + SESSION + '-' + poll;
     afterSave = () => {
       const c = input.querySelector('.btn.chosen');
-      store(VK, type === 'choice' && c ? c.textContent : '1');
-      out.classList.add('open'); refresh.style.display = ''; draw();
+      store(VK, type === 'choice' && c ? c.textContent : type === 'slider' ? String(sliderVal) : '1');
+      out.classList.add('open'); refresh.style.display = type === 'slider' && !TEACHER ? 'none' : ''; draw();
       // tells the slide that this person has decided (the deck then shows its [show answer] button)
       node.dispatchEvent(new CustomEvent('micropoll:saved', { bubbles: true, detail: { poll: poll } }));
     };
     const prev = load(VK);
     if (prev) {
       input.querySelectorAll('.btn').forEach(b => { if (b.textContent === prev) b.classList.add('chosen'); });
+      if (setSlider && isFinite(Number(prev))) setSlider(Number(prev));
       status.textContent = 'answered_';
-      out.classList.add('open'); refresh.style.display = '';
+      out.classList.add('open'); refresh.style.display = type === 'slider' && !TEACHER ? 'none' : '';
       // results are loaded only when the slide is on screen (one call, not one per answered poll at page load)
       let drawn = false;
       const drawIfHere = () => { if (drawn) return; const cur = window.Reveal && Reveal.getCurrentSlide && Reveal.getCurrentSlide(); if (cur && (cur === node.closest('section') || cur.contains(node) || node.closest('section').contains(cur))) { drawn = true; draw(); } };

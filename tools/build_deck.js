@@ -8,7 +8,7 @@ const LEC = process.argv[2] || 'L02';
 const SB = process.argv[3] || path.join(__dirname, '..', '..', '02_overview-html', 'W02_storyboard_v2_L02-L03.html');
 const h = fs.readFileSync(SB, 'utf8');
 const S = eval(h.slice(h.indexOf('const S = [') + 10, h.indexOf('// ---------- state')).trim().replace(/;\s*$/, ''));
-const V = '20261008f';
+const V = '20261008j';
 const NUM = parseInt(LEC.slice(1), 10);  // L03 → 3
 
 const esc = s => String(s);
@@ -97,8 +97,52 @@ function svgClassDemand(g) {
   return `<div class="cd-pick">` + ps.map((p, i) => `<div class="cd-g"${i ? ' hidden' : ''}>${one(p)}</div>`).join('') +
     `<div class="cd-btns">` + ps.map((p, i) => `<button class="btn${i ? '' : ' chosen'}" onclick="const w=this.closest('.cd-pick');w.querySelectorAll('.cd-g').forEach((g,j)=>g.hidden=j!==${i});w.querySelectorAll('.cd-btns .btn').forEach((b,j)=>b.classList.toggle('chosen',j===${i}))">€${p}</button>`).join('') + `</div></div>`;
 }
+// buyers'/sellers' staircases crossing (Kemal, 08.10): buy [values high → low], sell [costs low → high], price,
+// marginal (boxes on the last buyer and seller who trade); dots = the units that trade at the price
+function svgMarket(g) {
+  const W = 560, H = 340, L = 56, B = 40, T = 22, R = 18, pw = W - L - R, ph = H - T - B;
+  const n = g.buy.length, pm = Math.max(...g.buy, ...g.sell) * 1.1, x = q => L + q / (n + 0.5) * pw, y = p => T + ph - p / pm * ph;
+  let s = axes(W, H, L, T, pw, ph);
+  const step = (vals, c, on) => { let d = ''; vals.forEach((v, i) => d += (i ? ' L' : 'M') + x(i) + ',' + y(v) + ' L' + x(i + 1) + ',' + y(v)); return `<path d="${d}" fill="none" stroke="${c}" stroke-width="3"/>` + vals.map((v, i) => on(v) ? `<circle cx="${x(i + 0.5)}" cy="${y(v)}" r="5.5" fill="${c}"/>` : '').join(''); };
+  s += step(g.buy, COL('demand'), v => g.price == null || v >= g.price) + step(g.sell, COL('supply'), v => g.price == null || v <= g.price);
+  if (g.price != null) s += `<line x1="${L}" y1="${y(g.price)}" x2="${L + pw}" y2="${y(g.price)}" stroke="#111" stroke-width="1.5" stroke-dasharray="7 5"/><text x="${L - 6}" y="${y(g.price) + 5}" text-anchor="end" font-weight="600">€${g.price}</text>`;
+  s += `<text x="${x(1)}" y="${y(g.buy[0]) - 8}" fill="${COL('demand')}" font-weight="600">buyers</text><text x="${x(n - 1)}" y="${y(g.sell[n - 1]) - 8}" fill="${COL('supply')}" text-anchor="end" font-weight="600">sellers</text>`;
+  [0, Math.round(pm / 2 / 10) * 10, Math.round(pm / 10) * 10].forEach(p => { if (p <= pm && (g.price == null || Math.abs(y(p) - y(g.price)) > 16)) s += `<text x="${L - 6}" y="${y(p) + 5}" text-anchor="end" fill="#999" font-size="12">€${p}</text>`; });
+  for (let i = 0; i < n; i++) s += `<text x="${x(i + 0.5)}" y="${T + ph + 17}" text-anchor="middle" fill="#999" font-size="12">${i + 1}</text>`;
+  const nb = g.price == null ? 0 : Math.min(g.buy.filter(v => v >= g.price).length, g.sell.filter(v => v <= g.price).length);
+  if (g.marginal && nb) {
+    const bw = x(1) - x(0);
+    s += `<rect x="${x(nb - 1)}" y="${y(g.buy[nb - 1]) - 13}" width="${bw}" height="26" fill="none" stroke="${COL('demand')}" stroke-width="2.5"/><text x="${x(nb - 0.5)}" y="${y(g.buy[nb - 1]) - 19}" text-anchor="middle" fill="${COL('demand')}" font-weight="600">€${g.buy[nb - 1]}</text>` +
+      `<rect x="${x(nb - 1)}" y="${y(g.sell[nb - 1]) - 13}" width="${bw}" height="26" fill="none" stroke="${COL('supply')}" stroke-width="2.5"/><text x="${x(nb - 0.5)}" y="${y(g.sell[nb - 1]) + 32}" text-anchor="middle" fill="${COL('supply')}" font-weight="600">€${g.sell[nb - 1]}</text>`;
+  }
+  if (nb) s += `<text x="${L + pw}" y="${T + ph + 34}" text-anchor="end" fill="#777">${nb} pairs trade (dots)</text>`;
+  return s + '</svg>';
+}
+// lines + anim (Kemal, 08.10) → an animated graph (assets/js/anim-graph.js): {line: i, to: p0} slides line i,
+// {price: [a, b]} slides the price line; one click (fragment) = the animation. `mark` and `hl` belong to the end state
+// when the mark is not on the starting lines (e.g. a tax: the new equilibrium).
+let AG = 0;
+function animSpec(g) {
+  const side = l => l.side || (l.n === 'demand' ? 'demand' : 'supply');
+  const curves = g.lines.map(l => ({ id: l.n, p0: l.p0, s: l.s, side: side(l) }));
+  const base = [{ show: curves.map(c => c.id) }], steps = [], a = g.anim;
+  const onBase = g.mark && g.lines.every(l => Math.abs(l.p0 + l.s * g.mark[0] - g.mark[1]) < 1e-6 * Math.max(1, g.pmax));
+  const extra = [];
+  if (g.mark) (onBase ? base : extra).push({ mark_at: g.mark });
+  (g.hl || []).forEach(p => (onBase || !g.mark ? base : extra).push({ hl: p }));
+  if (a.price) { base.push({ price_line: a.price[0] }); steps.push({ price_line: a.price[1] }); }
+  if (a.line != null) { const l = g.lines[a.line]; steps.push({ shift: l.n, to: { id: l.n, p0: a.to, s: l.s } }); }
+  if (extra.length && steps.length) Object.assign(steps[steps.length - 1], ...extra);
+  const bg = g.bg ? (g.bg === 'class' ? { vals: CLASS_VALS, side: 'demand' } : g.bg) : undefined;
+  return { axes: { qmax: g.qmax, pmax: g.pmax, plabel: 'P', qlabel: 'Q', eur: '€' }, curves, base, steps, bg, ticks: true };
+}
+function agraphHTML(spec, mode, id) {
+  return `<div class="agraph" id="${id}" data-mode="${mode}" data-spec='${JSON.stringify(spec).replace(/&/g, '&amp;').replace(/'/g, '&#39;')}'></div>`;
+}
 function graph(g) {
   if (!g) return '';
+  if (g.type === 'market') return svgMarket(g);
+  if (g.type === 'lines' && g.anim) return agraphHTML(animSpec(g), 'frag', 'ag' + (++AG));
   if (g.type === 'steps') return svgSteps();
   if (g.type === 'lines') return svgLines(g);
   if (g.type === 'stairs') return svgStairs(g);
@@ -130,6 +174,11 @@ function rowsHTML(rows, start, cls) {
   let k = start;
   return `<div class="rows ${cls || ''}">` + rows.filter(r => r[0] !== '' || r[1] !== '').map(([a, b]) => { k++; return `<div class="k fragment" data-fragment-index="${k}">${a}</div><div class="v fragment" data-fragment-index="${k}">${b}</div>`; }).join('') + '</div>';
 }
+// plain lines (Can, 08.10: graph slides and exercise sets: text full width on top, no label column)
+function linesHTML(rows, start, off) {
+  let k = start;
+  return '<div class="plain-lines">' + rows.filter(r => r[0] !== '' || r[1] !== '').map(([a, b]) => { k++; return `<div class="pl ${off ? 'frag-off' : 'fragment'}" data-fragment-index="${k}">${a ? `<b>${a}</b> · ` : ''}${b}</div>`; }).join('') + '</div>';
+}
 function tableHTML(tbl, frag, start) {
   let k = start;
   return '<table class="console step-table">' + tbl.map((r, i) => {
@@ -143,14 +192,17 @@ function answerHTML(ans, extraTbl, hasPoll) {
   if (!ans) return '';
   // the answer sits on the slide itself, in its own green card below the question (no pop-up).
   // [show answer] appears only after this person has answered the poll on the slide (for everyone).
-  return `<div class="ans-wrap${hasPoll ? ' wait' : ''}"><button class="btn ans-btn">show answer ↓</button><div class="ans-card" hidden><div class="ans-label">answer</div><div class="ans">${ans.a}</div>` + (ans.w || []).map(w => `<div class="why">${w}</div>`).join('') + (extraTbl ? miniTable(extraTbl) : '') + (ans.m ? `<pre class="math">${ans.m}</pre>` : '') + (ans.graph ? `<div class="ans-graph">${graph(ans.graph)}</div>` : '') + '</div></div>';
+  return `<div class="ans-wrap${hasPoll ? ' wait' : ''}"><button class="btn ans-btn">show answer ↓</button><div class="ans-card" hidden><div class="ans-label">answer</div><div class="ans">${ans.a}</div>` + (ans.w || []).map(w => `<div class="why">${w}</div>`).join('') + (extraTbl ? miniTable(extraTbl) : '') + (ans.m ? `<pre class="math">${ans.m}</pre>` : '') + (ans.graph ? `<div class="ans-graph">${graph(ans.graph)}</div>` : '') + (ans.agraph ? `<div class="ans-graph ans-ag">${agraphHTML(ans.agraph, 'card', 'ag' + (++AG))}</div>` : '') + '</div></div>';
 }
-function pollHTML(p, frag, type) {
+function pollHTML(p, frag, type, cls) {
   if (!p || !p.o || !p.o.length) return '';
   const id = safeId(p.id && !/[ /*]/.test(p.id) ? p.id : '');
   if (!id) return '';
   const opts = p.o.map(o => strip(o).replace(/,/g, '‚')).join(',');
-  return `<div class="poll fragment" data-fragment-index="${frag}" data-poll="${id}" data-type="${p.multi ? 'multi' : (type || 'choice')}" data-options="${opts}"></div>`;
+  // stored values are cut to 40 characters (interactive.js safe()): two options must still differ
+  const sv = p.o.map(o => strip(o).replace(/,/g, '‚').trim().replace(/[^A-Za-z0-9.\-]/g, '_').slice(0, 40));
+  if (new Set(sv).size < sv.length) console.warn('warning: ' + id + ': two options are the same in their first 40 characters');
+  return `<div class="poll ${cls == null ? 'fragment' : cls}"${frag != null ? ` data-fragment-index="${frag}"` : ''} data-poll="${id}" data-type="${p.multi ? 'multi' : (type || 'choice')}" data-options="${opts}"></div>`;
 }
 
 // ---------- slide builders ----------
@@ -196,27 +248,77 @@ function section(s) {
   if (s.tag === 'own words') {
     return ''; // expanded separately
   }
-  let body = `<h2>${s.title}</h2>` + (s.sub ? `<p class="sub">${s.sub}</p>` : '');
-  let k = 0;
+  let head = `<h2>${s.title}</h2>` + (s.sub ? `<p class="sub">${s.sub}</p>` : '');
+  if (s.set) {
+    const vs = setVariants(s);
+    if (vs.length > 1) return `<section ${sid} class="set-slide">${head}${setNav(s, vs)}` + vs.map((v, i) => `<div class="set-v${i ? '' : ' on'}" data-v="${i}"${i ? ' hidden' : ''}>${i ? variantBody(v, i) : slideBody(s)}</div>`).join('') + `${notes}</section>`;
+  }
+  return `<section ${sid}>${head}${slideBody(s)}${notes}</section>`;
+}
+// the body of a normal slide: key line, rows/table, graph BELOW the text (Can, 08.10), question, poll, answer card
+function slideBody(s) {
+  let body = '', k = 0;
   const hasRows = s.rows && s.rows.length;
   // the key line of a slide: left-aligned, normal weight, a bit larger than body text (Can, 07.10: no huge centred bold lines)
   if (s.big || s.def) body += `<div class="lead-block">${s.big ? `<div class="lead">${s.big}</div>` : ''}${s.def ? `<div class="def">${s.def}</div>` : ''}</div>`;
   const isEx = s.tag === 'example';
-  const g = graph(s.graph);
-  let main = '';
-  if (isEx && s.tbl) { main += tableHTML(s.tbl, true, k); k += s.tbl.length - 1; }
-  if (hasRows) { main += rowsHTML(s.rows, k, s.q ? 'story' : ''); k += s.rows.filter(r => r[0] !== '' || r[1] !== '').length; }
-  if (!isEx && s.tbl && !s.ans) { main += tableHTML(s.tbl, false, k); }
-  body += g ? `<div class="split"><div>${main}</div><div class="split-g">${g}</div></div>` : main;
+  const g = graph(s.graph), plain = !!(g || s.set), aid = g && /class="agraph"/.test(g) ? 'ag' + AG : null;
+  if (isEx && s.tbl) { body += tableHTML(s.tbl, true, k); k += s.tbl.length - 1; }
+  if (hasRows) { body += plain ? linesHTML(s.rows, k) : rowsHTML(s.rows, k, s.q ? 'story' : ''); k += s.rows.filter(r => r[0] !== '' || r[1] !== '').length; }
+  if (!isEx && s.tbl && !s.ans) { body += tableHTML(s.tbl, false, k); }
+  if (g) {
+    body += `<div class="gwrap">${g}</div>`;
+    // an animated graph: one more click plays it
+    if (aid) { k++; body += `<span class="fragment gstep" data-g="${aid}" data-fragment-index="${k}"></span>`; }
+  }
   if (s.q) { k++; body += `<div class="big q fragment" data-fragment-index="${k}">${s.q}</div>`; }
   const hasPoll = !!(s.poll && s.poll.o && s.poll.o.length && !/tap options|one tap|free text/.test(s.poll.o[0]));
   if (hasPoll) body += pollHTML(s.poll, s.q ? k : ++k);
   body += answerHTML(s.ans, (!isEx && s.tbl && s.ans) ? s.tbl : null, hasPoll);
   // personalise prompts: switched off (Can, 07.10: he has other plans for personalising)
-  return `<section ${sid}>${body}${notes}</section>`;
+  return body;
 }
+// ---------- exercise sets (Can, 08.10): ◀ ▶ through variants of the same exercise type ----------
+// storyboard: set: {kind, file: "15_practice/out/L03_sets.json", key: "<slide id>"}; the slide itself is variant 0,
+// the file's instances (Alper; checked by Sinan) follow. Each variant: own poll id, answer after a choice,
+// its graph (Sinan's steps) inside the last answer card, one step per click.
+const SETS = {};
+function setVariants(s) {
+  const f = path.join(__dirname, '..', '..', s.set.file);
+  if (!SETS[f]) { try { SETS[f] = JSON.parse(fs.readFileSync(f, 'utf8')); } catch (e) { console.warn('warning: cannot read ' + s.set.file); SETS[f] = {}; } }
+  const list = SETS[f][s.set.key || s.id] || [];
+  if (!list.length) console.warn('warning: ' + s.id + ': no variants in ' + s.set.file);
+  return [s].concat(list);
+}
+function setNav(s, vs) {
+  const lv = vs.map((v, i) => i ? (v.level || '') : 'from the slide');
+  return `<div class="set-nav" data-levels='${JSON.stringify(lv).replace(/'/g, '&#39;')}'><button class="btn ghost set-prev" title="previous variant">◀</button><span class="set-n">1 / ${vs.length}</span><button class="btn ghost set-next" title="next variant: same kind, new story">▶</button><span class="set-lv dim">${lv[0]}</span><span class="set-kind dim">${s.set.kind || ''}</span></div>`;
+}
+function variantBody(v, i) {
+  let body = '', k = 0;
+  const rows = (v.rows || []).filter(r => r[0] !== '' || r[1] !== '');
+  body += linesHTML(rows, k, true); k += rows.length;
+  if (v.q) { k++; body += `<div class="big q frag-off" data-fragment-index="${k}">${v.q}</div>`; }
+  const last = v.poll2 ? v.poll2 : v;
+  const withG = (a, g) => Object.assign({}, a || { a: '' }, g ? { agraph: g } : {});
+  const p1 = { id: v.poll, o: v.o };
+  body += `<div class="qa">` + pollHTML(p1, v.q ? k : ++k, null, 'frag-off') + answerHTML(withG(v.ans, last === v ? v.graph : null), null, true) + `</div>`;
+  if (v.poll2) {
+    const p = v.poll2;
+    body += `<div class="qa qa2" hidden><div class="big q">${p.q}</div>` + pollHTML({ id: p.poll, o: p.o }, null, null, '') + answerHTML(withG(p.ans, v.graph), null, true) + `</div>`;
+  }
+  return body;
+}
+// own words (+ from L03, Cevdet with Can's go, 08.10: "before" and "after" confidence sliders, 0–100 %, ids
+// <LEC>-conf-<c> and <LEC>-fit-<c>; Cevdet compares them with Jev's score). A storyboard own-words slide with conf: false switches them off.
 function ownWords() {
-  return Object.entries(OW).map(([id, l], i) => `<section data-sid="${LEC}-ow-${id}"><h2>in your own words · ${i + 1}/${Object.keys(OW).length}</h2><div class="big" style="margin-top:6%">what is ${l}?</div><p class="dim small">(English, 1–2 sentences, without looking at the slides)</p><div class="poll" data-poll="${LEC}-ow-${id}" data-type="text" data-max="300"></div>${i === 0 ? '<p class="dim small" style="margin-top:1.2em">anonymous · your text is checked by an AI model (Jev, TypeSafe, USA) · don\'t write your name · ungraded</p>' : ''}<aside class="notes">Own words → Jev after class (Cevdet). Concept id ${id}.</aside></section>`).join('\n');
+  const ids = Object.keys(OW), conf = NUM >= 3 && !(SB_OW && SB_OW.conf === false);
+  const sl = (id, q) => `<div class="ow-conf"><div class="ow-q">${q}</div><div class="poll" data-poll="${id}" data-type="slider" data-min="0" data-max="100" data-step="10" data-unit="%" data-noidea="off"></div></div>`;
+  return Object.entries(OW).map(([id, l], i) => `<section data-sid="${LEC}-ow-${id}" class="ow-slide"><h2>in your own words · ${i + 1}/${ids.length}</h2>` +
+    (conf ? sl(`${LEC}-conf-${id}`, `<span class="dim">1 ·</span> how well do you know ${l}?`) + `<div class="ow-q"><span class="dim">2 ·</span> what is ${l}?</div>` : `<div class="big" style="margin-top:6%">what is ${l}?</div>`) +
+    `<p class="dim small">(English, 1–2 sentences, without looking at the slides)</p><div class="poll" data-poll="${LEC}-ow-${id}" data-type="text" data-max="300"></div>` +
+    (conf ? sl(`${LEC}-fit-${id}`, `<span class="dim">3 ·</span> how much of ${l} does your text capture: everything there is to it?`) : '') +
+    `<p class="dim small" style="margin-top:1em">anonymous · your text is checked by an AI model (Jev, TypeSafe, USA) · don't write your name · ungraded</p><aside class="notes">Own words${conf ? ' + confidence' : ''} → Jev after class (Cevdet). Concept id ${id}.</aside></section>`).join('\n');
 }
 
 const slides = S.filter(s => s.lec === LEC && s.min > 0 && s.tag !== 'removed');
@@ -250,9 +352,28 @@ const html = `<!doctype html>
 <link rel="stylesheet" href="../../assets/css/console-light.css?v=${V}">
 <style>
   /* deck-specific layout (generated by tools/build_deck.js from the storyboard) */
-  .split { display: grid; grid-template-columns: 1fr 0.85fr; gap: 1.2em; align-items: start; margin-top: 0.8em; }
-  .split .rows { margin-top: 0.4em; }
+  /* graph slides (Can, 08.10): text full width on top, the graph below, centred, as big as fits */
+  .gwrap { display: flex; flex-direction: column; align-items: center; margin-top: 0.5em; }
+  .gwrap > svg.graph, .gwrap .agraph svg.graph, .gwrap .cd-pick svg.graph { height: 380px; width: auto; max-width: 100%; }
+  .gwrap > .hbars, .gwrap > .floor-embed, .gwrap > .graph-desc, .gwrap > .sd-slider { width: 100%; }
+  .plain-lines { margin-top: 0.7em; }
+  .plain-lines .pl { font-size: 0.75em; line-height: 1.4; margin: 0.15em 0; }
+  .plain-lines .pl b { font-weight: 600; color: var(--dim); }
   .graph { width: 100%; height: auto; }
+  .agraph { display: flex; flex-direction: column; align-items: center; width: 100%; }
+  .agraph .ag-svg { width: 100%; display: flex; justify-content: center; }
+  .ag-bar { display: flex; gap: 0.4em; align-items: center; justify-content: center; margin-top: 0.2em; }
+  .ag-bar .btn { font-size: 0.5em; padding: 0.15em 0.6em; } .ag-bar .ag-n { font-size: 0.45em; }
+  .ans-graph.ans-ag { max-width: 680px; margin-left: auto; margin-right: auto; }
+  .ans-graph.ans-ag svg.graph { height: 360px; width: auto; max-width: 100%; }
+  /* exercise sets: ◀ ▶ through variants of the same kind */
+  .set-nav { display: flex; align-items: center; gap: 0.5em; margin: 0.2em 0 0.3em; font-size: 0.6em; }
+  .set-nav .btn { font-size: 1em; padding: 0.1em 0.7em; } .set-nav .set-n { font-weight: 600; }
+  .set-nav .set-kind { margin-left: auto; font-size: 0.85em; }
+  .qa2 { margin-top: 0.8em; border-top: 1px dashed #ccc; padding-top: 0.3em; }
+  html.mobile .gwrap > svg.graph, html.mobile .gwrap .agraph svg.graph, html.mobile .ans-graph.ans-ag svg.graph, html.mobile .gwrap .cd-pick svg.graph { height: auto; width: 100%; }
+  html.mobile .plain-lines .pl { font-size: 0.9em; }
+  html.mobile .set-nav { font-size: 0.8em; flex-wrap: wrap; } html.mobile .set-nav .set-kind { margin-left: 0; width: 100%; }
   .graph-desc { font-size: 0.6em; border: 1.5px dashed #bbb; padding: 0.5em; }
   .reveal table.step-table tr.fragment.visible.past { opacity: 0.55; }
   .reveal table.step-table { font-size: 0.72em; border-collapse: collapse; margin-top: 0.8em; width: 100%; }
@@ -270,7 +391,6 @@ const html = `<!doctype html>
   .hb-f { display: block; height: 100%; background: var(--p-green); border-right: 1.5px solid var(--line); }
   .hb-n { text-align: right; }
   .hb-note { margin-top: 0.5em; font-size: 0.85em; }
-  html.mobile .split { grid-template-columns: 1fr; }
   .svl-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.6em; align-items: start; margin-top: 0.5em; }
   .svl-grid .sv-box { margin-bottom: 0.9em; }
   .svl-grid .bar-row { font-size: 0.6em; grid-template-columns: 12em 1fr 4.6em; margin: 0.22em 0; }
@@ -279,6 +399,9 @@ const html = `<!doctype html>
   .sv-live .svl-refresh { font-size: 0.8em; padding: 0.1em 0.6em; }
   html.mobile .svl-grid { grid-template-columns: 1fr; }
   html.mobile .svl-grid .bar-row { font-size: 0.8em; }
+  .ow-slide .ow-q { font-size: 0.85em; margin-top: 0.7em; }
+  .ow-slide .ow-conf .poll { margin-top: 0.2em; }
+  .ow-slide .poll[data-type="text"] { margin-top: 0.3em; }
   .lead-block { margin-top: 0.7em; text-align: left; }
   .lead-block .lead { font-size: 0.9em; font-weight: 400; line-height: 1.35; }
   .lead-block .def { font-size: 0.65em; margin: 0.5em 0 0; max-width: none; text-align: left; }
@@ -311,6 +434,7 @@ ${out.join('\n\n')}
 <script src="../../assets/js/config.js?v=${V}"></script>
 <script src="../../assets/js/interactive.js?v=${V}"></script>
 <script src="../../assets/js/sd-graph.js?v=${V}"></script>
+<script src="../../assets/js/anim-graph.js?v=${V}"></script>
 <script src="../../assets/js/mining-demo.js?v=${V}"></script>
 <script src="../../assets/js/menu.js?v=${V}"></script>
 <script src="../../assets/js/side-panels.js?v=${V}"></script>
@@ -335,7 +459,11 @@ ${out.join('\n\n')}
   // after your own choice the solution opens by itself (Can, 07.10), under the results; [hide answer] folds it
   document.addEventListener('micropoll:saved', e => {
     const s = e.target.closest('section'); if (!s) return;
-    s.querySelectorAll('.ans-wrap').forEach(w => {
+    // exercise sets: the answer that belongs to this poll (a variant can have two questions; the second shows after the first)
+    const box = e.target.closest('.qa') || e.target.closest('.set-v') || s;
+    const nx = box.classList.contains('qa') && !box.classList.contains('qa2') ? box.parentElement.querySelector('.qa2') : null;
+    if (nx) nx.hidden = false;
+    box.querySelectorAll(':scope > .ans-wrap, :scope > .poll ~ .ans-wrap').forEach(w => {
       w.classList.remove('wait');
       if (e.detail && e.detail.restored) return;  // answered earlier on this device: [show answer] is available, card stays closed
       const card = w.querySelector('.ans-card'), b = w.querySelector('.ans-btn');
@@ -348,6 +476,23 @@ ${out.join('\n\n')}
     card.hidden = !open; b.textContent = open ? 'hide answer ↑' : 'show answer ↓';
     const sec = b.closest('section');
     if (open && sec) setTimeout(() => sec.scrollTo({ top: sec.scrollHeight }), 30);
+  });
+  // exercise sets: ◀ ▶ switch the variant; only the shown variant's steps are clicks (fragments)
+  function setVariant(sec, d) {
+    const vs = [...sec.querySelectorAll(':scope > .set-v')], cur = vs.findIndex(v => v.classList.contains('on'));
+    const i = (cur + d + vs.length) % vs.length, a = vs[cur], b = vs[i];
+    a.querySelectorAll('.fragment').forEach(f => { f.classList.remove('fragment', 'visible', 'current-fragment'); f.classList.add('frag-off'); });
+    a.classList.remove('on'); a.hidden = true;
+    b.querySelectorAll('.frag-off').forEach(f => { f.classList.remove('frag-off'); f.classList.add('fragment'); });
+    b.classList.add('on'); b.hidden = false;
+    const nav = sec.querySelector('.set-nav'), lv = JSON.parse(nav.dataset.levels || '[]');
+    nav.querySelector('.set-n').textContent = (i + 1) + ' / ' + vs.length; nav.querySelector('.set-lv').textContent = lv[i] || '';
+    if (!MOBILE) { Reveal.syncFragments(); Reveal.navigateFragment(-1); }
+    sec.scrollTop = 0;
+  }
+  document.addEventListener('click', e => {
+    const b = e.target.closest('.set-prev, .set-next'); if (!b) return;
+    setVariant(b.closest('section'), b.classList.contains('set-next') ? 1 : -1); b.blur();
   });
   // a new slide always starts at its top
   Reveal.on('slidechanged', e => { e.currentSlide.scrollTop = 0; });

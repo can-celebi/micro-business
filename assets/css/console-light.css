@@ -138,6 +138,13 @@ table.console .verdict { font-weight: 600; text-align: center; min-width: 5.5em;
 }
 .poll-input .unit { font-size: 0.85em; margin-right: 0.3em; color: var(--dim); }
 .poll-status { font-size: 0.65em; color: var(--dim); margin-left: 0.6em; }
+/* slider poll (Cevdet, 08.10): no thumb until the student touches it */
+.poll-input input.slider { width: 14em; max-width: 60vw; accent-color: #0074D9; margin: 0 0.4em; padding: 0; border: none; background: none; box-shadow: none; }
+.poll-input input.slider.untouched::-webkit-slider-thumb { opacity: 0; }
+.poll-input input.slider.untouched::-moz-range-thumb { opacity: 0; }
+.poll-input .slider-end { font-size: 0.6em; }
+.poll-input .slider-val { min-width: 3.2em; font-weight: 600; margin: 0 0.4em; }
+html.mobile .poll-input input.slider { width: 100%; max-width: none; margin: 0.3em 0; }
 .poll-controls { margin-top: 0.6em; }
 .poll-results { display: none; margin-top: 0.4em; }
 .poll-results.open { display: block; }
@@ -344,6 +351,12 @@ html.mobile .poll-input textarea { font-size: 1em; }
 .side-mode { font-family: var(--mono); font-size: 11px; color: var(--dim); align-self: center; }
 .side-panel .class-h { margin-top: 14px; padding-top: 8px; border-top: 1px solid #e3e3e3; }
 .pulse-graph svg { display: block; margin: 4px 0; }
+/* chat light (teacher, Can 08.10): grey when no open question, red + glowing while one is open */
+.chat-light { display: inline-flex; align-items: center; gap: 6px; }
+.chat-light i { width: 14px; height: 14px; border-radius: 50%; background: #cfcfcf; border: 1px solid #999; display: inline-block; }
+.chat-light.on { font-size: 15px; padding: 5px 12px; background: #fde4e6; border-color: #d62728; color: #b0141a; font-weight: 700; }
+.chat-light.on i { background: #ff2a2a; border-color: #b0141a; animation: chat-glow 1.2s ease-in-out infinite; }
+@keyframes chat-glow { 0%, 100% { box-shadow: 0 0 3px 1px rgba(255, 40, 40, .55); } 50% { box-shadow: 0 0 12px 6px rgba(255, 40, 40, .85); } }
 /* teacher-only content: students see this box in its place, so the empty space is clearly on purpose (Can, 08.10) */
 .teacher-only { margin: 6px 0; padding: 8px 10px; background: var(--p-blue, #E4EFFA); border: 1.5px dashed #9bb7d6; border-radius: 3px; font-size: 13px; color: #333; }
 .pg { margin: 6px 0 10px; }
