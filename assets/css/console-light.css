@@ -344,6 +344,8 @@ html.mobile .poll-input textarea { font-size: 1em; }
 .side-mode { font-family: var(--mono); font-size: 11px; color: var(--dim); align-self: center; }
 .side-panel .class-h { margin-top: 14px; padding-top: 8px; border-top: 1px solid #e3e3e3; }
 .pulse-graph svg { display: block; margin: 4px 0; }
+/* teacher-only content: students see this box in its place, so the empty space is clearly on purpose (Can, 08.10) */
+.teacher-only { margin: 6px 0; padding: 8px 10px; background: var(--p-blue, #E4EFFA); border: 1.5px dashed #9bb7d6; border-radius: 3px; font-size: 13px; color: #333; }
 .pg { margin: 6px 0 10px; }
 .pg-h { font-size: 12px; margin-bottom: 2px; }
 .pg-bar { display: flex; height: 20px; border: 1px solid #bbb; background: #fff; }

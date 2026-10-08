@@ -8,7 +8,7 @@ const LEC = process.argv[2] || 'L02';
 const SB = process.argv[3] || path.join(__dirname, '..', '..', '02_overview-html', 'W02_storyboard_v2_L02-L03.html');
 const h = fs.readFileSync(SB, 'utf8');
 const S = eval(h.slice(h.indexOf('const S = [') + 10, h.indexOf('// ---------- state')).trim().replace(/;\s*$/, ''));
-const V = '20261008d';
+const V = '20261008e';
 const NUM = { L02: 2, L03: 3 }[LEC];
 
 const esc = s => String(s);

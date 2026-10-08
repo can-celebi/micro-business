@@ -7,9 +7,11 @@
 // student's device with the public key in config.js (namesKey); only Can's private key (00_admin/keys, never in a
 // repo) can read them: tools/names.py. Every answer already carries this device's random id, so after decrypting,
 // answers, questions and chat can be credited to students (participation points).
-// Teacher mode: press T and type the teacher code (remembered on that device; ?teacher opens the box on phones): chat refresh every 20 s, [answered ✓] on messages,
-// pulse refresh every 60 s, poll [results] without voting. Students' screens refresh the chat every 3 min, plus
-// on open, on send and on [refresh] (all devices share one GitHub budget of 5,000 calls an hour).
+// Teacher mode: press T and type the teacher code (remembered on that device; ?teacher opens the box on phones).
+// Chat and class pulse go to the teacher screen only (Can, 08.10): students send messages and tap the pulse, see their
+// own sent messages (kept on their device) and a note "📺 … on the lecturer's screen"; their devices make no read calls.
+// The teacher screen loads the chat every 20 s ([answered ✓], [hide]) and the pulse gauges every 60 s
+// (all devices share one GitHub budget of 5,000 calls an hour).
 (function () {
   const LEC = document.body.dataset.lecture;
   const MP = window.MicroPoll, CFG = window.MICRO_CONFIG || {};
@@ -141,6 +143,8 @@
 
   let classBusy = false;
   async function drawClass() {
+    // the class pulse is read by the teacher screen only (Can, 08.10): students' devices never load it
+    if (!MP.teacher) { graph.innerHTML = '<div class="teacher-only">📺 the class pulse is on the lecturer\'s screen · your taps go there</div>'; prf.hidden = true; return; }
     if (classBusy) return; classBusy = true;
     let all;
     try { all = await MP.allAnswers(LEC + '-pulse-'); } catch (e) { graph.innerHTML = '<div class="dim">could not load</div>'; classBusy = false; return; }
@@ -168,12 +172,13 @@
         `<div class="pg-ends"><span>1 ${it.lo}</span><span>5 ${it.hi}</span></div></div>`;
     });
     if (!nAll.size) { graph.innerHTML = '<div class="dim sp-note">the class right now: ' + (win && Date.now() < win[0] ? 'starts at ' + hm(win[0]) : 'no answers yet') + '</div>'; return; }
-    graph.innerHTML = '<div class="dim sp-note">the class right now · ' + hm(now) + ' · thin strip = 10 min ago</div>' + html;
+    graph.innerHTML = '<div class="dim sp-note">the class right now · ' + hm(now) + ' · thin strip = 10 min ago · updates every minute</div>' + html;
   }
 
   // ---------- chat ----------
   const cSec = mk('div', 'sp-sec chat-sec');
-  cSec.appendChild(mk('h3', null, '&gt; class chat <span class="dim sp-note">questions welcome</span>'));
+  cSec.appendChild(mk('h3', null, MP.teacher ? '&gt; class chat <span class="dim sp-note">updates every 20 s</span>' : '&gt; ask the lecturer <span class="dim sp-note">questions welcome</span>'));
+  if (!MP.teacher) cSec.appendChild(mk('div', 'teacher-only', '📺 your messages go to the lecturer\'s screen · answers in class'));
   const msgs = mk('div', 'chat-msgs');
   const ta = mk('textarea'); ta.rows = 2; ta.maxLength = 400; ta.placeholder = 'what don\'t you understand?'; stop(ta);
   ta.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send.click(); } });
@@ -182,7 +187,10 @@
   cSec.appendChild(msgs); cSec.appendChild(ta); cSec.appendChild(cbar);
   let chat = [], done = new Set(), gone = new Set(), chatBusy = false, firstChat = true;
   const keyOf = m => m.ts + '-' + m.client;
+  const MYKEY = 'micro-mychat-' + LEC;
+  const myChat = () => { try { return JSON.parse(ls.get(MYKEY) || '[]'); } catch (e) { return []; } };
   async function loadChat() {
+    if (!MP.teacher) { chat = myChat(); drawChat(); return; }  // students: own messages only, no API call
     if (chatBusy) return; chatBusy = true;
     try {
       const refs = await MP.tagRefs(LEC + '-ask');
@@ -207,9 +215,9 @@
     const atBottom = msgs.scrollHeight - msgs.scrollTop - msgs.clientHeight < 30;
     msgs.innerHTML = chat.length ? chat.map(m => {
       const k = keyOf(m), ans = done.has(k), own = m.client === MP.cid;
-      return `<div class="chat-m${ans ? ' done' : ''}${own ? ' own' : ''}"><div class="chat-h"><b>${esc(m.nick || 'anonymous')}</b> <span class="dim">${hm(m.ts)}${m.slide ? ' · slide ' + esc(m.slide) : ''}${ans ? ' · ✓ answered' : ''}</span></div><div>${esc(m.text)}</div>` +
+      return `<div class="chat-m${ans ? ' done' : ''}${own ? ' own' : ''}"><div class="chat-h"><b>${esc(m.nick || 'anonymous')}</b> <span class="dim">${hm(m.ts)}${m.slide ? ' · slide ' + esc(m.slide) : ''}${ans ? ' · ✓ answered' : ''}${MP.teacher ? '' : ' · sent ✓'}</span></div><div>${esc(m.text)}</div>` +
         (MP.teacher ? (ans ? '' : `<button class="btn ghost" data-k="${k}">answered ✓</button>`) + `<button class="btn ghost del" data-d="${k}">hide</button>` : '') + '</div>';
-    }).join('') : '<div class="dim sp-note">no messages yet: ask anything</div>';
+    }).join('') : '<div class="dim sp-note">' + (MP.teacher ? 'no messages yet' : 'nothing sent yet: ask anything') + '</div>';
     msgs.querySelectorAll('button[data-k]').forEach(b => b.onclick = async () => {
       done.add(b.dataset.k); drawChat(); badge();
       try { await MP.submitText(LEC + '-askdone-' + b.dataset.k, { by: 'teacher' }); } catch (e) {}
@@ -238,11 +246,13 @@
     try {
       await MP.submitText(LEC + '-ask-' + Date.now(), { text: q, nick: me.nick, slide: slideNo(), sid: slideSid() }, n => cst.textContent = 'busy, retry ' + n + '…');
       // no local copy (its time stamp differs from the stored one, so it showed twice): reload from the store
-      ta.value = ''; cst.textContent = 'sent_'; await loadChat(); setTimeout(loadChat, 3000);
+      if (!MP.teacher) { const mine = myChat(); mine.push({ ts: Date.now(), client: MP.cid, nick: me.nick, text: q, slide: slideNo() }); ls.set(MYKEY, JSON.stringify(mine)); }
+      ta.value = ''; cst.textContent = 'sent_'; await loadChat(); if (MP.teacher) setTimeout(loadChat, 3000);
     } catch (e) { cst.textContent = 'not sent (offline?)'; }
     send.disabled = false;
   };
   crf.onclick = () => loadChat();
+  if (!MP.teacher) crf.hidden = true;
 
   // ---------- layout ----------
   let chatBtn = null, meBtn = mk('button', 'side-btn me-btn', esc(meLabel()));
@@ -301,8 +311,10 @@
 
   // ---------- refresh rhythm (one shared budget: keep students' calls low) ----------
   const visible = () => !document.hidden && (WIDE ? document.body.classList.contains('sb-open') : true);
-  if (WIDE) { drawClass(); loadChat(); }
-  else if (MP.teacher) loadChat();
-  setInterval(() => { if (visible() && (WIDE || MP.teacher)) loadChat(); }, MP.teacher ? 20000 : 180000);
-  setInterval(() => { if (visible() && WIDE) drawClass(); }, MP.teacher ? 60000 : 300000);
+  // students: no polling at all (Can, 08.10: chat and class pulse are for the teacher screen only)
+  if (WIDE || MP.teacher) { drawClass(); loadChat(); }
+  if (MP.teacher) {
+    setInterval(() => { if (visible()) loadChat(); }, 20000);
+    setInterval(() => { if (visible()) drawClass(); }, 60000);
+  }
 })();

@@ -35,7 +35,7 @@
     const btn = sec.querySelector('.svl-refresh');
     if (!MP.teacher || !MP.hasToken) {
       sec.querySelector('.svl-grid').style.display = 'none'; btn.style.display = 'none';
-      sec.querySelector('.svl-n').textContent = 'the results are on the screen';
+      const n = sec.querySelector('.svl-n'); n.textContent = '📺 the results are on the lecturer\'s screen'; n.classList.add('teacher-only');
       return;
     }
     btn.onclick = () => draw(sec);
