@@ -9,7 +9,7 @@ const SB = process.argv[3] || path.join(__dirname, '..', '..', '02_overview-html
 const h = fs.readFileSync(SB, 'utf8');
 const S = eval(h.slice(h.indexOf('const S = [') + 10, h.indexOf('// ---------- state')).trim().replace(/;\s*$/, ''));
 const V = '20261008e';
-const NUM = { L02: 2, L03: 3 }[LEC];
+const NUM = parseInt(LEC.slice(1), 10);  // L03 → 3
 
 const esc = s => String(s);
 const strip = s => String(s).replace(/<[^>]+>/g, '');
@@ -155,10 +155,19 @@ function pollHTML(p, frag, type) {
 
 // ---------- slide builders ----------
 const CONCEPT_OF = { 'L02-13': 'perfect competition', 'L02-21': 'demand', 'L02-26': 'supply', 'L02-09': 'allocation mechanisms' };
-// own words (Can, 07.10): only these two concepts
-const OW = { pc: 'perfect competition', barr: 'a barrier to entry' };
-// end-of-class check (Can, 07.10): only these two concepts
-const AFTER = [['pc', 'perfect competition'], ['barr', 'barriers to entry']];
+// Per lecture: own-words concepts ("what is …?") and the end-of-class check (same ids as the opening survey's "today").
+// A storyboard slide can override them: own-words slide `ow: {id: 'label'}`, before-you-go slide `concepts: [[id, label], …]`.
+const PER_LECTURE = {
+  // L02 (Can, 07.10): only these two concepts
+  L02: { ow: { pc: 'perfect competition', barr: 'a barrier to entry' }, after: [['pc', 'perfect competition'], ['barr', 'barriers to entry']] },
+  // L03 (storyboard L03-29, L03-30, decision T5): 7 concepts at the end, 4 in own words (Cevdet's ids)
+  L03: { ow: { invdem: 'inverse demand', invsup: 'inverse supply', eq: 'equilibrium', shift: 'the difference between a shift of a curve and a movement along it' },
+         after: [['dem', 'demand'], ['invdem', 'inverse demand'], ['law', 'law of demand'], ['sup', 'supply'], ['invsup', 'inverse supply'], ['eq', 'equilibrium'], ['shift', 'shift vs movement']] },
+};
+const SB_OW = S.find(x => x.tag === 'own words' && x.ow), SB_AFTER = S.find(x => x.tag === 'survey' && x.concepts);
+const OW = (SB_OW && SB_OW.ow) || (PER_LECTURE[LEC] || {}).ow || {};
+const AFTER = (SB_AFTER && SB_AFTER.concepts) || (PER_LECTURE[LEC] || {}).after || [];
+if (!Object.keys(OW).length || !AFTER.length) console.warn('warning: no own-words or before-you-go concepts for ' + LEC + ' (add them to PER_LECTURE or the storyboard)');
 
 function section(s) {
   const notes = s.notes ? `<aside class="notes">${strip(s.notes)}</aside>` : '';
@@ -175,7 +184,7 @@ function section(s) {
       `<div class="svl-grid"><div>${box(first, 0)}</div><div>${rest.map((b, i) => box(b, i + 1)).join('')}</div></div>${notes}</section>`;
   }
   if (s.tag === 'survey' && s.id.endsWith('-03')) {
-    const sn = 'S0' + NUM;
+    const sn = 'S' + String(NUM).padStart(2, '0');
     return `<section ${sid}><h2>${s.title}</h2><div class="qr-slide" style="height:auto;margin-top:1em"><img src="qr-survey.svg" alt="QR code to the survey" style="width:300px;height:300px"><div class="qr-link">can-celebi.github.io/micro-business/${sn}</div><div class="dim small">anonymous · about 3 minutes · <a href="../../survey/${LEC}/index.html" target="_blank">open the survey</a></div></div>${notes}</section>`;
   }
   if (s.tag === 'survey') {
