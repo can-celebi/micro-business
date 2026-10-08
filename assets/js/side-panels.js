@@ -202,7 +202,7 @@
       chat = chat.filter(m => live.has(keyOf(m)) && !gone.has(keyOf(m)));
       const fresh = refs.filter(r => r.poll.startsWith(LEC + '-ask-') && !have.has(r.ts + '-' + r.client) && !gone.has(r.ts + '-' + r.client));
       for (let i = 0; i < fresh.length; i += 8) {
-        const got = await Promise.all(fresh.slice(i, i + 8).map(r => MP.blob(r.sha).then(j => Object.assign({ ts: r.ts, client: r.client }, j)).catch(() => null)));
+        const got = await Promise.all(fresh.slice(i, i + 8).map(r => MP.blob(r.sha).then(j => Object.assign({}, j, { ts: r.ts, client: r.client })).catch(() => null)));
         chat.push(...got.filter(m => m && m.text));
       }
       const seen = new Set(); chat = chat.filter(m => { const k = keyOf(m); if (seen.has(k)) return false; seen.add(k); return true; });
@@ -216,7 +216,7 @@
     msgs.innerHTML = chat.length ? chat.map(m => {
       const k = keyOf(m), ans = done.has(k), own = m.client === MP.cid;
       return `<div class="chat-m${ans ? ' done' : ''}${own ? ' own' : ''}"><div class="chat-h"><b>${esc(m.nick || 'anonymous')}</b> <span class="dim">${hm(m.ts)}${m.slide ? ' · slide ' + esc(m.slide) : ''}${ans ? ' · ✓ answered' : ''}${MP.teacher ? '' : ' · sent ✓'}</span></div><div>${esc(m.text)}</div>` +
-        (MP.teacher ? (ans ? '' : `<button class="btn ghost" data-k="${k}">answered ✓</button>`) + `<button class="btn ghost del" data-d="${k}">hide</button>` : '') + '</div>';
+        (MP.teacher ? (ans ? '' : `<button class="btn ghost" data-k="${esc(k)}">answered ✓</button>`) + `<button class="btn ghost del" data-d="${esc(k)}">hide</button>` : '') + '</div>';
     }).join('') : '<div class="dim sp-note">' + (MP.teacher ? 'no messages yet' : 'nothing sent yet: ask anything') + '</div>';
     msgs.querySelectorAll('button[data-k]').forEach(b => b.onclick = async () => {
       done.add(b.dataset.k); drawChat(); badge();
