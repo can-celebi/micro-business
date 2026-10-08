@@ -13,7 +13,7 @@
     const r2 = x => Math.round(x * 100) / 100;
     // inverse P = c − d·Q is the same line as Q = c/d − P/d
     const a = isInv ? v('a') / v('b') : v('a'), b = isInv ? 1 / v('b') : v('b');
-    const W = 520, H = 300, L = 56, B = 34, T = 10, R = 14, pw = W - L - R, ph = H - T - B;
+    const W = 520, H = 300, L = 56, B = 34, T = 10, R = 14, pw = W - L - R, ph = H - T - B - 8;
     const x = q => L + Math.max(0, Math.min(q, qm)) / qm * pw, y = p => T + ph - Math.max(0, Math.min(p, pm)) / pm * ph;
     // endpoints of the line inside the box
     let p0, q0, p1, q1;
@@ -24,13 +24,14 @@
       p0 = -a / b; q0 = 0; p1 = pm; q1 = a + b * pm;
       if (q1 > qm) { q1 = qm; p1 = (qm - a) / b; }
     }
-    const c = isD ? '#0074D9' : '#eb6834', ch = isD ? a / b : -a / b;
+    const c = isD ? '#0062C4' : '#D9480F', ch = isD ? a / b : -a / b;
     box.querySelector('svg').innerHTML =
       '<line x1="' + L + '" y1="' + T + '" x2="' + L + '" y2="' + (T + ph) + '" stroke="#222"/><line x1="' + L + '" y1="' + (T + ph) + '" x2="' + (L + pw) + '" y2="' + (T + ph) + '" stroke="#222"/>' +
       '<text x="' + (L - 8) + '" y="' + (T + 12) + '" text-anchor="end" fill="#777">P</text><text x="' + (L + pw) + '" y="' + (T + ph + 18) + '" text-anchor="end" fill="#777">Q</text>' +
       '<line x1="' + x(q0) + '" y1="' + y(p0) + '" x2="' + x(q1) + '" y2="' + y(p1) + '" stroke="' + c + '" stroke-width="3"/>' +
-      (ch <= pm ? '<circle cx="' + L + '" cy="' + y(ch) + '" r="5" fill="' + c + '"/><text x="' + (L + 8) + '" y="' + (y(ch) - 6) + '" fill="#555">P = ' + r1(ch) + '</text>' : '') +
-      (isD && !isInv && a <= qm ? '<circle cx="' + x(a) + '" cy="' + (T + ph) + '" r="5" fill="' + c + '"/><text x="' + x(a) + '" y="' + (T + ph - 10) + '" text-anchor="middle" fill="#555">Q = ' + r1(a) + '</text>' : '') +
+      // both intercepts, labelled live on the axes (Kemal, 08.10): price axis a/b, quantity axis a
+      (ch <= pm ? '<circle cx="' + L + '" cy="' + y(ch) + '" r="6" fill="' + c + '"/><text x="' + (L - 8) + '" y="' + (y(ch) + 5) + '" text-anchor="end" fill="' + c + '" font-weight="600">' + r1(ch) + '</text>' + (isD && !isInv ? '<text x="' + (L + 10) + '" y="' + (y(ch) - 8) + '" fill="#555">a/b = ' + r1(a) + '/' + r1(b) + '</text>' : '') : '') +
+      (isD && !isInv && a <= qm ? '<circle cx="' + x(a) + '" cy="' + (T + ph) + '" r="6" fill="' + c + '"/><text x="' + x(a) + '" y="' + (T + ph + 18) + '" text-anchor="middle" fill="' + c + '" font-weight="600">' + r1(a) + '</text><text x="' + x(a) + '" y="' + (T + ph - 10) + '" text-anchor="middle" fill="#555">a</text>' : '') +
       (isInv ? (() => { const q = v('q'), p = Math.max(0, v('a') - v('b') * q);
         return '<line x1="' + x(q) + '" y1="' + (T + ph) + '" x2="' + x(q) + '" y2="' + y(p) + '" stroke="#999" stroke-dasharray="4 4"/><line x1="' + L + '" y1="' + y(p) + '" x2="' + x(q) + '" y2="' + y(p) + '" stroke="#999" stroke-dasharray="4 4"/>' +
           '<circle cx="' + x(q) + '" cy="' + y(p) + '" r="6" fill="#222"/><text x="' + (x(q) + 9) + '" y="' + (y(p) - 8) + '" fill="#222">Q = ' + q + ' → P = ' + r2(p) + '</text>'; })() : '');
@@ -57,6 +58,7 @@
       '<label><span>' + lb + '</span><input type="range" data-k="b" min="' + d.bmin + '" max="' + d.bmax + '" step="' + (d.bstep || 1) + '" value="' + d.b + '"><b data-o="b"></b></label>' +
       (isInv ? '<label><span>Q</span><input type="range" data-k="q" min="0" max="' + d.qmax + '" step="1" value="' + (d.q || 40) + '"><b data-o="q"></b></label>' : '') + '<div class="ro"></div>';
     box.querySelectorAll('input').forEach(i => { i.oninput = () => draw(box); i.addEventListener('keydown', e => e.stopPropagation()); });
+    box.setAttribute('data-prevent-swipe', '');  // dragging a slider on a phone must not change the slide
     draw(box);
   }
   function go() { document.querySelectorAll('.sd-slider').forEach(init); }

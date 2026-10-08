@@ -18,13 +18,14 @@
   if (!LEC || /print-pdf/.test(location.search) || !MP) return;
   const W = window.innerWidth, H = window.innerHeight;
   const WIDE = W >= 900 && !document.documentElement.classList.contains('mobile');
-  const GB = ['#cfe8c9', '#e7f0c6', '#f6efc0', '#f8d9b8', '#f2b6ae'];  // 1 good … 5 bad (pastel)
+  // 1 … 5 as a saturated diverging scale, grey in the middle (Can, 08.10: "much more saturated"; works for colour-blind viewers)
+  const GB = ['#0B5394', '#5B8FCB', '#8C8C8C', '#E8590C', '#B71C1C'];
   const ITEMS = [
     // confusion replaced "understanding" on 08.10 (Can): all three now run 1 good … 5 bad. Old taps of poll
     // <LEC>-pulse-understand stay readable: understanding v is shown as confusion 6 − v (see drawClass).
     { id: 'confusion', name: 'confusion', q: 'how lost are you right now?', lo: 'I follow', hi: 'I\'m lost', col: GB },
     { id: 'tired', name: 'tiredness', q: 'how tired are you?', lo: 'fresh', hi: 'exhausted', col: GB },
-    { id: 'pace', name: 'pace', q: 'the pace is …', lo: 'too slow', hi: 'too fast', col: ['#c4d8f0', '#dfe9f6', '#ececE6', '#f8e1c9', '#f2c3a4'] },
+    { id: 'pace', name: 'pace', q: 'the pace is …', lo: 'too slow', hi: 'too fast', col: GB },
   ];
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const hm = ts => { const d = new Date(ts); return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); };
@@ -39,7 +40,7 @@
   // this device (remembered). In teacher mode, T switches it off again. Students without the code get nothing.
   const codePanel = mk('div', 'pulse-panel side-panel code-panel');
   codePanel.hidden = true; stop(codePanel);
-  codePanel.innerHTML = '<h3>&gt; teacher code</h3>';
+  codePanel.innerHTML = '<h3>&gt; lecturer code</h3>';
   const codeIn = mk('input'); codeIn.type = 'password'; codeIn.autocomplete = 'off'; codeIn.placeholder = 'code';
   const codeGo = mk('button', 'btn', 'enter'), codeSt = mk('div', 'st');
   codePanel.appendChild(codeIn); codePanel.appendChild(codeGo); codePanel.appendChild(codeSt);
@@ -67,7 +68,7 @@
     return btoa(String.fromCharCode(...new Uint8Array(ct)));
   }
   function drawMe() {
-    meSec.innerHTML = '<h3>&gt; who are you?</h3><div class="dim sp-note">others only see your <b>nickname</b>. Your name is encrypted on this device; only the teacher can read it (for participation points).</div>';
+    meSec.innerHTML = '<h3>&gt; who are you?</h3><div class="dim sp-note">others only see your <b>nickname</b>. Your name is encrypted on this device; only the lecturer can read it (for participation points).</div>';
     const f = (lab, k, ph) => { const l = mk('label', 'sp-field', '<span>' + lab + '</span>'); const i = mk('input'); i.value = me[k] || ''; i.placeholder = ph; i.maxLength = 40; i.dataset.k = k; stop(i); l.appendChild(i); meSec.appendChild(l); return i; };
     const fn = f('first name', 'name', 'e.g. Lena'), sn = f('surname', 'surname', 'e.g. Huber'), nn = f('nickname', 'nick', 'shown in chat');
     // in class or at home (Can, 07.10): asked every lecture; stored per lecture as poll <LEC>-where (+ in the reg record)
@@ -161,7 +162,7 @@
     const now = win ? Math.min(Date.now(), win[1]) : Date.now();
     const counts = (rows, t) => { const last = {}; rows.forEach(r => { if (r.ts <= t) last[r.client] = r.value; }); const c = [0, 0, 0, 0, 0]; Object.values(last).forEach(v => { if (v >= 1 && v <= 5) c[v - 1]++; }); return c; };
     const sum = c => c.reduce((p, q) => p + q, 0), avg = c => sum(c) ? c.reduce((p, q, i) => p + q * (i + 1), 0) / sum(c) : null;
-    const seg = (c, it, txt) => c.map((k, j) => `<span style="width:${sum(c) ? 100 * k / sum(c) : 0}%;background:${it.col[j]}">${txt && k ? k : ''}</span>`).join('');
+    const seg = (c, it, txt) => c.map((k, j) => `<span style="width:${sum(c) ? 100 * k / sum(c) : 0}%;background:${it.col[j]};color:#fff;font-weight:600">${txt && k ? k : ''}</span>`).join('');
     let html = '', nAll = new Set();
     ITEMS.forEach(it => {
       const rows = rowsOf(it); rows.forEach(r => nAll.add(r.client));
@@ -185,7 +186,7 @@
   const send = mk('button', 'btn', 'send'), crf = mk('button', 'btn ghost', 'refresh'), cst = mk('span', 'st');
   const cbar = mk('div', 'chat-bar'); cbar.appendChild(send); cbar.appendChild(crf); cbar.appendChild(cst);
   cSec.appendChild(msgs); cSec.appendChild(ta); cSec.appendChild(cbar);
-  let chat = [], done = new Set(), gone = new Set(), chatBusy = false, firstChat = true;
+  let chat = [], done = new Set(), gone = new Set(), chatBusy = false, firstChat = true, light = null;
   const keyOf = m => m.ts + '-' + m.client;
   const MYKEY = 'micro-mychat-' + LEC;
   const myChat = () => { try { return JSON.parse(ls.get(MYKEY) || '[]'); } catch (e) { return []; } };
@@ -236,6 +237,8 @@
   }
   function badge() {
     const open = chat.filter(m => !done.has(keyOf(m))).length;
+    // the chat light (teacher): glows red while a question is open; [answered ✓] or [hide] on all of them turns it off
+    if (light) { light.classList.toggle('on', open > 0); light.innerHTML = '<i></i>' + (open ? open + ' new question' + (open > 1 ? 's' : '') : 'chat'); light.title = open ? 'open the chat' : 'no open questions'; }
     if (chatBtn) { chatBtn.textContent = MP.teacher && open ? '💬 ' + open : '💬 chat'; chatBtn.classList.toggle('has', MP.teacher && open > 0); }
     const h = cSec.querySelector('h3'); if (h) h.classList.toggle('has', MP.teacher && open > 0);
   }
@@ -255,17 +258,24 @@
   if (!MP.teacher) crf.hidden = true;
 
   // ---------- layout ----------
-  let chatBtn = null, meBtn = mk('button', 'side-btn me-btn', esc(meLabel()));
+  let chatBtn = null, meBtn = mk('button', 'side-btn me-btn', esc(meLabel())), openChat = () => {};
   const top = mk('div', 'side-btns');
   if (MP.teacher) {
-    top.appendChild(mk('span', 'side-mode', 'teacher'));
+    top.appendChild(mk('span', 'side-mode', 'lecturer'));
+    // chat light (Can, 08.10): a red glowing light while a student question is open; click = go to the first open one
+    light = mk('button', 'side-btn chat-light', '<i></i>chat');
+    light.onclick = () => {
+      openChat();
+      setTimeout(() => { const m = [...msgs.querySelectorAll('.chat-m')].find(x => !x.classList.contains('done')); if (m) m.scrollIntoView({ block: 'center' }); }, 60);
+    };
+    top.appendChild(light);
     // teacher only: the name wheel over the slide (same browser, so a list loaded there once stays there)
     const wBtn = mk('button', 'side-btn wheel-btn', '🎡 names'); wBtn.title = 'name wheel';
     const wBox = mk('div', 'wheel-overlay'); wBox.hidden = true;
-    const wClose = mk('button', 'side-btn wheel-close', '✕ back to the slides');
+    const wClose = mk('button', 'side-btn wheel-close', '✕ close');
     wBox.appendChild(wClose);
     wBtn.onclick = () => {
-      if (!wBox.querySelector('iframe')) { const f = mk('iframe'); f.src = '../../wheel/index.html' + (/[?&]test\b/.test(location.search) ? '?test' : ''); f.title = 'name wheel'; wBox.appendChild(f); }
+      if (!wBox.querySelector('iframe')) { const f = mk('iframe'); f.src = '../../wheel/index.html?compact' + (/[?&]test\b/.test(location.search) ? '&test' : ''); f.title = 'name wheel'; wBox.appendChild(f); }
       wBox.hidden = false;
     };
     wClose.onclick = () => { wBox.hidden = true; };
@@ -292,6 +302,7 @@
       if (window.Reveal && Reveal.layout) setTimeout(() => Reveal.layout(), 30);
     };
     fold.onclick = () => setOpen(false); tab.onclick = () => setOpen(true);
+    openChat = () => setOpen(true);
     setOpen(ls.get('micro-sidebar') !== '0');
     top.appendChild(meBtn);
   } else {
@@ -301,6 +312,7 @@
     document.body.appendChild(pPanel); document.body.appendChild(cPanel); panels.push(pPanel, cPanel);
     const pBtn = mk('button', 'side-btn pulse-btn', '◐ pulse'); chatBtn = mk('button', 'side-btn chat-btn', '💬 chat');
     pBtn.onclick = () => toggle(pPanel, drawClass); chatBtn.onclick = () => toggle(cPanel, loadChat);
+    openChat = () => { if (cPanel.hidden) toggle(cPanel, loadChat); };
     top.appendChild(pBtn); top.appendChild(chatBtn); top.appendChild(meBtn);
   }
   document.body.appendChild(top);
@@ -314,7 +326,9 @@
   // students: no polling at all (Can, 08.10: chat and class pulse are for the teacher screen only)
   if (WIDE || MP.teacher) { drawClass(); loadChat(); }
   if (MP.teacher) {
-    setInterval(() => { if (visible()) loadChat(); }, 20000);
+    // also with the sidebar folded, and during class even in a background tab: the chat light must work
+    const inClassNow = () => { const w = MP.classWindow(LEC); return !!w && Date.now() >= w[0] - 15 * 60000 && Date.now() <= w[1] + 15 * 60000; };
+    setInterval(() => { if (!document.hidden || inClassNow()) loadChat(); }, 20000);
     setInterval(() => { if (visible()) drawClass(); }, 60000);
   }
 })();

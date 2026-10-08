@@ -8,7 +8,7 @@
   --dim: #777777;
   --faint: #bbbbbb;
   --line: #222222;
-  --accent: #0074D9;
+  --accent: #0062C4;
   --good: #2ECC40;
   --warn: #FFDC00;
   --bad: #FF4136;
@@ -126,7 +126,8 @@ table.console .verdict { font-weight: 600; text-align: center; min-width: 5.5em;
 .btn::before { content: "[ "; color: var(--dim); }
 .btn::after { content: " ]"; color: var(--dim); }
 .btn:hover { background: var(--p-blue); }
-.btn.chosen { background: var(--p-green); }
+.btn.chosen { background: #E3F1E7; border-color: #1B7F3B; color: #1B7F3B; font-weight: 600; }
+.btn.chosen::after { content: ' ✓'; }
 .btn.ghost { border-color: #ccc; color: var(--dim); }
 
 .poll { margin-top: 1.2em; }
@@ -139,7 +140,7 @@ table.console .verdict { font-weight: 600; text-align: center; min-width: 5.5em;
 .poll-input .unit { font-size: 0.85em; margin-right: 0.3em; color: var(--dim); }
 .poll-status { font-size: 0.65em; color: var(--dim); margin-left: 0.6em; }
 /* slider poll (Cevdet, 08.10): no thumb until the student touches it */
-.poll-input input.slider { width: 14em; max-width: 60vw; accent-color: #0074D9; margin: 0 0.4em; padding: 0; border: none; background: none; box-shadow: none; }
+.poll-input input.slider { width: 14em; max-width: 60vw; accent-color: #0062C4; margin: 0 0.4em; padding: 0; border: none; background: none; box-shadow: none; }
 .poll-input input.slider.untouched::-webkit-slider-thumb { opacity: 0; }
 .poll-input input.slider.untouched::-moz-range-thumb { opacity: 0; }
 .poll-input .slider-end { font-size: 0.6em; }
@@ -153,7 +154,7 @@ html.mobile .poll-input input.slider { width: 100%; max-width: none; margin: 0.3
 
 .bar-row { display: grid; grid-template-columns: 4em 1fr 5.2em; gap: 0.6em; align-items: center; font-size: 0.7em; margin: 0.2em 0; }
 .bar-track { height: 0.9em; background: #f1f1ee; border: 1px solid #ddd; }
-.bar-fill { display: block; height: 100%; background: var(--p-green); border-right: 1.5px solid var(--line); }
+.bar-fill { display: block; height: 100%; background: #7A3DB8; }
 .bar-n { text-align: right; white-space: nowrap; }
 
 /* compact poll results (07.10): one small aligned table of thin bars, not a full-width block */
@@ -333,7 +334,7 @@ html.mobile .sv-grid .bar-row { font-size: 0.8em; }
 
 /* "no idea" option, free-text polls (2026-10-06) */
 .btn.noidea { color: var(--dim); border-style: dashed; }
-.bar-fill.noidea { background: #eee; }
+.bar-fill.noidea { background: #bdbdbd; }
 .poll-input textarea { font-family: var(--mono); font-size: 0.75em; width: 100%; min-height: 3em; border: 1.5px solid #bbb; border-radius: 2px; padding: 0.3em; }
 html.mobile .poll-input textarea { font-size: 1em; }
 
@@ -383,6 +384,8 @@ html.mobile .pg-h { font-size: 13px; } html.mobile .pg-ends { font-size: 11px; }
 .sd-slider { font-size: 0.55em; }
 .sd-slider svg { width: 100%; height: auto; display: block; }
 .sd-slider label { display: grid; grid-template-columns: 2em 1fr 4em; align-items: center; gap: 0.6em; margin: 0.25em 0; }
+.sd-slider input[type=range] { accent-color: #0062C4; height: 1.6em; width: 100%; }
+.sd-slider label b { font-size: 1.2em; }
 .sd-slider label span { color: var(--dim); }
 .sd-slider .ro { margin-top: 0.5em; line-height: 1.6; font-size: 1.35em; }
 .sd-slider .ro .dim { font-size: 0.75em; }
@@ -457,7 +460,8 @@ html.mobile .side-btn { font-size: 13px; padding: 6px 8px; }
 html.mobile .reveal .slides > section { padding-top: 42px !important; }
 .qr-slide img.qr-small { width: 220px !important; height: 220px !important; }
 html.mobile .qr-slide img.qr-small { width: 40vw !important; height: 40vw !important; }
-.wheel-overlay { position: fixed; inset: 0; z-index: 60; background: #fff; display: flex; flex-direction: column; }
+/* the name wheel (Can, 08.10): a box in the top-right corner over the pulse panel, the sidebar's width */
+.wheel-overlay { position: fixed; top: 0; right: 0; width: 300px; height: 390px; max-height: calc(100vh - 16px); z-index: 60; background: #fff; display: flex; flex-direction: column; border: 1.5px solid var(--line); box-shadow: 3px 3px 0 rgba(0,0,0,.15); }
 .wheel-overlay[hidden] { display: none; }
 .wheel-overlay iframe { flex: 1; width: 100%; border: 0; }
-.wheel-close { align-self: flex-end; margin: 8px 12px 0; }
+.wheel-close { align-self: flex-end; margin: 4px 4px 0; font-size: 11px; padding: 2px 8px; }

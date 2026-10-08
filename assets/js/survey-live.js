@@ -10,6 +10,7 @@
   const MP = window.MicroPoll;
   const secs = [...document.querySelectorAll('section.sv-live')];
   if (!MP || !secs.length) return;
+  const CACHE = {};
   const hm = ts => new Date(ts || Date.now()).toLocaleTimeString('de-AT', { hour: '2-digit', minute: '2-digit' });
   const ls = { get: k => { try { return localStorage.getItem(k); } catch (e) { return null; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} } };
 
@@ -24,9 +25,40 @@
       const k = row.dataset.share, c = A.filter(a => String(a[k]) === row.dataset.v).length;
       (S.share[k] = S.share[k] || {})[row.dataset.v] = c;
     });
+    // compare boxes (Can, 08.10): the same rows for each survey in data-cmp (e.g. Wednesday | today)
+    S.cmp = S.cmp || {};
     return S;
   }
+  function summariseCmp(sec, poll, A) {
+    const C = { n: A.length, mean: {}, share: {}, tried: {} };
+    sec.querySelectorAll('.bar-row[data-cmean]').forEach(row => {
+      const k = row.dataset.cmean, v = A.map(a => Number(a[k])).filter(x => x >= 1 && x <= 5);
+      C.mean[k] = [v.reduce((x, y) => x + y, 0), v.length];
+      if (row.dataset.tried) C.tried[k] = A.filter(a => a[row.dataset.tried]).length;
+    });
+    sec.querySelectorAll('.bar-row[data-cshare]').forEach(row => {
+      const k = row.dataset.cshare; (C.share[k] = C.share[k] || {})[row.dataset.v] = A.filter(a => String(a[k]) === row.dataset.v).length;
+    });
+    return C;
+  }
+  function paintCmp(sec, S) {
+    sec.querySelectorAll('.cmp-box').forEach(box => {
+      const polls = box.dataset.cmp.split(',');
+      polls.forEach((p, i) => { const C = (S.cmp || {})[p]; const h = box.querySelector('.cmp-n[data-i="' + i + '"]'); if (h) h.textContent = C ? '· n = ' + C.n : ''; });
+      box.querySelectorAll('.bar-row[data-cmean]').forEach(row => polls.forEach((p, i) => {
+        const C = (S.cmp || {})[p], [sum, cnt] = (C && C.mean[row.dataset.cmean]) || [0, 0], m = cnt ? sum / cnt : 0, t = C && C.tried[row.dataset.cmean];
+        row.querySelectorAll('.bar-fill')[i].style.width = (100 * m / 5) + '%';
+        row.querySelector('.bar-n[data-i="' + i + '"]').textContent = (cnt ? m.toFixed(1) : '–') + (t != null ? ' · ' + t : '');
+      }));
+      box.querySelectorAll('.bar-row[data-cshare]').forEach(row => polls.forEach((p, i) => {
+        const C = (S.cmp || {})[p], c = (C && (C.share[row.dataset.cshare] || {})[row.dataset.v]) || 0, pct = C && C.n ? 100 * c / C.n : 0;
+        row.querySelectorAll('.bar-fill')[i].style.width = pct + '%';
+        row.querySelector('.bar-n[data-i="' + i + '"]').textContent = Math.round(pct) + '% (' + c + ')';
+      }));
+    });
+  }
   function paint(sec, S) {
+    paintCmp(sec, S);
     sec.querySelectorAll('.bar-row[data-mean]').forEach(row => {
       const [sum, cnt] = S.mean[row.dataset.mean] || [0, 0], m = cnt ? sum / cnt : 0;
       row.querySelector('.bar-fill').style.width = (100 * m / 5) + '%';
@@ -46,6 +78,14 @@
     try {
       const recs = (await MP.textResults(sec.dataset.poll + '/')).filter(r => r.poll === sec.dataset.poll);
       const S = summarise(sec, recs.map(r => r.answers || {}));
+      // compare surveys: this one again, and the earlier ones read once per page load (they are finished)
+      const others = [...new Set([...sec.querySelectorAll('.cmp-box')].flatMap(b => b.dataset.cmp.split(',')))];
+      for (const p of others) {
+        let A;
+        if (p === sec.dataset.poll) A = recs.map(r => r.answers || {});
+        else { if (!CACHE[p]) CACHE[p] = (await MP.textResults(p + '/')).filter(r => r.poll === p).map(r => r.answers || {}); A = CACHE[p]; }
+        S.cmp[p] = summariseCmp(sec, p, A);
+      }
       paint(sec, S);
       st.textContent = 'n = ' + S.n + ' · ' + hm();
       const k = 'micro-sum-' + MP.session + '-' + sec.dataset.poll;
@@ -84,4 +124,8 @@
     else if (MP.hasToken && !seen.has(s)) { seen.add(s); drawSummary(s); }
   };
   if (window.Reveal) { Reveal.on('slidechanged', e => open(e.currentSlide)); Reveal.on('ready', e => open(e.currentSlide)); }
+  // a page opened directly on this slide (a reload): the ready event can come before this script listens
+  let tries = 0, opened = false;
+  const first = () => { const cur = window.Reveal && Reveal.isReady && Reveal.isReady() && Reveal.getCurrentSlide(); if (cur) { if (!opened && cur.classList.contains('sv-live') && !(teacher && cur.dataset.drawn)) { opened = true; cur.dataset.drawn = '1'; open(cur); } } else if (tries++ < 20) setTimeout(first, 300); };
+  setTimeout(first, 300);
 })();

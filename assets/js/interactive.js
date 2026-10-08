@@ -14,7 +14,14 @@
   const GH = cfg.github || {};
   const TOKEN = (GH.tokenParts || []).length ? atob(GH.tokenParts.join('')) : '';
   // ?test in the URL writes to session "test" (for load tests and rehearsals)
-  const SESSION = /[?&]test\b/.test(location.search) ? 'test' : (cfg.session || 'default');
+  // a page served from this computer (a local preview) always writes to the test session, so previews never reach the
+  // class data (Kemal, 08.10: Can's preview taps landed in ws26). ?live forces the real session on localhost.
+  const LOCAL = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname) && !/[?&]live\b/.test(location.search);
+  const SESSION = /[?&]test\b/.test(location.search) || LOCAL ? 'test' : (cfg.session || 'default');
+  // ?fresh (Kemal, 08.10): forget this device's remembered TEST answers, so a preview starts clean. Never the real session.
+  if (SESSION === 'test' && /[?&]fresh\b/.test(location.search)) {
+    try { Object.keys(localStorage).filter(k => k.indexOf('micro-voted-test-') === 0).forEach(k => localStorage.removeItem(k)); } catch (e) {}
+  }
   const NOIDEA = 'no idea';
   const API = 'https://api.github.com/repos/' + GH.owner + '/' + GH.repo;
 
@@ -166,6 +173,8 @@
 
   // class window of a lecture: [start, end] in ms (18:30–20:00 Vienna time on its date, config.js), or null if unknown
   function classWindow(lec) {
+    // the test session has no class window (Can, 08.10: "for now we are testing it so please show me"): every tap counts
+    if (SESSION === 'test') return null;
     const day = (cfg.lectures || {})[lec], tt = cfg.classTime || ['18:30', '20:00'];
     if (!day) return null;
     const vienna = (hhmm) => {
@@ -231,6 +240,7 @@
       if (parts.length < 3) return;
       const ts = Number(parts[0]), client = parts[1], raw = parts.slice(2).join('--');
       const value = raw !== '' && isFinite(Number(raw)) ? Number(raw) : raw;
+      if (preClass(poll, ts)) return;
       const k = poll + '|' + client;
       if (!latest[k] || latest[k].ts < ts) latest[k] = { poll: poll, client: client, ts: ts, value: value };
     });
@@ -239,6 +249,12 @@
     return by;
   }
 
+  // slide polls count from 30 minutes before their class on (config.js dates): earlier taps are previews
+  // (Kemal, 08.10). Nothing is deleted; the exports still have every answer.
+  function preClass(poll, ts) {
+    const m = /^(L\d\d)-/.exec(poll), w = m && classWindow(m[1]);
+    return !!w && ts < w[0] - 30 * 60000;
+  }
   async function results(poll) {
     if (!TOKEN) {
       const all = JSON.parse(load('micro-poll-' + poll) || '{}');
@@ -254,6 +270,7 @@
       if (parts.length < 3) return;
       const ts = Number(parts[0]), client = parts[1], raw = parts.slice(2).join('--');
       const value = raw !== '' && isFinite(Number(raw)) ? Number(raw) : raw;
+      if (preClass(poll, ts)) return;
       if (!latest[client] || latest[client].ts < ts) latest[client] = { ts: ts, value: value };
     });
     const responses = Object.values(latest).map(x => ({ value: x.value, time: new Date(x.ts).toISOString() }));
