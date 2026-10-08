@@ -344,6 +344,14 @@ html.mobile .poll-input textarea { font-size: 1em; }
 .side-mode { font-family: var(--mono); font-size: 11px; color: var(--dim); align-self: center; }
 .side-panel .class-h { margin-top: 14px; padding-top: 8px; border-top: 1px solid #e3e3e3; }
 .pulse-graph svg { display: block; margin: 4px 0; }
+.pg { margin: 6px 0 10px; }
+.pg-h { font-size: 12px; margin-bottom: 2px; }
+.pg-bar { display: flex; height: 20px; border: 1px solid #bbb; background: #fff; }
+.pg-bar span { display: flex; align-items: center; justify-content: center; font-size: 11px; overflow: hidden; }
+.pg-then { display: flex; height: 5px; margin-top: 2px; }
+.pg-then span { display: block; }
+.pg-ends { display: flex; justify-content: space-between; font-size: 10px; color: #999; margin-top: 1px; }
+html.mobile .pg-h { font-size: 13px; } html.mobile .pg-ends { font-size: 11px; }
 .pulse-legend { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 12px; margin: 2px 0 4px; }
 .pulse-legend i { display: inline-block; width: 10px; height: 3px; border-radius: 2px; margin-right: 5px; vertical-align: middle; }
 .side-panel .btn.ghost { font-size: 12px; padding: 2px 8px; margin-top: 6px; }

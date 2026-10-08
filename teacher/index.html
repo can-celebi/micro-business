@@ -29,14 +29,14 @@
   <label><input type="checkbox" id="recent"> pulse: only the last 15 minutes</label>
   <div id="out"></div>
 </main>
-<script src="../assets/js/config.js?v=t2"></script>
-<script src="../assets/js/interactive.js?v=t2"></script>
+<script src="../assets/js/config.js?v=t3"></script>
+<script src="../assets/js/interactive.js?v=t3"></script>
 <script>
 // Teacher view for Can's phone: teacher/?l=L02. Nothing updates by itself: press [ refresh ].
 const L = (new URLSearchParams(location.search).get('l') || 'L02').toUpperCase();
 const out = document.getElementById('out');
 const PULSE = [
-  ['understand', 'understanding of today', ['1','2','3','4','5'], '1 lost · 5 got it'],
+  ['confusion', 'confusion', ['1','2','3','4','5'], '1 I follow · 5 I\'m lost (old "understanding" taps shown as 6 − value)'],
   ['tired', 'tiredness', ['1','2','3','4','5'], '1 fresh · 5 exhausted'],
   ['pace', 'pace', ['1','2','3','4','5'], '1 too slow · 3 right · 5 too fast'],
   ['finish', 'finish when?', ['now','+10 min','+20 min','full time'], ''],
@@ -69,7 +69,8 @@ async function draw() {
     let h = document.createElement('div'); h.innerHTML = '<h2>pulse <span class="dim">· ' + (win ? hm(win[0]) + '–' + hm(win[1]) + ' only' : 'all taps') + '</span></h2>'; out.appendChild(h);
     PULSE.forEach(([id, name, opts, ends]) => {
       const latest = {};
-      (pulseAll[L + '-pulse-' + id] || []).forEach(r => { if (win && (r.ts < win[0] || r.ts > win[1])) return; if (!latest[r.client] || latest[r.client].ts < r.ts) latest[r.client] = r; });
+      const src = (pulseAll[L + '-pulse-' + id] || []).concat(id === 'confusion' ? (pulseAll[L + '-pulse-understand'] || []).map(r => Object.assign({}, r, { value: 6 - r.value })) : []);
+      src.forEach(r => { if (win && (r.ts < win[0] || r.ts > win[1])) return; if (!latest[r.client] || latest[r.client].ts < r.ts) latest[r.client] = r; });
       let rows = Object.values(latest);
       if (recent) rows = rows.filter(r => r.ts >= cutoff);
       const counts = {}; rows.forEach(r => counts[String(r.value)] = (counts[String(r.value)] || 0) + 1);

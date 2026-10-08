@@ -16,10 +16,13 @@
   if (!LEC || /print-pdf/.test(location.search) || !MP) return;
   const W = window.innerWidth, H = window.innerHeight;
   const WIDE = W >= 900 && !document.documentElement.classList.contains('mobile');
+  const GB = ['#cfe8c9', '#e7f0c6', '#f6efc0', '#f8d9b8', '#f2b6ae'];  // 1 good … 5 bad (pastel)
   const ITEMS = [
-    { id: 'understand', name: 'understanding', q: 'how well do you understand today\'s concepts?', lo: 'lost', hi: 'got it', col: '#3f7f2e' },
-    { id: 'tired', name: 'tiredness', q: 'how tired are you?', lo: 'fresh', hi: 'exhausted', col: '#b8432f' },
-    { id: 'pace', name: 'pace', q: 'the pace is …', lo: 'too slow', hi: 'too fast', col: '#2f63a8' },
+    // confusion replaced "understanding" on 08.10 (Can): all three now run 1 good … 5 bad. Old taps of poll
+    // <LEC>-pulse-understand stay readable: understanding v is shown as confusion 6 − v (see drawClass).
+    { id: 'confusion', name: 'confusion', q: 'how lost are you right now?', lo: 'I follow', hi: 'I\'m lost', col: GB },
+    { id: 'tired', name: 'tiredness', q: 'how tired are you?', lo: 'fresh', hi: 'exhausted', col: GB },
+    { id: 'pace', name: 'pace', q: 'the pace is …', lo: 'too slow', hi: 'too fast', col: ['#c4d8f0', '#dfe9f6', '#ececE6', '#f8e1c9', '#f2c3a4'] },
   ];
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const hm = ts => { const d = new Date(ts); return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); };
@@ -142,32 +145,28 @@
     classBusy = false;
     // class time only (Can, 08.10): taps before 18:30 or after 20:00 of the lecture day are ignored
     const win = MP.classWindow(LEC), inClass = r => !win || (r.ts >= win[0] && r.ts <= win[1]);
-    const series = ITEMS.map(it => ({ it: it, rows: (all[LEC + '-pulse-' + it.id] || []).filter(r => isFinite(r.value) && inClass(r)).sort((a, b) => a.ts - b.ts) }));
-    const tsAll = series.flatMap(s => s.rows.map(r => r.ts));
-    if (!tsAll.length) { graph.innerHTML = '<div class="dim sp-note">the class, over time: ' + (win && Date.now() < win[0] ? 'starts at ' + hm(win[0]) : 'no answers yet') + '</div>'; return; }
-    const t0 = win ? win[0] : Math.min(...tsAll), t1 = win ? Math.max(Math.min(Date.now(), win[1]), Math.max(...tsAll)) : Math.max(Date.now(), t0 + 60000), step = Math.max(60000, Math.ceil((t1 - t0) / 40 / 60000) * 60000);
-    const GW = 280, GH = 120, L = 18, R = 8, T = 6, B = 16;
-    const x = t => L + (GW - L - R) * (t - t0) / (t1 - t0), y = v => T + (GH - T - B) * (5 - v) / 4;
-    let svg = `<svg viewBox="0 0 ${GW} ${GH}" width="100%" role="img" aria-label="class pulse over time">`;
-    [1, 2, 3, 4, 5].forEach(v => svg += `<line x1="${L}" x2="${GW - R}" y1="${y(v)}" y2="${y(v)}" stroke="#e6e6e1" stroke-width="1"/><text x="${L - 5}" y="${y(v) + 3.5}" font-size="9" text-anchor="end" fill="#888">${v}</text>`);
-    svg += `<text x="${L}" y="${GH - 3}" font-size="9" fill="#888">${hm(t0)}</text><text x="${GW - R}" y="${GH - 3}" font-size="9" fill="#888" text-anchor="end">${t1 >= Date.now() - 60000 ? 'now ' : ''}${hm(t1)}</text>`;
-    const legend = [];
-    series.forEach(s => {
-      if (!s.rows.length) return;
-      const pts = [];
-      const times = []; for (let t = t0; t < t1; t += step) times.push(t); times.push(t1);  // always end exactly at t1
-      times.forEach(t => {
-        const latest = {}; s.rows.forEach(r => { if (r.ts <= t) latest[r.client] = r.value; });
-        const v = Object.values(latest);
-        if (v.length) { const m = v.reduce((a, b) => a + b, 0) / v.length; pts.push([x(t), y(m), m, v.length]); }
-      });
-      if (!pts.length) return;
-      const p = pts[pts.length - 1];
-      svg += `<polyline points="${pts.map(q => q[0].toFixed(1) + ',' + q[1].toFixed(1)).join(' ')}" fill="none" stroke="${s.it.col}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><circle cx="${p[0]}" cy="${p[1]}" r="3.5" fill="${s.it.col}" stroke="#fff" stroke-width="1.5"/>`;
-      legend.push(`<span><i style="background:${s.it.col}"></i>${s.it.name} <b>${p[2].toFixed(1)}</b></span>`);
+    // three gauges (Can, 08.10, option B): per question the share of phones at 1..5 right now (each phone's latest tap),
+    // the average, and a thin strip = 10 minutes earlier
+    const rowsOf = it => {
+      const r = (all[LEC + '-pulse-' + it.id] || []).filter(x => isFinite(x.value) && inClass(x));
+      if (it.id === 'confusion') (all[LEC + '-pulse-understand'] || []).forEach(x => { if (isFinite(x.value) && inClass(x)) r.push({ client: x.client, ts: x.ts, value: 6 - x.value }); });
+      return r.sort((p, q) => p.ts - q.ts);
+    };
+    const now = win ? Math.min(Date.now(), win[1]) : Date.now();
+    const counts = (rows, t) => { const last = {}; rows.forEach(r => { if (r.ts <= t) last[r.client] = r.value; }); const c = [0, 0, 0, 0, 0]; Object.values(last).forEach(v => { if (v >= 1 && v <= 5) c[v - 1]++; }); return c; };
+    const sum = c => c.reduce((p, q) => p + q, 0), avg = c => sum(c) ? c.reduce((p, q, i) => p + q * (i + 1), 0) / sum(c) : null;
+    const seg = (c, it, txt) => c.map((k, j) => `<span style="width:${sum(c) ? 100 * k / sum(c) : 0}%;background:${it.col[j]}">${txt && k ? k : ''}</span>`).join('');
+    let html = '', nAll = new Set();
+    ITEMS.forEach(it => {
+      const rows = rowsOf(it); rows.forEach(r => nAll.add(r.client));
+      const c = counts(rows, now), c0 = counts(rows, now - 10 * 60000), m = avg(c), m0 = avg(c0);
+      const trend = m != null && m0 != null ? (m - m0 > 0.15 ? ' ↑' : m - m0 < -0.15 ? ' ↓' : ' →') : '';
+      html += `<div class="pg"><div class="pg-h"><b>${it.name}</b> <span class="dim">avg <b>${m != null ? m.toFixed(1) : '–'}</b>${trend} · n = ${sum(c)}</span></div>` +
+        `<div class="pg-bar">${seg(c, it, true)}</div><div class="pg-then">${seg(c0, it, false)}</div>` +
+        `<div class="pg-ends"><span>1 ${it.lo}</span><span>5 ${it.hi}</span></div></div>`;
     });
-    svg += '</svg>';
-    graph.innerHTML = '<div class="dim sp-note">the class, over time (n = ' + new Set(series.flatMap(s => s.rows.map(r => r.client))).size + ')</div>' + svg + `<div class="pulse-legend">${legend.join('')}</div>`;
+    if (!nAll.size) { graph.innerHTML = '<div class="dim sp-note">the class right now: ' + (win && Date.now() < win[0] ? 'starts at ' + hm(win[0]) : 'no answers yet') + '</div>'; return; }
+    graph.innerHTML = '<div class="dim sp-note">the class right now · ' + hm(now) + ' · thin strip = 10 min ago</div>' + html;
   }
 
   // ---------- chat ----------
