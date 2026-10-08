@@ -465,11 +465,29 @@
     };
     refresh.onclick = draw;
     // after your own answer: open the results once (no auto-update; [refresh] for new answers)
+    // The choice is remembered on this device (micro-voted-<session>-<poll>), so after a reload or the next day
+    // the results and the answer stay open without voting again (Can, 08.10).
+    const VK = 'micro-voted-' + SESSION + '-' + poll;
     afterSave = () => {
+      const c = input.querySelector('.btn.chosen');
+      store(VK, type === 'choice' && c ? c.textContent : '1');
       out.classList.add('open'); refresh.style.display = ''; draw();
       // tells the slide that this person has decided (the deck then shows its [show answer] button)
       node.dispatchEvent(new CustomEvent('micropoll:saved', { bubbles: true, detail: { poll: poll } }));
     };
+    const prev = load(VK);
+    if (prev) {
+      input.querySelectorAll('.btn').forEach(b => { if (b.textContent === prev) b.classList.add('chosen'); });
+      status.textContent = 'answered_';
+      out.classList.add('open'); refresh.style.display = '';
+      // results are loaded only when the slide is on screen (one call, not one per answered poll at page load)
+      let drawn = false;
+      const drawIfHere = () => { if (drawn) return; const cur = window.Reveal && Reveal.getCurrentSlide && Reveal.getCurrentSlide(); if (cur && (cur === node.closest('section') || cur.contains(node) || node.closest('section').contains(cur))) { drawn = true; draw(); } };
+      if (window.Reveal && Reveal.on) Reveal.on('slidechanged', drawIfHere);
+      // the deck may not be ready yet when polls are set up: check again until it is (max ~6 s)
+      let tries = 0; const wait = () => { if (window.Reveal && Reveal.isReady && Reveal.isReady()) drawIfHere(); else if (tries++ < 20) setTimeout(wait, 300); }; wait();
+      setTimeout(() => node.dispatchEvent(new CustomEvent('micropoll:saved', { bubbles: true, detail: { poll: poll, restored: true } })), 0);
+    }
   }
 
   function initPrompt(d) {

@@ -8,7 +8,7 @@ const LEC = process.argv[2] || 'L02';
 const SB = process.argv[3] || path.join(__dirname, '..', '..', '02_overview-html', 'W02_storyboard_v2_L02-L03.html');
 const h = fs.readFileSync(SB, 'utf8');
 const S = eval(h.slice(h.indexOf('const S = [') + 10, h.indexOf('// ---------- state')).trim().replace(/;\s*$/, ''));
-const V = '20261008c';
+const V = '20261008d';
 const NUM = { L02: 2, L03: 3 }[LEC];
 
 const esc = s => String(s);
@@ -270,6 +270,7 @@ ${out.join('\n\n')}
     const s = e.target.closest('section'); if (!s) return;
     s.querySelectorAll('.ans-wrap').forEach(w => {
       w.classList.remove('wait');
+      if (e.detail && e.detail.restored) return;  // answered earlier on this device: [show answer] is available, card stays closed
       const card = w.querySelector('.ans-card'), b = w.querySelector('.ans-btn');
       if (card && card.hidden) { card.hidden = false; b.textContent = 'hide answer ↑'; setTimeout(() => s.scrollTo({ top: s.scrollHeight }), 400); }
     });
