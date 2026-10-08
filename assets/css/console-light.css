@@ -465,3 +465,7 @@ html.mobile .qr-slide img.qr-small { width: 40vw !important; height: 40vw !impor
 .wheel-overlay[hidden] { display: none; }
 .wheel-overlay iframe { flex: 1; width: 100%; border: 0; }
 .wheel-close { align-self: flex-end; margin: 4px 4px 0; font-size: 11px; padding: 2px 8px; }
+
+/* live-stream link (assets/js/stream.js): red dot while the class is on */
+.stream-link .stream-live { color: #B71C1C; font-weight: 700; text-decoration: none; }
+.stream-link .stream-live:hover { text-decoration: underline; }

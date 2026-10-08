@@ -8,7 +8,7 @@ const LEC = process.argv[2] || 'L02';
 const SB = process.argv[3] || path.join(__dirname, '..', '..', '02_overview-html', 'W02_storyboard_v2_L02-L03.html');
 const h = fs.readFileSync(SB, 'utf8');
 const S = eval(h.slice(h.indexOf('const S = [') + 10, h.indexOf('// ---------- state')).trim().replace(/;\s*$/, ''));
-const V = '20261009b';
+const V = '20261009c';
 const NUM = parseInt(LEC.slice(1), 10);  // L03 → 3
 
 const esc = s => String(s);
@@ -315,7 +315,7 @@ if (!Object.keys(OW).length || !AFTER.length) console.warn('warning: no own-word
 function section(s) {
   const notes = s.notes ? `<aside class="notes">${strip(s.notes)}</aside>` : '';
   const sid = `data-sid="${s.id}"`;
-  if (s.tag === 'qr') return `<section ${sid}><div class="qr-slide"><img src="qr.svg" alt="QR code to these slides"><div class="qr-link">${s.qr}</div><div class="dim small">${s.sub}</div></div><aside class="notes">Everyone opens the slides on their own device: polls, the pulse button and the own-words boxes are inside.</aside></section>`;
+  if (s.tag === 'qr') return `<section ${sid}><div class="qr-slide"><img src="qr.svg" alt="QR code to these slides"><div class="qr-link">${s.qr}</div><div class="dim small">${s.sub}</div><div class="small stream-line">can't come? <span class="stream-link"></span></div></div><aside class="notes">Everyone opens the slides on their own device: polls, the pulse button and the own-words boxes are inside.</aside></section>`;
   if (s.tag === 'title') return `<section ${sid}><div class="title-block"><div class="t">microeconomics<span class="cursor"></span></div><div class="s">040184 · ws 2026/27 · lecture ${NUM}</div><div class="a">${s.tb[2]}</div></div></section>`;
   if (s.results) {
     // live summary of the opening survey (Can, 07.10): filled by assets/js/survey-live.js on the teacher screen
@@ -611,6 +611,7 @@ ${out.join('\n\n')}
 <script src="../../assets/js/menu.js?v=${V}"></script>
 <script src="../../assets/js/side-panels.js?v=${V}"></script>
 <script src="../../assets/js/survey-live.js?v=${V}"></script>
+<script src="../../assets/js/stream.js?v=${V}"></script>
 <script>
   const MOBILE = window.MICRO_MOBILE;
   Reveal.initialize({

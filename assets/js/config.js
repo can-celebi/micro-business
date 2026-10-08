@@ -4,6 +4,8 @@
 // tokenParts = base64 of the token, split in chunks. Empty → local demo mode.
 window.MICRO_CONFIG = {
   session: "ws26",
+  // live stream (Can, 08.10): the u:stream WEB player only (never the R2R link)
+  stream: "https://ustream.univie.ac.at/live/24bc96b6-49c7-49f6-8ed4-dc4e9fb1d456",
   // public half of the name key (RSA-OAEP, SHA-256): students' names are encrypted with it on their own device;
   // only the private half (kept off this repo, on Can's computer) can read them. tools/names.py decrypts.
   // SHA-256 of "micro-teacher:" + the teacher code (the code itself is only in MICRO-CAN/00_admin/keys/teacher-code.txt)
