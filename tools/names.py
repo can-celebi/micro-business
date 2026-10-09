@@ -30,18 +30,27 @@ parts = re.findall(r'"([^"]+)"', re.search(r'tokenParts:\s*\[([^\]]*)\]', cfg).g
 TOKEN = base64.b64decode(''.join(parts)).decode()
 API = f'https://api.github.com/repos/{owner}/{repo}'
 
-# class windows (Vienna time) from config.js: a tap made during a lecture counts for that lecture,
-# even when the poll id carries another prefix (a reused slide, e.g. L02-m5-split60 in the L03 deck)
+# Which lecture a tap counts for (a reused slide keeps its old id, e.g. L02-m5-split60 sits only in the L03 deck):
+# 1. the id is in exactly one deck → that deck; 2. several decks → the one whose class window (Vienna time, ± 30 min,
+# from config.js) the tap falls in; 3. otherwise the id prefix.
+import glob
 from datetime import datetime
 from zoneinfo import ZoneInfo
 DAYS = {d: l for l, d in re.findall(r'(L\d+):\s*"(\d{4}-\d\d-\d\d)"', cfg)}
 T0, T1 = (int(h) * 60 + int(m) for h, m in re.findall(r'(\d\d):(\d\d)', re.search(r'classTime:[^\]]*', cfg).group(0)))
+DECKS = defaultdict(set)  # poll id -> lectures whose deck contains it
+for f in glob.glob(os.path.join(SITE, 'lectures', 'L*', 'index.html')):
+    for pid in set(re.findall(r'data-poll="([^"]+)"', open(f).read())):
+        DECKS[pid].add(os.path.basename(os.path.dirname(f)))
 
 
 def lecture(poll, ts):
+    decks = DECKS.get(poll, set())
+    if len(decks) == 1:
+        return next(iter(decks))
     t = datetime.fromtimestamp(int(ts) / (1000 if int(ts) > 1e11 else 1), ZoneInfo('Europe/Vienna'))
     lec = DAYS.get(t.strftime('%Y-%m-%d'))
-    if lec and T0 - 30 <= t.hour * 60 + t.minute <= T1 + 30:  # class window ± 30 min
+    if lec and (not decks or lec in decks) and T0 - 30 <= t.hour * 60 + t.minute <= T1 + 30:
         return lec
     return poll.split('-')[0]
 
