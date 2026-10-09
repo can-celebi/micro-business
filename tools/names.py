@@ -30,6 +30,21 @@ parts = re.findall(r'"([^"]+)"', re.search(r'tokenParts:\s*\[([^\]]*)\]', cfg).g
 TOKEN = base64.b64decode(''.join(parts)).decode()
 API = f'https://api.github.com/repos/{owner}/{repo}'
 
+# class windows (Vienna time) from config.js: a tap made during a lecture counts for that lecture,
+# even when the poll id carries another prefix (a reused slide, e.g. L02-m5-split60 in the L03 deck)
+from datetime import datetime
+from zoneinfo import ZoneInfo
+DAYS = {d: l for l, d in re.findall(r'(L\d+):\s*"(\d{4}-\d\d-\d\d)"', cfg)}
+T0, T1 = (int(h) * 60 + int(m) for h, m in re.findall(r'(\d\d):(\d\d)', re.search(r'classTime:[^\]]*', cfg).group(0)))
+
+
+def lecture(poll, ts):
+    t = datetime.fromtimestamp(int(ts) / (1000 if int(ts) > 1e11 else 1), ZoneInfo('Europe/Vienna'))
+    lec = DAYS.get(t.strftime('%Y-%m-%d'))
+    if lec and T0 - 30 <= t.hour * 60 + t.minute <= T1 + 30:  # class window ± 30 min
+        return lec
+    return poll.split('-')[0]
+
 
 def get(url):
     req = urllib.request.Request(url, headers={'Authorization': 'Bearer ' + TOKEN, 'Accept': 'application/vnd.github+json'})
@@ -98,7 +113,7 @@ def main():
         rest = r['ref'][len(base_t):]
         poll, last = rest.rsplit('/', 1)
         ts, client = last.split('--')[:2]
-        lec = poll.split('-')[0]
+        lec = lecture(poll, ts)
         if poll == 'reg':
             blob = get(f'{API}/git/blobs/{r["object"]["sha"]}')
             rec = json.loads(base64.b64decode(blob['content']))
@@ -125,7 +140,7 @@ def main():
     for r in refs('heads', session):
         rest = r['ref'][len(base_h):]
         poll, last = rest.rsplit('/', 1)
-        client = last.split('--')[1]
+        ts, client = last.split('--')[:2]
         if poll.endswith('-where'):  # 'today I'm: in class / at home', latest answer per lecture
             ts, val = int(last.split('--')[0]), last.split('--', 2)[2]
             lec = poll.split('-')[0]
@@ -138,7 +153,7 @@ def main():
                 continue  # count each poll once per student (changes of mind don't add points)
             seen.add((client, poll))
         acts[client][kind] += 1
-        lects[client].add(poll.split('-')[0])
+        lects[client].add(lecture(poll, ts))
     os.makedirs(OUT, exist_ok=True)
     path = os.path.join(OUT, f'participation_{session}.csv')
     kinds = ['poll', 'pulse', 'chat', 'own words', 'survey', 'text']

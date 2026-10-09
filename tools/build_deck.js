@@ -687,6 +687,10 @@ ${out.join('\n\n')}
 </body>
 </html>
 `;
+// a poll id with another lecture's prefix files its answers under that lecture (L02-m5-split60 in L03):
+// keep old ids as they are (their data), but give new polls the deck's prefix
+const foreign = [...new Set([...html.matchAll(/data-poll="(L\d+)-[^"]*"/g)].filter(m => m[1] !== LEC).map(m => m[0].slice(11, -1)))];
+if (foreign.length) console.warn('warning: poll ids with another lecture prefix (fine for old polls; new ones should start with ' + LEC + '-): ' + foreign.join(', '));
 const dir = path.join(__dirname, '..', 'lectures', LEC);
 fs.mkdirSync(dir, { recursive: true });
 fs.writeFileSync(path.join(dir, 'index.html'), html);
