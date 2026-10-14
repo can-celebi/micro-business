@@ -86,10 +86,16 @@
         else { if (!CACHE[p]) CACHE[p] = (await MP.textResults(p + '/')).filter(r => r.poll === p).map(r => r.answers || {}); A = CACHE[p]; }
         S.cmp[p] = summariseCmp(sec, p, A);
       }
+      if (MP.whereMap) {
+        const wm = await MP.whereMap(sec.dataset.poll.split('-')[0]).catch(() => ({}));
+        S.where = { in_class: 0, at_home: 0, none: 0 };
+        recs.forEach(r => { const v = wm[r.client]; S.where[v === 'in_class' || v === 'at_home' ? v : 'none']++; });
+      }
       paint(sec, S);
-      st.textContent = 'n = ' + S.n + ' · ' + hm();
+      st.innerHTML = 'n = ' + S.n + whereLine(S.where) + ' · ' + hm();
       const k = 'micro-sum-' + MP.session + '-' + sec.dataset.poll;
-      if (S.n && ls.get(k) !== String(S.n)) { await MP.submitText('sum-' + sec.dataset.poll, { summary: S }); ls.set(k, String(S.n)); }
+      const sig = S.n + JSON.stringify(S.where || {});  // a new summary also when only the in class / online counts moved
+      if (S.n && ls.get(k) !== sig) { await MP.submitText('sum-' + sec.dataset.poll, { summary: S }); ls.set(k, sig); }
     } catch (e) { st.textContent = 'could not load (offline?)'; }
   }
   // students: the latest summary only
@@ -102,10 +108,13 @@
       if (!rec || !rec.summary) return;
       paint(sec, rec.summary);
       grid.style.display = ''; st.classList.remove('teacher-only');
-      st.textContent = 'n = ' + rec.summary.n + ' · as of ' + hm(rec.ts);
+      st.innerHTML = 'n = ' + rec.summary.n + whereLine(rec.summary.where) + ' · as of ' + hm(rec.ts);
     } catch (e) { /* keep the note */ }
   }
 
+  // in class / online (Can, 14.10): each record's device looked up in today's sign-ins (<LEC>-where). Students fill in
+  // the survey before they sign in, so [refresh] after the sign-in slide fills these in. Counts only.
+  const whereLine = W => W ? ' · <span class="wh-in">● ' + W.in_class + ' in class</span> · <span class="wh-on">● ' + W.at_home + ' online</span> · <span class="wh-un">● ' + W.none + ' not signed in</span>' : '';
   const teacher = MP.teacher && MP.hasToken;
   secs.forEach(sec => {
     const btn = sec.querySelector('.svl-refresh');
