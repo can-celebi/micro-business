@@ -481,3 +481,5 @@ html.mobile .qr-slide img.qr-small { width: 40vw !important; height: 40vw !impor
 .chat-m.wh-on { border-left: 4px solid #C2255C; padding-left: 6px; }
 .chat-m.wh-un { border-left: 4px solid #ADB5BD; padding-left: 6px; }
 .wh-tag { font-size: 10px; font-weight: 600; }
+/* the right option, after your own answer (Can, 14.10) */
+.bar-row.correct .bar-label { color: #1B7F3B; font-weight: 700; }

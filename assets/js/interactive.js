@@ -322,9 +322,9 @@
 
   // bar length = share of all answers (n); label "57% (32)"
   // segs (optional): [[count, class], …] = the bar split by in class / online / not signed in
-  function bar(label, value, total, cls, segs) {
-    const row = el('div', 'bar-row');
-    row.appendChild(el('span', 'bar-label', label));
+  function bar(label, value, total, cls, segs, ok) {
+    const row = el('div', 'bar-row' + (ok ? ' correct' : ''));
+    row.appendChild(el('span', 'bar-label', (ok ? '✓ ' : '') + label));
     const track = el('span', 'bar-track' + (segs ? ' split' : ''));
     const pct = total > 0 ? 100 * value / total : 0;
     if (segs) segs.forEach(([c, k]) => { if (!c) return; const f = el('span', 'bar-fill ' + k); f.style.width = (100 * c / total) + '%'; track.appendChild(f); });
@@ -342,7 +342,9 @@
     d.innerHTML = '<b>' + clients.length + ' answered</b>' + WH.filter(([k]) => c[k] || k !== '').map(([k, l, cls]) => ' · <span class="' + cls + '">● ' + c[k] + ' ' + l + '</span>').join('');
     return d;
   }
-  function renderChoice(box, data, options, wmap) {
+  // correct (Can, 14.10, via Filiz): data-correct = the right option's text; its bar gets ✓, but only on a device that
+  // has answered (results are open from the start, so a ✓ before your own answer would give it away)
+  function renderChoice(box, data, options, wmap, correct) {
     const counts = {}, segs = {};
     if (options.indexOf(NOIDEA) < 0 && data.responses.some(r => String(r.value) === safe(NOIDEA))) options = options.concat([NOIDEA]);
     options.forEach(o => { counts[o] = 0; segs[o] = { in_class: 0, at_home: 0, '': 0 }; });
@@ -350,7 +352,7 @@
     data.responses.forEach(r => { const o = options.find(x => safe(x) === String(r.value)); if (o) { counts[o]++; segs[o][whKey(wmap, r.client)]++; used.push(r.client); } });
     const n = Object.values(counts).reduce((a, b) => a + b, 0);
     box.appendChild(answeredLine(used, wmap));
-    options.forEach(o => box.appendChild(bar(o, counts[o], n, o === NOIDEA ? 'noidea' : '', WH.map(([k, , cls]) => [segs[o][k], cls]))));
+    options.forEach(o => box.appendChild(bar(o, counts[o], n, o === NOIDEA ? 'noidea' : '', WH.map(([k, , cls]) => [segs[o][k], cls]), correct != null && o === correct)));
   }
 
   // multi: each answer is a string of letters (A = 1st option, B = 2nd …); bar = share of respondents who ticked it
@@ -531,7 +533,7 @@
         out.innerHTML = '';
         if (type === 'number' || type === 'slider') renderNumber(viz, data, unit, mark, wmap);
         else if (type === 'multi') renderMulti(viz, data, options, wmap);
-        else renderChoice(viz, data, withNoIdea && options.indexOf(NOIDEA) < 0 ? options.concat([NOIDEA]) : options, wmap);
+        else renderChoice(viz, data, withNoIdea && options.indexOf(NOIDEA) < 0 ? options.concat([NOIDEA]) : options, wmap, node.dataset.correct != null && load(VK) ? node.dataset.correct.trim() : null);
         out.appendChild(viz);
         if (TEACHER) {
           const raw = el('details', 'raw');
