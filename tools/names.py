@@ -8,7 +8,10 @@ Students sign in on the slides (👤): nickname in clear, name + surname encrypt
 public key in assets/js/config.js. Only the private key (MICRO-CAN/00_admin/keys/micro-names-private.pem,
 never in a repo) can read them. Every answer carries the device id, so activity can be credited.
 
-Writes MICRO-CAN/06_moodle/participation_<session>.csv (outside the public site repo: it holds real names).
+Writes MICRO-CAN/06_moodle/participation_<session>.csv (outside the public site repo: it holds real names), one row
+per student, and participation_<session>_log.csv: every single answer with its time (Vienna) and whether it was made
+in class time (lecture day, 18:00–20:15), before or after class, or on another day (Can, 14.10: participation points
+must show if buttons were clicked after class).
 If the u:space list (List of participants_….csv) is in MICRO-CAN/ or 06_moodle/, each sign-in is matched to the
 official name + matriculation number (exact / close: check / not on the list).
 """
@@ -19,7 +22,7 @@ from cryptography.hazmat.primitives.asymmetric import padding
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SITE = os.path.dirname(HERE)
-ROOT = os.path.dirname(SITE)  # MICRO-CAN
+ROOT = os.environ.get('MICRO_ROOT') or os.path.dirname(SITE)  # MICRO-CAN (MICRO_ROOT: when run from a copy of the site)
 KEY = os.path.join(ROOT, '00_admin', 'keys', 'micro-names-private.pem')
 OUT = os.path.join(ROOT, '06_moodle')
 
@@ -53,6 +56,23 @@ def lecture(poll, ts):
     if lec and (not decks or lec in decks) and T0 - 30 <= t.hour * 60 + t.minute <= T1 + 30:
         return lec
     return poll.split('-')[0]
+
+
+def when(lec, ts):
+    """Vienna time of a tap and where it falls: 'in class time' (its lecture's day, class start − 30 min … end + 15 min),
+    'before class', 'after class' (same day) or 'other day'."""
+    t = datetime.fromtimestamp(int(ts) / (1000 if int(ts) > 1e11 else 1), ZoneInfo('Europe/Vienna'))
+    day = {l: d for d, l in DAYS.items()}.get(lec)
+    m = t.hour * 60 + t.minute
+    if day != t.strftime('%Y-%m-%d'):
+        tag = 'other day'
+    elif m < T0 - 30:
+        tag = 'before class'
+    elif m > T1 + 15:
+        tag = 'after class'
+    else:
+        tag = 'in class time'
+    return t.strftime('%Y-%m-%d %H:%M:%S'), tag
 
 
 def get(url):
@@ -117,6 +137,8 @@ def main():
     lects = defaultdict(set)
     present = defaultdict(set)  # student device -> days marked 'here' on the wheel
     where = defaultdict(dict)   # student device -> {lecture: (ts, 'in class' | 'at home')}
+    log = []                    # every student answer: (device, lecture, kind, poll, ts, value)
+    inclass = defaultdict(lambda: [0, 0])  # device -> [polls first answered in class time, polls first answered outside]
     base_t = f'refs/tags/t/{session}/'
     for r in refs('tags', session):
         rest = r['ref'][len(base_t):]
@@ -144,6 +166,7 @@ def main():
         if kind not in ('askdone', 'askhide'):  # teacher marks, not student activity
             acts[client][kind] += 1
             lects[client].add(lec)
+            log.append((client, lec, kind, poll, ts, ''))  # texts: time only, never the text itself
     base_h = f'refs/heads/v/{session}/'
     seen = set()
     for r in refs('heads', session):
@@ -155,12 +178,15 @@ def main():
             lec = poll.split('-')[0]
             if lec not in where[client] or where[client][lec][0] < ts:
                 where[client][lec] = (ts, val.replace('_', ' '))
+            log.append((client, lec, 'where', poll, ts, val))
             continue
         kind = 'pulse' if '-pulse-' in poll else 'poll'
+        log.append((client, lecture(poll, ts), kind, poll, ts, last.split('--', 2)[2] if last.count('--') >= 2 else ''))
         if kind == 'poll':
             if (client, poll) in seen:
                 continue  # count each poll once per student (changes of mind don't add points)
             seen.add((client, poll))
+            inclass[client][0 if when(lecture(poll, ts), ts)[1] == 'in class time' else 1] += 1
         acts[client][kind] += 1
         lects[client].add(lecture(poll, ts))
     os.makedirs(OUT, exist_ok=True)
@@ -169,12 +195,26 @@ def main():
     with open(path, 'w', newline='') as f:
         w = csv.writer(f)
         ros = roster()
-        w.writerow(['official name', 'matrikel', 'match', 'surname', 'name', 'nickname', 'device id', 'lectures', 'present (wheel)', 'in class (said)', 'at home (said)'] + kinds)
+        w.writerow(['official name', 'matrikel', 'match', 'surname', 'name', 'nickname', 'device id', 'lectures', 'present (wheel)', 'in class (said)', 'at home (said)'] + kinds + ['polls in class time', 'polls outside class time'])
         clients = sorted(set(acts) | set(who) | set(present) | set(where), key=lambda c: (who.get(c, {}).get('surname', '~').lower(), c))
         for c in clients:
             p = who.get(c, {})
             r, how = match(p.get('name', ''), p.get('surname', ''), ros) if p else (None, '')
-            w.writerow([(r[0] + ' ' + r[1]) if r else '', r[2] if r else '', how, p.get('surname', ''), p.get('name', ''), p.get('nick', ''), c, ' '.join(sorted(lects[c])), ' '.join(sorted(present[c])), ' '.join(sorted(l for l, v in where[c].items() if v[1] == 'in class')), ' '.join(sorted(l for l, v in where[c].items() if v[1] == 'at home'))] + [acts[c][k] for k in kinds])
+            w.writerow([(r[0] + ' ' + r[1]) if r else '', r[2] if r else '', how, p.get('surname', ''), p.get('name', ''), p.get('nick', ''), c, ' '.join(sorted(lects[c])), ' '.join(sorted(present[c])), ' '.join(sorted(l for l, v in where[c].items() if v[1] == 'in class')), ' '.join(sorted(l for l, v in where[c].items() if v[1] == 'at home'))] + [acts[c][k] for k in kinds] + inclass[c])
+    # every answer with its time: one row each (the first answer to a poll is the one that counts above)
+    lpath = os.path.join(OUT, f'participation_{session}_log.csv')
+    with open(lpath, 'w', newline='') as f:
+        w = csv.writer(f)
+        w.writerow(['name (official if matched)', 'nickname', 'device id', 'lecture', 'kind', 'poll', 'time (Vienna)', 'class time', 'answer'])
+        names = {}
+        for c in set(x[0] for x in log):
+            p = who.get(c, {})
+            r = match(p.get('name', ''), p.get('surname', ''), ros)[0] if p else None
+            names[c] = (r[0] + ' ' + r[1]) if r else (p.get('name', '') + ' ' + p.get('surname', '')).strip()
+        for c, lec, kind, poll, ts, val in sorted(log, key=lambda x: (who.get(x[0], {}).get('surname', '~').lower(), x[0], int(x[4]))):
+            t, tag = when(lec, ts)
+            w.writerow([names[c], who.get(c, {}).get('nick', ''), c, lec, kind, poll, t, tag, val])
+    print(f'{len(log)} answers with time → {lpath}')
     print(f'{len(who)} signed in · {len(acts)} devices active → {path}')
 
 
