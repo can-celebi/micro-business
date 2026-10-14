@@ -209,6 +209,13 @@ function animSpec(g) {
   if (a.price) { base.push({ price_line: a.price[0] }); steps.push({ price_line: a.price[1] }); }
   if (a.line != null) { const l = g.lines[a.line]; steps.push({ shift: l.n, to: { id: l.n, p0: a.to, s: l.s } }); }
   if (extra.length && steps.length) Object.assign(steps[steps.length - 1], ...extra);
+  // wedge: T (Filiz, 14.10, per-unit tax): after the supply shift, one more click marks buyers pay / sellers keep / tax T
+  // at the new quantity (sellers keep = the old supply line there). Without `mark` the new equilibrium is computed.
+  if (a.wedge != null && a.line != null) {
+    const sh = steps[steps.length - 1], d = g.lines.find(l => side(l) === 'demand'), l = g.lines[a.line];
+    if (!sh.mark_at && d) { const q = (a.to - d.p0) / (d.s - l.s); sh.mark_at = [q, d.p0 + d.s * q]; }
+    steps.push({ wedge: { T: +a.wedge } });
+  }
   // gap: {p, label, cap} (Can, 08.10, shortage / surplus): one click each: the price line (solid, labelled cap) ·
   // the two quantities on it (dashed down, bold) · the gap highlighted with its label
   if (g.gap) {
