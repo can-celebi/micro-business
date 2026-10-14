@@ -57,6 +57,12 @@
   }
   const checkCode = code => !!cfg.teacherHash && sha256hex('micro-teacher:' + String(code || '').trim()) === cfg.teacherHash;
   const TEACHER = checkCode(load('micro-teacher-code'));
+  // ?fresh on the lecturer's device (Can, 14.10): forget this device's own remembered answers for this lecture, so a
+  // preview before class doesn't show up on the projector. Only this browser's marks; nothing stored is deleted.
+  if (TEACHER && /[?&]fresh\b/.test(location.search)) {
+    const lec = document.body && document.body.dataset.lecture;
+    try { if (lec) Object.keys(localStorage).filter(k => k.indexOf('micro-voted-' + SESSION + '-' + lec + '-') === 0).forEach(k => localStorage.removeItem(k)); } catch (e) {}
+  }
   let CID = load('micro-cid');
   if (!CID) {
     CID = Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
