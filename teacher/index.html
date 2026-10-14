@@ -103,6 +103,11 @@ async function draw() {
       // L04 on: problem set 1, how did it go? (1 very badly … 5 very well)
       { const c = {}; A.forEach(a => { if (a.ps1 !== undefined) c[a.ps1] = (c[a.ps1] || 0) + 1; });
         if (Object.keys(c).length) { const box = document.createElement('div'); box.innerHTML = `<h3>problem set 1: how did it go? <span class="dim">· mean ${mean('ps1')} · 1 very badly … 5 very well</span></h3>`; bars(box, ['1','2','3','4','5'], c, n); out.appendChild(box); } }
+      // L04 on: the live stream (1 very bad … 5 very good, optional) and a video recording (yes / maybe / no) (Can, 14.10)
+      { const c = {}; A.forEach(a => { if (a.stream !== undefined) c[a.stream] = (c[a.stream] || 0) + 1; }); const k = Object.values(c).reduce((x, y) => x + y, 0);
+        if (k) { const box = document.createElement('div'); box.innerHTML = `<h3>the streaming: how is it? <span class="dim">· n = ${k} · mean ${mean('stream')} · 1 very bad … 5 very good</span></h3>`; bars(box, ['1','2','3','4','5'], c, k); out.appendChild(box); } }
+      { const c = {}; A.forEach(a => { if (a.video) c[a.video] = (c[a.video] || 0) + 1; }); const k = Object.values(c).reduce((x, y) => x + y, 0);
+        if (k) { const box = document.createElement('div'); box.innerHTML = `<h3>a video recording of each lecture? <span class="dim">· n = ${k}</span></h3>`; bars(box, ['yes','maybe','no'], c, k); out.appendChild(box); } }
       LBL.about.forEach(([k, l, o]) => { const c = {}; A.forEach(a => { if (a[k] !== undefined) c[a[k]] = (c[a[k]] || 0) + 1; }); if (!Object.keys(c).length) return;
         const box = document.createElement('div'); box.innerHTML = `<h3>${l}</h3>`; bars(box, o.map(x => x[0]), c, n, o.map(x => x[1])); out.appendChild(box); });
       const c = {}; A.forEach(a => { if (a.ps !== undefined) c[a.ps] = (c[a.ps] || 0) + 1; });
