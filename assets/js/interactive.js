@@ -6,7 +6,10 @@
 //   <div class="poll" data-poll="L02-ow-pc" data-type="text" data-max="300"></div>   (free text, e.g. own words)
 //   <div class="poll" data-poll="L02-q" data-type="multi" data-options="a,b,c"></div>   (tap all that apply, then submit)
 // Every choice/number poll gets a "no idea" button (data-noidea="off" to drop it).
-// After answering, the results open by themselves; [refresh] reloads them (no auto-update, on purpose).
+// Results are open from the start for everyone (Can, 14.10: "why are we even hiding the results"; cfg.resultsFirst = false
+// brings back the old rule: results only after your own answer). [refresh] reloads them; the lecturer screen reloads the
+// poll on the current slide by itself every 5 s (one call, free when nothing changed: ETag → 304).
+// In class / online (Can, 14.10): every answer is coloured by where its device signed in today (poll <LEC>-where).
 // Prompt markup:
 //   <details class="prompt"><summary>personalise</summary><pre>…prompt…</pre></details>
 (function () {
@@ -68,6 +71,41 @@
   const sleep = ms => new Promise(r => setTimeout(r, ms));
   const headers = () => ({ 'Authorization': 'Bearer ' + TOKEN, 'Accept': 'application/vnd.github+json' });
   let headSha = null;
+  // GET with ETag: an unchanged answer list comes back as 304, which costs nothing from the class's 5,000 calls an hour
+  const ETAGS = {};
+  async function getJSON(url) {
+    const h = headers(), c = ETAGS[url];
+    if (c) h['If-None-Match'] = c.etag;
+    const r = await fetch(url, { headers: h, cache: 'no-store' });
+    if (r.status === 304 && c) return c.data;
+    const data = await r.json(), e = r.headers.get('ETag');
+    if (r.ok && e) ETAGS[url] = { etag: e, data: data };
+    return data;
+  }
+  // where each device is today (sign-in: poll <LEC>-where, latest tap): {client: 'in_class' | 'at_home'}; 4 s cache (ETag makes repeats free)
+  const WHERE = {};
+  async function whereMap(lec) {
+    if (!TOKEN || !lec) return {};
+    const w = WHERE[lec];
+    if (w && Date.now() - w.at < 4000) return w.map;
+    const prefix = 'refs/heads/v/' + SESSION + '/' + lec + '-where/';
+    const refs = await getJSON(API + '/git/matching-refs/heads/v/' + SESSION + '/' + lec + '-where/');
+    const latest = {};
+    (Array.isArray(refs) ? refs : []).forEach(x => {
+      const parts = x.ref.slice(prefix.length).split('--');
+      if (parts.length < 3) return;
+      const ts = Number(parts[0]);
+      if (!latest[parts[1]] || latest[parts[1]].ts < ts) latest[parts[1]] = { ts: ts, v: parts.slice(2).join('--') };
+    });
+    const map = {};
+    Object.keys(latest).forEach(k => map[k] = latest[k].v);
+    WHERE[lec] = { at: Date.now(), map: map };
+    return map;
+  }
+  const lecOf = poll => (/^(L\d\d)-/.exec(poll) || [])[1] || (document.body && document.body.dataset.lecture) || '';
+  // in class / online / not signed in today (Can, 14.10)
+  const WH = [['in_class', 'in class', 'wh-in'], ['at_home', 'online', 'wh-on'], ['', 'not signed in', 'wh-un']];
+  const whKey = (map, client) => map[client] === 'in_class' || map[client] === 'at_home' ? map[client] : '';
 
   async function baseSha() {
     if (headSha) return headSha;
@@ -139,10 +177,9 @@
   // count only (texts are read by the teacher page / export script, not shown on slides)
   async function textCount(poll) {
     if (!TOKEN) return { n: 0 };
-    const r = await fetch(API + '/git/matching-refs/tags/t/' + SESSION + '/' + poll + '/', { headers: headers(), cache: 'no-store' });
-    const refs = await r.json();
+    const refs = await getJSON(API + '/git/matching-refs/tags/t/' + SESSION + '/' + poll + '/');
     const clients = new Set((Array.isArray(refs) ? refs : []).map(x => x.ref.split('--').pop()));
-    return { n: clients.size };
+    return { n: clients.size, clients: [...clients] };
   }
 
   // all latest texts of polls starting with prefix (teacher page): [{poll, client, ts, text, skipped, ...}]
@@ -262,8 +299,7 @@
       return { poll: poll, mode: 'local demo (no token)', n: responses.length, responses: responses };
     }
     const prefix = 'refs/heads/v/' + SESSION + '/' + poll + '/';
-    const r = await fetch(API + '/git/matching-refs/heads/v/' + SESSION + '/' + poll + '/', { headers: headers(), cache: 'no-store' });
-    const refs = await r.json();
+    const refs = await getJSON(API + '/git/matching-refs/heads/v/' + SESSION + '/' + poll + '/');
     const latest = {};
     (Array.isArray(refs) ? refs : []).forEach(x => {
       const parts = x.ref.slice(prefix.length).split('--');
@@ -273,7 +309,7 @@
       if (preClass(poll, ts)) return;
       if (!latest[client] || latest[client].ts < ts) latest[client] = { ts: ts, value: value };
     });
-    const responses = Object.values(latest).map(x => ({ value: x.value, time: new Date(x.ts).toISOString() }));
+    const responses = Object.keys(latest).map(c => ({ value: latest[c].value, time: new Date(latest[c].ts).toISOString(), client: c }));
     return { poll: poll, session: SESSION, n: responses.length, responses: responses };
   }
 
@@ -285,40 +321,51 @@
   }
 
   // bar length = share of all answers (n); label "57% (32)"
-  function bar(label, value, total, cls) {
+  // segs (optional): [[count, class], …] = the bar split by in class / online / not signed in
+  function bar(label, value, total, cls, segs) {
     const row = el('div', 'bar-row');
     row.appendChild(el('span', 'bar-label', label));
-    const track = el('span', 'bar-track');
-    const fill = el('span', 'bar-fill ' + (cls || ''));
+    const track = el('span', 'bar-track' + (segs ? ' split' : ''));
     const pct = total > 0 ? 100 * value / total : 0;
-    fill.style.width = pct + '%';
-    track.appendChild(fill);
+    if (segs) segs.forEach(([c, k]) => { if (!c) return; const f = el('span', 'bar-fill ' + k); f.style.width = (100 * c / total) + '%'; track.appendChild(f); });
+    else { const fill = el('span', 'bar-fill ' + (cls || '')); fill.style.width = pct + '%'; track.appendChild(fill); }
     row.appendChild(track);
     row.appendChild(el('span', 'bar-n', Math.round(pct) + '% (' + value + ')'));
     return row;
   }
 
-  function renderChoice(box, data, options) {
-    const counts = {};
+  // "23 answered · ● 17 in class · ● 5 online · ● 1 not signed in" (Can, 14.10)
+  function answeredLine(clients, wmap) {
+    const d = el('div', 'answered');
+    const c = { in_class: 0, at_home: 0, '': 0 };
+    clients.forEach(k => c[whKey(wmap, k)]++);
+    d.innerHTML = '<b>' + clients.length + ' answered</b>' + WH.filter(([k]) => c[k] || k !== '').map(([k, l, cls]) => ' · <span class="' + cls + '">● ' + c[k] + ' ' + l + '</span>').join('');
+    return d;
+  }
+  function renderChoice(box, data, options, wmap) {
+    const counts = {}, segs = {};
     if (options.indexOf(NOIDEA) < 0 && data.responses.some(r => String(r.value) === safe(NOIDEA))) options = options.concat([NOIDEA]);
-    options.forEach(o => counts[o] = 0);
-    data.responses.forEach(r => { const o = options.find(x => safe(x) === String(r.value)); if (o) counts[o]++; });
+    options.forEach(o => { counts[o] = 0; segs[o] = { in_class: 0, at_home: 0, '': 0 }; });
+    const used = [];
+    data.responses.forEach(r => { const o = options.find(x => safe(x) === String(r.value)); if (o) { counts[o]++; segs[o][whKey(wmap, r.client)]++; used.push(r.client); } });
     const n = Object.values(counts).reduce((a, b) => a + b, 0);
-    options.forEach(o => box.appendChild(bar(o, counts[o], n, o === NOIDEA ? 'noidea' : '')));
-    box.appendChild(el('div', 'dim small-line', 'n = ' + n));
+    box.appendChild(answeredLine(used, wmap));
+    options.forEach(o => box.appendChild(bar(o, counts[o], n, o === NOIDEA ? 'noidea' : '', WH.map(([k, , cls]) => [segs[o][k], cls]))));
   }
 
   // multi: each answer is a string of letters (A = 1st option, B = 2nd …); bar = share of respondents who ticked it
-  function renderMulti(box, data, options) {
+  function renderMulti(box, data, options, wmap) {
     const letters = 'ABCDEFGHIJ';
     const rows = data.responses.map(r => String(r.value)).filter(v => v !== safe(NOIDEA));
     const n = data.responses.length;
+    box.appendChild(answeredLine(data.responses.map(r => r.client), wmap));
     options.forEach((o, i) => box.appendChild(bar(o, rows.filter(v => v.indexOf(letters[i]) >= 0).length, n)));
     const ni = data.responses.length - rows.length;
     box.appendChild(el('div', 'dim small-line', 'n = ' + n + ' · bars = share who ticked it' + (ni ? ' · no idea: ' + ni : '')));
   }
 
-  function renderNumber(box, data, unit, mark) {
+  function renderNumber(box, data, unit, mark, wmap) {
+    box.appendChild(answeredLine(data.responses.map(r => r.client), wmap));
     const vals = data.responses.map(r => Number(r.value)).filter(v => isFinite(v)).sort((a, b) => b - a);
     const noIdea = data.responses.filter(r => String(r.value) === safe(NOIDEA)).length;
     if (!vals.length) { box.appendChild(el('div', 'dim', 'no answers yet' + (noIdea ? ' · no idea: ' + noIdea : ''))); return; }
@@ -470,18 +517,21 @@
     const out = el('div', 'poll-results');
     node.appendChild(out);
 
-    async function draw() {
-      out.innerHTML = '';
-      out.appendChild(el('div', 'dim', 'loading…'));
+    // quiet = the lecturer screen's own 5-s reload: no "loading…" flicker, keep the old numbers if a call fails
+    let busy = false;
+    async function draw(quiet) {
+      if (busy) return; busy = true;
+      if (!quiet) { out.innerHTML = ''; out.appendChild(el('div', 'dim', 'loading…')); }
       try {
         const viz = el('div', 'viz');
-        if (type === 'slider' && !TEACHER) { out.innerHTML = ''; viz.appendChild(el('div', 'dim small-line', 'your answer: ' + sliderVal + unit + ' · saved')); out.appendChild(viz); return; }
-        if (type === 'text') { const c = await textCount(poll); out.innerHTML = ''; viz.appendChild(el('div', 'dim small-line', c.n + ' answers so far (the texts are read after class)')); out.appendChild(viz); return; }
+        if (type === 'slider' && !TEACHER) { out.innerHTML = ''; viz.appendChild(el('div', 'dim small-line', sliderVal === null ? '' : 'your answer: ' + sliderVal + unit + ' · saved')); out.appendChild(viz); busy = false; return; }
+        const wmap = await whereMap(lecOf(poll)).catch(() => ({}));
+        if (type === 'text') { const c = await textCount(poll); out.innerHTML = ''; viz.appendChild(answeredLine(c.clients || [], wmap)); viz.appendChild(el('div', 'dim small-line', 'the texts are read after class')); out.appendChild(viz); busy = false; return; }
         const data = await results(poll);
         out.innerHTML = '';
-        if (type === 'number' || type === 'slider') renderNumber(viz, data, unit, mark);
-        else if (type === 'multi') renderMulti(viz, data, options);
-        else renderChoice(viz, data, withNoIdea && options.indexOf(NOIDEA) < 0 ? options.concat([NOIDEA]) : options);
+        if (type === 'number' || type === 'slider') renderNumber(viz, data, unit, mark, wmap);
+        else if (type === 'multi') renderMulti(viz, data, options, wmap);
+        else renderChoice(viz, data, withNoIdea && options.indexOf(NOIDEA) < 0 ? options.concat([NOIDEA]) : options, wmap);
         out.appendChild(viz);
         if (TEACHER) {
           const raw = el('details', 'raw');
@@ -490,16 +540,16 @@
           out.appendChild(raw);
         }
       } catch (e) {
-        out.innerHTML = '';
-        out.appendChild(el('div', 'dim', 'could not load results'));
+        if (!quiet) { out.innerHTML = ''; out.appendChild(el('div', 'dim', 'could not load results')); }
       }
+      busy = false;
     }
     show.onclick = () => {
       const open = out.classList.toggle('open');
       refresh.style.display = open ? '' : 'none';
       if (open) draw();
     };
-    refresh.onclick = draw;
+    refresh.onclick = () => draw();
     // after your own answer: open the results once (no auto-update; [refresh] for new answers)
     // The choice is remembered on this device (micro-voted-<session>-<poll>), so after a reload or the next day
     // the results and the answer stay open without voting again (Can, 08.10).
@@ -507,7 +557,7 @@
     afterSave = () => {
       const c = input.querySelector('.btn.chosen');
       store(VK, type === 'choice' && c ? c.textContent : type === 'slider' ? String(sliderVal) : '1');
-      out.classList.add('open'); refresh.style.display = type === 'slider' && !TEACHER ? 'none' : ''; draw();
+      out.classList.add('open'); refresh.style.display = type === 'slider' && !TEACHER ? 'none' : ''; draw(true);
       // tells the slide that this person has decided (the deck then shows its [show answer] button)
       node.dispatchEvent(new CustomEvent('micropoll:saved', { bubbles: true, detail: { poll: poll } }));
     };
@@ -516,14 +566,20 @@
       input.querySelectorAll('.btn').forEach(b => { if (b.textContent === prev) b.classList.add('chosen'); });
       if (setSlider && isFinite(Number(prev))) setSlider(Number(prev));
       status.textContent = 'answered_';
+      setTimeout(() => node.dispatchEvent(new CustomEvent('micropoll:saved', { bubbles: true, detail: { poll: poll, restored: true } })), 0);
+    }
+    const FIRST = cfg.resultsFirst !== false && type !== 'slider';
+    if (prev || FIRST || TEACHER) {
       out.classList.add('open'); refresh.style.display = type === 'slider' && !TEACHER ? 'none' : '';
-      // results are loaded only when the slide is on screen (one call, not one per answered poll at page load)
+      // results are loaded only when the slide is on screen (one call, not one per poll at page load)
+      const here = () => { const cur = window.Reveal && Reveal.getCurrentSlide && Reveal.getCurrentSlide(), sec = node.closest('section'); return !!(cur && sec && (cur === sec || cur.contains(node) || sec.contains(cur))); };
       let drawn = false;
-      const drawIfHere = () => { if (drawn) return; const cur = window.Reveal && Reveal.getCurrentSlide && Reveal.getCurrentSlide(); if (cur && (cur === node.closest('section') || cur.contains(node) || node.closest('section').contains(cur))) { drawn = true; draw(); } };
-      if (window.Reveal && Reveal.on) Reveal.on('slidechanged', drawIfHere);
+      const drawIfHere = () => { if (drawn || !here()) return; drawn = true; draw(); };
+      if (window.Reveal && Reveal.on) Reveal.on('slidechanged', () => { drawn = false; drawIfHere(); });
       // the deck may not be ready yet when polls are set up: check again until it is (max ~6 s)
       let tries = 0; const wait = () => { if (window.Reveal && Reveal.isReady && Reveal.isReady()) drawIfHere(); else if (tries++ < 20) setTimeout(wait, 300); }; wait();
-      setTimeout(() => node.dispatchEvent(new CustomEvent('micropoll:saved', { bubbles: true, detail: { poll: poll, restored: true } })), 0);
+      // the lecturer screen: the poll on screen reloads itself every 5 s, so the count goes up as people answer (Can, 14.10)
+      if (TEACHER) setInterval(() => { if (!document.hidden && here()) draw(true); }, 5000);
     }
   }
 
@@ -539,7 +595,7 @@
     d.appendChild(b);
   }
 
-  window.MicroPoll = { teacher: TEACHER, submit: submit, results: results, submitText: submitText, textResults: textResults, allResults: allResults, allAnswers: allAnswers, tagRefs: tagRefs, blob: blob, classWindow: classWindow, teacherLogin: teacherLogin, teacherLogout: teacherLogout, safe: safe, hasToken: !!TOKEN, session: SESSION, cid: CID };
+  window.MicroPoll = { whereMap: whereMap, teacher: TEACHER, submit: submit, results: results, submitText: submitText, textResults: textResults, allResults: allResults, allAnswers: allAnswers, tagRefs: tagRefs, blob: blob, classWindow: classWindow, teacherLogin: teacherLogin, teacherLogout: teacherLogout, safe: safe, hasToken: !!TOKEN, session: SESSION, cid: CID };
 
   function init() {
     // PDF export (?print-pdf): show answers, polls become plain text

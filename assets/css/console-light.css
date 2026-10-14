@@ -469,3 +469,15 @@ html.mobile .qr-slide img.qr-small { width: 40vw !important; height: 40vw !impor
 /* live-stream link (assets/js/stream.js): red dot while the class is on */
 .stream-link .stream-live { color: #B71C1C; font-weight: 700; text-decoration: none; }
 .stream-link .stream-live:hover { text-decoration: underline; }
+
+/* in class / online (Can, 14.10): poll bars split by where each device signed in today; chat messages on the lecturer screen */
+.answered { font-size: 0.68em; margin: 0.1em 0 0.35em; }
+.poll-results .viz .answered { grid-column: 1 / -1; font-size: 1.35em; }
+.wh-in { color: #0C8599; } .wh-on { color: #C2255C; } .wh-un { color: #868E96; }
+.bar-track.split { display: flex; }
+.bar-track.split .bar-fill { display: block; flex: none; }
+.bar-fill.wh-in { background: #0C8599; } .bar-fill.wh-on { background: #C2255C; } .bar-fill.wh-un { background: #ADB5BD; }
+.chat-m.wh-in { border-left: 4px solid #0C8599; padding-left: 6px; }
+.chat-m.wh-on { border-left: 4px solid #C2255C; padding-left: 6px; }
+.chat-m.wh-un { border-left: 4px solid #ADB5BD; padding-left: 6px; }
+.wh-tag { font-size: 10px; font-weight: 600; }

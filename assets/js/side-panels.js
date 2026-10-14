@@ -186,7 +186,7 @@
   const send = mk('button', 'btn', 'send'), crf = mk('button', 'btn ghost', 'refresh'), cst = mk('span', 'st');
   const cbar = mk('div', 'chat-bar'); cbar.appendChild(send); cbar.appendChild(crf); cbar.appendChild(cst);
   cSec.appendChild(msgs); cSec.appendChild(ta); cSec.appendChild(cbar);
-  let chat = [], done = new Set(), gone = new Set(), chatBusy = false, firstChat = true, light = null;
+  let chat = [], done = new Set(), gone = new Set(), chatBusy = false, firstChat = true, light = null, wmap = {};
   const keyOf = m => m.ts + '-' + m.client;
   const MYKEY = 'micro-mychat-' + LEC;
   const myChat = () => { try { return JSON.parse(ls.get(MYKEY) || '[]'); } catch (e) { return []; } };
@@ -195,6 +195,8 @@
     if (chatBusy) return; chatBusy = true;
     try {
       const refs = await MP.tagRefs(LEC + '-ask');
+      // in class / online (Can, 14.10): where the sender's device signed in today
+      wmap = await MP.whereMap(LEC).catch(() => wmap);
       refs.filter(r => r.poll.startsWith(LEC + '-askdone-')).forEach(r => done.add(r.poll.slice((LEC + '-askdone-').length)));
       // hidden by the teacher: a mark <LEC>-askhide-<id>; the message itself stays stored (Can: never delete)
       refs.filter(r => r.poll.startsWith(LEC + '-askhide-')).forEach(r => gone.add(r.poll.slice((LEC + '-askhide-').length)));
@@ -216,7 +218,8 @@
     const atBottom = msgs.scrollHeight - msgs.scrollTop - msgs.clientHeight < 30;
     msgs.innerHTML = chat.length ? chat.map(m => {
       const k = keyOf(m), ans = done.has(k), own = m.client === MP.cid;
-      return `<div class="chat-m${ans ? ' done' : ''}${own ? ' own' : ''}"><div class="chat-h"><b>${esc(m.nick || 'anonymous')}</b> <span class="dim">${hm(m.ts)}${m.slide ? ' · slide ' + esc(m.slide) : ''}${ans ? ' · ✓ answered' : ''}${MP.teacher ? '' : ' · sent ✓'}</span></div><div>${esc(m.text)}</div>` +
+      const w = MP.teacher ? (wmap[m.client] === 'in_class' ? ['wh-in', 'in class'] : wmap[m.client] === 'at_home' ? ['wh-on', 'online'] : ['wh-un', 'where?']) : null;
+      return `<div class="chat-m${ans ? ' done' : ''}${own ? ' own' : ''}${w ? ' ' + w[0] : ''}"><div class="chat-h"><b>${esc(m.nick || 'anonymous')}</b>${w ? ` <span class="wh-tag ${w[0]}">● ${w[1]}</span>` : ''} <span class="dim">${hm(m.ts)}${m.slide ? ' · slide ' + esc(m.slide) : ''}${ans ? ' · ✓ answered' : ''}${MP.teacher ? '' : ' · sent ✓'}</span></div><div>${esc(m.text)}</div>` +
         (MP.teacher ? (ans ? '' : `<button class="btn ghost" data-k="${esc(k)}">answered ✓</button>`) + `<button class="btn ghost del" data-d="${esc(k)}">hide</button>` : '') + '</div>';
     }).join('') : '<div class="dim sp-note">' + (MP.teacher ? 'no messages yet' : 'nothing sent yet: ask anything') + '</div>';
     msgs.querySelectorAll('button[data-k]').forEach(b => b.onclick = async () => {
