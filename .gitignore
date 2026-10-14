@@ -1,2 +1,5 @@
 .DS_Store
 *.swp
+.claude/
+06_moodle/
+participation_*.csv

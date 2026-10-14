@@ -25,6 +25,16 @@ SITE = os.path.dirname(HERE)
 ROOT = os.environ.get('MICRO_ROOT') or os.path.dirname(SITE)  # MICRO-CAN (MICRO_ROOT: when run from a copy of the site)
 KEY = os.path.join(ROOT, '00_admin', 'keys', 'micro-names-private.pem')
 OUT = os.path.join(ROOT, '06_moodle')
+# real names never inside a repo (Murat, 14.10): run from a worktree copy without MICRO_ROOT, OUT would sit in the site folder
+def _in_repo(path):
+    d = os.path.abspath(path)
+    while d != os.path.dirname(d):
+        if os.path.exists(os.path.join(d, '.git')):
+            return d
+        d = os.path.dirname(d)
+    return None
+if _in_repo(OUT):
+    sys.exit(f'refusing to write real names inside the repo {_in_repo(OUT)}: set MICRO_ROOT=<MICRO-CAN folder>')
 
 cfg = open(os.path.join(SITE, 'assets', 'js', 'config.js')).read()
 owner = re.search(r'owner:\s*"([^"]+)"', cfg).group(1)
