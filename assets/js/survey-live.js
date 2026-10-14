@@ -118,9 +118,11 @@
   const teacher = MP.teacher && MP.hasToken;
   secs.forEach(sec => {
     const btn = sec.querySelector('.svl-refresh');
+    // students: the slide stays visible (Can, 14.10: fixed parts like the problem set 1 grades must always show); the
+    // survey bars fill in from the latest summary record, '–' until the lecturer screen has written one
     if (!teacher) {
-      sec.querySelector('.svl-grid').style.display = 'none'; btn.style.display = 'none';
-      const n = sec.querySelector('.svl-n'); n.textContent = '📺 the results are on the lecturer\'s screen'; n.classList.add('teacher-only');
+      btn.style.display = 'none';
+      const n = sec.querySelector('.svl-n'); n.textContent = '📺 live numbers on the lecturer\'s screen'; n.classList.add('teacher-only');
       return;
     }
     btn.onclick = () => draw(sec);
