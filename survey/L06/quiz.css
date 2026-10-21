@@ -26,3 +26,5 @@ h1 { font-size: 1.3rem; margin: 0 0 .8rem; font-weight: 600; }
 .setup.small { font-size: .9rem; padding: 6px 12px; margin-bottom: .6rem; }
 .m { font-family: "STIX Two Text", "Cambria Math", Georgia, serif; font-size: 1.1em; white-space: nowrap; } .m i { font-style: italic; } .m sub { font-size: .65em; vertical-align: -.25em; }
 .qlist { margin-top: 1.4rem; border-top: 1px solid #ddd; padding-top: .6rem; } .qlist summary { cursor: pointer; color: #3b6fb0; } .qlist .rq { margin: .8rem 0; }
+/* Can (21.10): the yellow box holds all the information, so it stays on top while students scroll through the questions */
+.setup { position: sticky; top: 0; z-index: 5; box-shadow: 0 3px 8px rgba(0,0,0,.12); }
