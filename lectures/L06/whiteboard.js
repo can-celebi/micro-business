@@ -12,6 +12,8 @@
   .wb-open { position: fixed; left: 10px; top: 10px; z-index: 61; font: 13px "IBM Plex Mono", ui-monospace, monospace; background: #fff; color: #333; border: 1px solid #c9cfd8; border-radius: 4px; padding: 3px 10px; cursor: pointer; }
   .wb { position: fixed; z-index: 70; background: #fff; display: none; box-shadow: 0 0 0 1px #d9dde3; }
   .wb.on { display: block; }
+  .wb.grid { background-image: linear-gradient(#e9edf2 1px, transparent 1px), linear-gradient(90deg, #e9edf2 1px, transparent 1px); background-size: 40px 40px; }
+  .wb.nopen canvas { pointer-events: none; cursor: default; }
   .wb canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; cursor: crosshair; }
   .wb-bar { position: absolute; left: 10px; top: 10px; z-index: 2; display: flex; gap: 6px; flex-wrap: wrap; align-items: center; font: 13px "IBM Plex Mono", ui-monospace, monospace; background: rgba(255,255,255,.92); padding: 4px; border-radius: 6px; }
   .wb-bar button { font: inherit; background: #fff; color: #333; border: 1px solid #c9cfd8; border-radius: 4px; padding: 3px 9px; cursor: pointer; }
@@ -24,11 +26,12 @@
   open.className = 'wb-open'; open.type = 'button'; open.textContent = '[ board ]'; open.title = 'whiteboard (W)';
   document.body.appendChild(open);
 
-  const wb = document.createElement('div'); wb.className = 'wb';
+  const wb = document.createElement('div'); wb.className = 'wb grid';   // faded grid lines by default (Can, 21.10)
   const COLS = { black: '#222', blue: '#0062C4', red: '#D9480F', green: '#1B7F3B' };
   wb.innerHTML = '<canvas></canvas><div class="wb-bar">' +
     Object.keys(COLS).map(k => `<button type="button" data-c="${k}" title="${k}"><span class="dot" style="background:${COLS[k]}"></span></button>`).join('') +
     '<button type="button" data-a="erase">eraser</button><button type="button" data-a="undo">undo</button><button type="button" data-a="clear">clear</button><span class="sep"></span>' +
+    '<button type="button" data-a="pen" class="on">pen on</button><button type="button" data-a="grid" class="on">grid</button><span class="sep"></span>' +
     '<button type="button" data-m="full">full</button><button type="button" data-m="right">right half</button><button type="button" data-m="bottom">bottom half</button><span class="sep"></span>' +
     '<button type="button" data-a="close">close ✕</button></div>';
   document.body.appendChild(wb);
@@ -56,7 +59,8 @@
   }
   function seg(st, a, b, W) {
     cx.strokeStyle = st.erase ? '#fff' : COLS[st.c]; cx.lineCap = 'round'; cx.lineJoin = 'round';
-    cx.lineWidth = (st.erase ? 28 : b[2]) ; cx.beginPath(); cx.moveTo(a[0] * W, a[1] * W); cx.lineTo(b[0] * W, b[1] * W); cx.stroke();
+    cx.lineWidth = (st.erase ? 28 : b[2]); cx.globalCompositeOperation = st.erase ? 'destination-out' : 'source-over';   // the eraser removes ink and keeps the grid
+    cx.beginPath(); cx.moveTo(a[0] * W, a[1] * W); cx.lineTo(b[0] * W, b[1] * W); cx.stroke(); cx.globalCompositeOperation = 'source-over';
   }
   function redraw() {
     const W = 1; cx.clearRect(0, 0, cv.width, cv.height);
@@ -76,6 +80,9 @@
     if (a === 'undo') { strokes.pop(); redraw(); }
     if (a === 'clear') { strokes.length = 0; redraw(); }
     if (a === 'close') toggle(false);
+    // Can (21.10): a plain white board without drawing (e.g. for the iPad app), and the grid on or off
+    if (a === 'pen') { const off = wb.classList.toggle('nopen'); b.classList.toggle('on', !off); b.textContent = off ? 'pen off' : 'pen on'; }
+    if (a === 'grid') { b.classList.toggle('on', wb.classList.toggle('grid')); }
   });
   function marks() {
     wb.querySelectorAll('[data-c]').forEach(b => b.classList.toggle('on', !erasing && b.dataset.c === colour));
