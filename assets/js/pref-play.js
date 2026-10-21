@@ -101,8 +101,8 @@
       s += axisLines(A, xname + ' ' + iv('x'), '€ on everything else ' + iv('y'));
       if (st.B !== B0 || st.px !== P0) s += seg(B0, P0, BLUE, 3, 0.22);
       s += seg(st.B, st.px, BLUE, 4);
-      if (yi <= ymax) s += '<circle cx="' + L + '" cy="' + A.Y(yi) + '" r="6" fill="' + BLUE + '"/><text x="' + (L - 8) + '" y="' + (A.Y(yi) + 5) + '" text-anchor="end" fill="' + BLUE + '" font-weight="600">' + r1(yi) + '</text>';
-      if (xi <= xmax) s += '<circle cx="' + A.X(xi) + '" cy="' + (T + ph) + '" r="6" fill="' + BLUE + '"/><text x="' + A.X(xi) + '" y="' + (T + ph + 20) + '" text-anchor="middle" fill="' + BLUE + '" font-weight="600">' + r1(xi) + '</text>';
+      if (yi <= ymax) s += '<circle cx="' + L + '" cy="' + A.Y(yi) + '" r="6" fill="' + BLUE + '"/><text x="' + (L - 8) + '" y="' + (A.Y(yi) + 5) + '" text-anchor="end" fill="' + BLUE + '">' + r1(yi) + '</text>';
+      if (xi <= xmax) s += '<circle cx="' + A.X(xi) + '" cy="' + (T + ph) + '" r="6" fill="' + BLUE + '"/><text x="' + A.X(xi) + '" y="' + (T + ph + 20) + '" text-anchor="middle" fill="' + BLUE + '">' + r1(xi) + '</text>';
       f.svg.innerHTML = s;
       f.eq.innerHTML = '<div class="pp-disp">' + m(r2(st.px) + '&#8202;' + ITX + ' + ' + ITY + ' = ' + r2(st.B)) + '</div>' +
         '<div>ends: ' + m(fr(BB, PX) + ' = ' + fr(r2(st.B), r2(st.px)) + ' = ' + r1(xi)) + ' ' + xname + ', ' + m(fr(BB, PY) + ' = €' + r2(st.B)) +
@@ -129,8 +129,8 @@
       let s = clip(id);
       s += '<rect x="' + X(xa) + '" y="' + T + '" width="' + (L + pw - X(xa)) + '" height="' + (Y(ya) - T) + '" fill="#E3F2E6"/>';
       s += '<rect x="' + L + '" y="' + Y(ya) + '" width="' + (X(xa) - L) + '" height="' + (T + ph - Y(ya)) + '" fill="#FBE7E2"/>';
-      s += '<text x="' + (X(xa) + (L + pw - X(xa)) / 2) + '" y="' + (T + (Y(ya) - T) / 2 + 5) + '" text-anchor="middle" fill="' + GREEN + '" font-size="16" font-weight="600" ' + halo + '>better than A</text>';
-      s += '<text x="' + (L + (X(xa) - L) / 2) + '" y="' + (Y(ya) + (T + ph - Y(ya)) / 2 + 5) + '" text-anchor="middle" fill="#C2410C" font-size="16" font-weight="600" ' + halo + '>worse than A</text>';
+      s += '<text x="' + (X(xa) + (L + pw - X(xa)) / 2) + '" y="' + (T + (Y(ya) - T) / 2 + 5) + '" text-anchor="middle" fill="' + GREEN + '" font-size="16" ' + halo + '>better than A</text>';
+      s += '<text x="' + (L + (X(xa) - L) / 2) + '" y="' + (Y(ya) + (T + ph - Y(ya)) / 2 + 5) + '" text-anchor="middle" fill="#C2410C" font-size="16" ' + halo + '>worse than A</text>';
       s += '<g clip-path="url(#' + id + ')">';
       if (st.map) [0.45, 2.1].forEach(c => { s += curve(Ax, k * c, BLUE, 2.2, ' opacity="0.45"'); });
       s += curve(Ax, k, BLUE, 4);
@@ -142,7 +142,7 @@
         lab(0.45, 'worse curve'); lab(2.1, 'better curve');
       }
       s += '<line x1="' + X(xa) + '" y1="' + Y(ya) + '" x2="' + X(xa) + '" y2="' + (T + ph) + '" stroke="' + GREEN + '" opacity="0.45"/><line x1="' + L + '" y1="' + Y(ya) + '" x2="' + X(xa) + '" y2="' + Y(ya) + '" stroke="' + GREEN + '" opacity="0.45"/>';
-      s += '<circle cx="' + X(xa) + '" cy="' + Y(ya) + '" r="9" fill="' + GREEN + '" stroke="#fff" stroke-width="2"/><text x="' + (xa > 0.7 * xmax ? X(xa) - 13 : X(xa) + 13) + '" y="' + (Y(ya) - 12) + '"' + (xa > 0.7 * xmax ? ' text-anchor="end"' : '') + ' fill="' + GREEN + '" font-weight="700" ' + halo + '>A (' + r1(xa) + ', €' + r1(ya) + ')</text>';
+      s += '<circle cx="' + X(xa) + '" cy="' + Y(ya) + '" r="9" fill="' + GREEN + '" stroke="#fff" stroke-width="2"/><text x="' + (xa > 0.7 * xmax ? X(xa) - 13 : X(xa) + 13) + '" y="' + (Y(ya) - 12) + '"' + (xa > 0.7 * xmax ? ' text-anchor="end"' : '') + ' fill="' + GREEN + '" ' + halo + '>A (' + r1(xa) + ', €' + r1(ya) + ')</text>';
       f.svg.innerHTML = s;
       f.eq.innerHTML = /^(0|off|no)$/.test(box.dataset.hint || '') ? '' : '<span class="dim">drag A</span>';   // data-hint="off": the slide already says it
       f.status.innerHTML = st.mrs ? '<div><span style="color:' + PURPLE + '"><b>MRS at A = ' + r1(mrs) + '</b></span>: you would give about €' + r1(mrs) + ' for one more ' + xone + '</div><div class="dim">drag A to the right: the curve flattens, the MRS falls</div>' : '';
@@ -182,7 +182,7 @@
       if (inX(x2) && inY(yc)) s += '<circle cx="' + X(x2) + '" cy="' + Y(yc) + '" r="6" fill="' + BLUE + '"/>'; if (inX(x2) && inY(yt)) s += '<circle cx="' + X(x2) + '" cy="' + Y(yt) + '" r="6" fill="' + PURPLE + '"/>';
       s += '</g>';
       s += '<rect x="' + L + '" y="' + T + '" width="' + pw + '" height="' + ph + '" fill="none" stroke="#ccc"/>';
-      s += '<circle cx="' + X(xa) + '" cy="' + Y(ya) + '" r="8" fill="' + GREEN + '" stroke="#fff" stroke-width="2"/><text x="' + (X(xa) + 12) + '" y="' + (Y(ya) - 12) + '" fill="' + GREEN + '" font-weight="700" ' + halo + '>A</text>';
+      s += '<circle cx="' + X(xa) + '" cy="' + Y(ya) + '" r="8" fill="' + GREEN + '" stroke="#fff" stroke-width="2"/><text x="' + (X(xa) + 12) + '" y="' + (Y(ya) - 12) + '" fill="' + GREEN + '" ' + halo + '>A</text>';
       s += '<text x="' + (L + 8) + '" y="' + (T + 18) + '" fill="#555" font-size="16" ' + halo + '>zoom ' + r1(st.z) + '× · window ' + r2(2 * hw) + ' ' + xname + ' wide</text>';
       f.svg.innerHTML = s;
       const dyc = yc - ya, dyt = -mrs * st.dx;
