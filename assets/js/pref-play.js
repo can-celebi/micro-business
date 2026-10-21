@@ -18,7 +18,7 @@
   const W = 600, H = 360, L = 58, BOT = 40, T = 16, R = 20, pw = W - L - R, ph = H - T - BOT;
   const BLUE = '#0062C4', PURPLE = '#7A3DB8', GREEN = '#1B7F3B';
   const MATH = '"STIX Two Text", "Cambria Math", Georgia, serif';
-  const halo = 'paint-order="stroke" stroke="#fff" stroke-width="4" stroke-linejoin="round"';
+  const halo = 'paint-order="stroke" stroke="#fff" stroke-width="5" stroke-linejoin="round"';
   const r1 = v => String(Math.round(v * 10) / 10), r2 = v => String(Math.round(v * 100) / 100), r3 = v => String(Math.round(v * 1000) / 1000);
   const fr = (a, b) => '<span class="pp-fr"><span>' + a + '</span><span>' + b + '</span></span>';
   const m = s => '<span class="pp-m">' + s + '</span>';
@@ -55,8 +55,8 @@
     let s = '';
     const ox = A.x0 <= 0 && A.x1 >= 0 ? A.X(0) : L, oy = A.y0 <= 0 && A.y1 >= 0 ? A.Y(0) : T + ph;
     s += '<line x1="' + ox + '" y1="' + T + '" x2="' + ox + '" y2="' + (T + ph) + '" stroke="#222"/><line x1="' + L + '" y1="' + oy + '" x2="' + (L + pw) + '" y2="' + oy + '" stroke="#222"/>';
-    s += '<text x="' + (ox + 8) + '" y="' + (T + 12) + '" fill="#555" font-size="14" ' + halo + '>' + yl + '</text>';
-    s += '<text x="' + (L + pw) + '" y="' + (oy - 8) + '" text-anchor="end" fill="#555" font-size="14" ' + halo + '>' + xl + '</text>';
+    s += '<text x="' + (ox + 8) + '" y="' + (T + 12) + '" fill="#555" font-size="16" ' + halo + '>' + yl + '</text>';
+    s += '<text x="' + (L + pw) + '" y="' + (oy - 8) + '" text-anchor="end" fill="#555" font-size="16" ' + halo + '>' + xl + '</text>';
     return s;
   }
   // the clipped polyline of y = k / x inside the box
@@ -128,8 +128,8 @@
       let s = clip(id);
       s += '<rect x="' + X(xa) + '" y="' + T + '" width="' + (L + pw - X(xa)) + '" height="' + (Y(ya) - T) + '" fill="#E3F2E6"/>';
       s += '<rect x="' + L + '" y="' + Y(ya) + '" width="' + (X(xa) - L) + '" height="' + (T + ph - Y(ya)) + '" fill="#FBE7E2"/>';
-      s += '<text x="' + (X(xa) + (L + pw - X(xa)) / 2) + '" y="' + (T + (Y(ya) - T) / 2 + 5) + '" text-anchor="middle" fill="' + GREEN + '" font-size="15" font-weight="600" ' + halo + '>better than A</text>';
-      s += '<text x="' + (L + (X(xa) - L) / 2) + '" y="' + (Y(ya) + (T + ph - Y(ya)) / 2 + 5) + '" text-anchor="middle" fill="#C2410C" font-size="15" font-weight="600" ' + halo + '>worse than A</text>';
+      s += '<text x="' + (X(xa) + (L + pw - X(xa)) / 2) + '" y="' + (T + (Y(ya) - T) / 2 + 5) + '" text-anchor="middle" fill="' + GREEN + '" font-size="16" font-weight="600" ' + halo + '>better than A</text>';
+      s += '<text x="' + (L + (X(xa) - L) / 2) + '" y="' + (Y(ya) + (T + ph - Y(ya)) / 2 + 5) + '" text-anchor="middle" fill="#C2410C" font-size="16" font-weight="600" ' + halo + '>worse than A</text>';
       s += '<g clip-path="url(#' + id + ')">';
       if (st.map) [0.45, 2.1].forEach(c => { s += curve(Ax, k * c, BLUE, 2.2, ' opacity="0.45"'); });
       s += curve(Ax, k, BLUE, 4);
@@ -137,13 +137,13 @@
       s += '</g>';
       s += axisLines(Ax, xname + ' ' + iv('x'), '€ on everything else ' + iv('y'));
       if (st.map) {
-        const lab = (c, t) => { const xx = xmax * 0.98, yy = k * c / xx; if (yy < ymax * 0.95) s += '<text x="' + X(xx) + '" y="' + (Y(yy) - 8) + '" text-anchor="end" fill="' + BLUE + '" font-size="14" opacity="0.85" ' + halo + '>' + t + '</text>'; };
+        const lab = (c, t) => { const xx = xmax * 0.98, yy = k * c / xx; if (yy < ymax * 0.95) s += '<text x="' + X(xx) + '" y="' + (Y(yy) - 8) + '" text-anchor="end" fill="' + BLUE + '" font-size="16" opacity="0.85" ' + halo + '>' + t + '</text>'; };
         lab(0.45, 'worse curve'); lab(2.1, 'better curve');
       }
       s += '<line x1="' + X(xa) + '" y1="' + Y(ya) + '" x2="' + X(xa) + '" y2="' + (T + ph) + '" stroke="' + GREEN + '" opacity="0.45"/><line x1="' + L + '" y1="' + Y(ya) + '" x2="' + X(xa) + '" y2="' + Y(ya) + '" stroke="' + GREEN + '" opacity="0.45"/>';
       s += '<circle cx="' + X(xa) + '" cy="' + Y(ya) + '" r="9" fill="' + GREEN + '" stroke="#fff" stroke-width="2"/><text x="' + (xa > 0.7 * xmax ? X(xa) - 13 : X(xa) + 13) + '" y="' + (Y(ya) - 12) + '"' + (xa > 0.7 * xmax ? ' text-anchor="end"' : '') + ' fill="' + GREEN + '" font-weight="700" ' + halo + '>A (' + r1(xa) + ', €' + r1(ya) + ')</text>';
       f.svg.innerHTML = s;
-      f.eq.innerHTML = '<span class="dim">drag A</span>';
+      f.eq.innerHTML = /^(0|off|no)$/.test(box.dataset.hint || '') ? '' : '<span class="dim">drag A</span>';   // data-hint="off": the slide already says it
       f.status.innerHTML = st.mrs ? '<div><span style="color:' + PURPLE + '"><b>MRS at A = ' + r1(mrs) + '</b></span>: you would give about €' + r1(mrs) + ' for one more ' + xone + '</div><div class="dim">drag A to the right: the curve flattens, the MRS falls</div>' : '';
     }
     drag(f.svg, () => Ax, (x, y) => { st.a = [Math.max(0.5, Math.min(xmax - 0.5, Math.round(x * 4) / 4)), Math.max(2, Math.min(ymax - 2, Math.round(y)))]; draw(); });
@@ -176,7 +176,7 @@
       s += '</g>';
       s += '<rect x="' + L + '" y="' + T + '" width="' + pw + '" height="' + ph + '" fill="none" stroke="#ccc"/>';
       s += '<circle cx="' + X(xa) + '" cy="' + Y(ya) + '" r="8" fill="' + GREEN + '" stroke="#fff" stroke-width="2"/><text x="' + (X(xa) + 12) + '" y="' + (Y(ya) - 12) + '" fill="' + GREEN + '" font-weight="700" ' + halo + '>A</text>';
-      s += '<text x="' + (L + 8) + '" y="' + (T + 18) + '" fill="#555" font-size="14" ' + halo + '>zoom ' + r1(st.z) + '× · window ' + r2(2 * hw) + ' ' + xname + ' wide</text>';
+      s += '<text x="' + (L + 8) + '" y="' + (T + 18) + '" fill="#555" font-size="16" ' + halo + '>zoom ' + r1(st.z) + '× · window ' + r2(2 * hw) + ' ' + xname + ' wide</text>';
       f.svg.innerHTML = s;
       const dyc = yc - ya, dyt = -mrs * st.dx;
       f.eq.innerHTML = '<div class="pp-disp">' + m('Δ' + ITY + ' ≈ −MRS · Δ' + ITX) + '</div><div class="pp-disp-sub">' + m('MRS = ' + r1(mrs)) + ' at A</div>';
