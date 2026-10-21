@@ -45,7 +45,7 @@
         { t: 'Sam strictly prefers Bot A to Bot B, Bot B to Bot C, and Bot C to Bot A. Sam has Bot C and pays €1 for every swap to a plan Sam prefers. You offer C → B → A → C. How much has Sam paid when Sam holds Bot C again?', o: ['€0', '€1', '€3', '€6'], k: 'c' }
       ] },
     q3: { title: 'quiz 3 · your choices on budget lines', budget: true,
-      setup: [['story', 'each round you get a new budget for two AI services'], ['x', 'GPU hours'], ['y', 'API credits'], ['task', 'tap the bundle you like best on each line; any point on the line is allowed, including both ends']],
+      setup: [['story', 'each round you get a new budget for two AI services'], ['x', 'GPU hours'], ['y', 'API credits'], ['task', 'tap the bundle you like best on each line (any point, also the ends)']],
       lines: (window.L06_LINES || []) }
   };
   const QZ = QUIZZES[Q];
@@ -55,7 +55,7 @@
   async function sha(s) { const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s)); return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join(''); }
   const LS = k => { try { return localStorage.getItem(k); } catch (e) { return null; } }, SS = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
   const POLL = 'L06-' + Q, GATE = 'L06-gate-' + Q;
-  const setupHTML = () => '<div class="setup">' + QZ.setup.map(([k, v]) => `<div class="k">${k}</div><div class="v">${v}</div>`).join('') + '</div>';
+  const setupHTML = () => '<div class="setup' + (QZ.budget ? ' small' : '') + '">' + QZ.setup.map(([k, v]) => `<div class="k">${k}</div><div class="v">${v}</div>`).join('') + '</div>';
 
   // gate: latest valid answer decides
   async function gateState() {
@@ -126,7 +126,7 @@
       let s = `<div class="round">round ${k + 1} of ${L.length}</div><svg id="bs" viewBox="0 0 ${W} ${W}" class="fig budget">`;
       for (let g = 20; g <= 100; g += 20) s += `<line x1="${px(g)}" y1="${py(0)}" x2="${px(g)}" y2="${py(100)}" stroke="#eee"/><line x1="${px(0)}" y1="${py(g)}" x2="${px(100)}" y2="${py(g)}" stroke="#eee"/><text x="${px(g)}" y="${py(0) + 15}" font-size="10" text-anchor="middle">${g}</text><text x="${px(0) - 5}" y="${py(g) + 3}" font-size="10" text-anchor="end">${g}</text>`;
       s += `<line x1="${px(0)}" y1="${py(0)}" x2="${px(100)}" y2="${py(0)}" stroke="#222"/><line x1="${px(0)}" y1="${py(0)}" x2="${px(0)}" y2="${py(100)}" stroke="#222"/>`;
-      s += `<text x="${px(100)}" y="${py(0) + 28}" font-size="11" text-anchor="end">x · GPU hours</text><text x="${px(0) + 4}" y="${py(100) - 4}" font-size="11">y · API credits</text>`;
+      s += `<text x="${px(100)}" y="${py(0) + 28}" font-size="11" text-anchor="end">x · GPU hours</text><text x="${px(0) + 26}" y="${py(100) + 10}" font-size="11">y · API credits</text>`;
       s += `<line x1="${px(Ix)}" y1="${py(0)}" x2="${px(0)}" y2="${py(Iy)}" stroke="#0062C4" stroke-width="4" stroke-linecap="round"/>`;
       s += `<line id="hit" x1="${px(Ix)}" y1="${py(0)}" x2="${px(0)}" y2="${py(Iy)}" stroke="transparent" stroke-width="40"/>`;
       if (p != null) { const x = p * Ix, y = (1 - p) * Iy; s += `<circle cx="${px(x)}" cy="${py(y)}" r="8" fill="#D9480F"/>`; }

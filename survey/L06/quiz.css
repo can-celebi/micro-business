@@ -12,7 +12,7 @@ h1 { font-size: 1.3rem; margin: 0 0 .8rem; font-weight: 600; }
 .go:disabled { opacity: .4; }
 .msg { margin-top: .8rem; font-size: 1rem; } a { color: #1a1a1a; }
 .fig { width: 100%; max-width: 300px; display: block; margin: 4px 0 10px; }
-.fig.budget { max-width: 420px; touch-action: manipulation; cursor: crosshair; }
+.fig.budget { max-width: 340px; touch-action: manipulation; cursor: crosshair; }
 .lock { border: 1.3px dashed #999; border-radius: 4px; padding: 14px; }
 .lock input { font: inherit; font-size: 1rem; padding: 6px; width: 5em; }
 .round { color: #6b6b6b; margin: .3rem 0; } .cur { margin: .3rem 0 .6rem; font-size: 1rem; }
@@ -23,3 +23,4 @@ h1 { font-size: 1.3rem; margin: 0 0 .8rem; font-weight: 600; }
 .bar .fill { position: absolute; left: 0; top: 0; bottom: 0; background: #E4EFFA; z-index: 0; }
 .bar.ok .fill { background: #CDEBCD; } .bar .lab, .bar .num { position: relative; z-index: 1; }
 .bar .num { position: absolute; right: 8px; top: 6px; color: #444; }
+.setup.small { font-size: .9rem; padding: 6px 12px; margin-bottom: .6rem; }

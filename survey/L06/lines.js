@@ -1,1 +1,1 @@
-window.L06_LINES = [[100, 50], [50, 100], [80, 80], [100, 30], [30, 100], [60, 90], [90, 60], [100, 70], [70, 100], [55, 55], [100, 100], [40, 85]]; // PLACEHOLDER until Deniz
+window.L06_LINES = [[48,72],[84,13],[29,82],[58,29],[17,96],[43,62],[84,45],[27,94],[67,22],[38,72],[18,92],[39,59]]; // Deniz (Games & experiments), 21.10: Choi rule, random clicking violates GARP 98.1%; order mixed by Filiz
