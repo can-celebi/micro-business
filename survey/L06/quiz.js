@@ -164,7 +164,8 @@
     const tag = async a => (await sha('micro-gate:' + code.trim() + ':L06-' + Q + ':' + a)).slice(0, 8);
     $('app').innerHTML = `<h1>${QZ.title} · lecturer</h1><p class="s">state: <b id="st">…</b></p>
       <div class="opts"><button class="go" id="op" type="button">[ open ]</button><button class="opt" id="cl" type="button">[ close ]</button><button class="opt" id="rf" type="button">[ refresh ]</button></div>
-      <div id="res" class="res"></div>`;
+      <div id="res" class="res"></div>
+      <details class="qlist"><summary>[ show the questions ]</summary>${QZ.budget ? `<p>${QZ.lines.length} budget lines, one tap per line (x and y); no right answers.</p>` : QZ.qs.map((q, i) => `<div class="rq"><div class="t"><b>${i + 1}.</b> ${q.t}</div>${q.fig ? FIG[q.fig] : ''}<div class="s">${q.o.map((o, j) => 'abcd'[j] + ') ' + o).join(' · ')}</div></div>`).join('')}</details>`;
     const setState = async v => { $('st').textContent = 'saving…'; try { await P.submit(GATE, v + '-' + await tag(v)); $('st').textContent = v; } catch (e) { $('st').textContent = 'not saved, tap again'; } };
     $('op').onclick = () => setState('open'); $('cl').onclick = () => { if ($('cl').dataset.sure) setState('closed'); else { $('cl').dataset.sure = 1; $('st').textContent = 'tap [ close ] again: closing is final for this quiz'; } };
     async function refresh() {
