@@ -16,7 +16,7 @@
       <button class="h3-b" data-a="reset" type="button">reset</button>
     </div>`;
   const cv = box.querySelector('canvas'), cx = cv.getContext('2d');
-  const W = 720, H = 430, DPR = Math.min(2, window.devicePixelRatio || 1);
+  const W = 900, H = 370, DPR = Math.min(2, window.devicePixelRatio || 1);
   cv.width = W * DPR; cv.height = H * DPR; cx.scale(DPR, DPR);
   const slider = box.querySelector('input'), hOut = box.querySelector('.h3-h');
   const FONT = '"STIX Two Text", "Cambria Math", Georgia, serif';
@@ -42,8 +42,8 @@
   function P(x, y, z) {
     const X = x - 5, Y = y - 5, c = Math.cos(st.th), s = Math.sin(st.th), cp = Math.cos(st.ph), sp = Math.sin(st.ph);
     const xr = X * c - Y * s, yr = X * s + Y * c, zz = z - 2.4;
-    const S = 32 - cp;  // the whole square fits when seen from above (and moves left, away from the notes)
-    return { x: W / 2 - 10 - 130 * (1 - cp) + xr * S, y: H / 2 + 8 + 34 * cp - (yr * sp + zz * cp) * S, d: yr * cp - zz * sp };
+    const S = 28 + 3 * cp;  // the whole square fits when seen from above (and moves left, away from the notes)
+    return { x: W / 2 - 10 - 130 * (1 - cp) + xr * S, y: H / 2 + 5 - 10 * cp - (yr * sp + zz * cp) * S, d: yr * cp - zz * sp };
   }
   // hiking-map tints by height: pale green (low) → cream → light brown (high)
   const TINT = [[0, [226, 240, 218]], [4, [240, 240, 205]], [7, [236, 220, 192]], [10, [221, 196, 168]]];
@@ -95,7 +95,7 @@
     // z axis: utility
     if (st.ph < 1.25) { line(P(0, 0, 0), P(0, 0, 7.4), '#333', 1.5); text(P(0, 0, 7.9), 'utility u', 20, '#222', '', 'start'); }
     // labels u₁, u₂, … at the end of each floor curve
-    st.curves.forEach((k, i) => { if (k.drop > 0.95) { const e = P(10, k.c * k.c / 10, 0); sub(e.x + 10, e.y + 6, i + 1, COLS[i % COLS.length]); } });
+    st.curves.forEach((k, i) => { if (k.drop > 0.95) { const lx = Math.min(10, k.c * k.c / 1.6), e = P(lx, k.c * k.c / lx, 0); sub(e.x + 10, e.y - 4, i + 1, COLS[i % COLS.length]); } });
     if (st.note) { cx.font = '20px ' + FONT; cx.fillStyle = '#0062C4'; cx.textAlign = 'right'; cx.fillText(st.note, W - 12, 28); }
     if (st.note2) { cx.font = '18px ' + FONT; cx.fillStyle = '#1B7F3B'; cx.textAlign = 'right'; cx.fillText(st.note2, W - 12, 54); }
   }
@@ -115,7 +115,7 @@
   function sub(x, y, n, col) {
     cx.textAlign = 'left'; cx.fillStyle = col; cx.lineWidth = 5; cx.strokeStyle = '#fff';
     cx.font = 'italic 22px ' + FONT; cx.strokeText('u', x, y); cx.fillText('u', x, y);
-    cx.font = '15px ' + FONT; cx.strokeText(String(n), x + 11, y + 5); cx.fillText(String(n), x + 11, y + 5);
+    cx.font = '18px ' + FONT; cx.strokeText(String(n), x + 11, y + 6); cx.fillText(String(n), x + 11, y + 6);
   }
 
   // ---- animation loop ----
