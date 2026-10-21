@@ -36,8 +36,11 @@
         { t: 'y is a composite good with p<sub>y</sub> = 1. One unit of y is …', o: ['one other product', '€1 spent on everything else', 'one AI video', 'nothing: y is only a label'], k: 'b' },
         { t: 'At p<sub>x</sub> = €4: one more AI video costs you how much of everything else?', o: ['€1', '€20', '€80', '€4'], k: 'd' }
       ] },
-    q2: { title: 'quiz 2 · preferences and indifference curves', setup: [['goods', 'x and y are both goods: more of each is better']],
+    q2: { title: 'quiz 2 · preferences and indifference curves', setup: [['transitive', 'if A … B and B … C, then always A … C'], ['goods', 'x and y are both goods: more of each is better']],
       qs: [
+        { t: 'Your friend\'s friend: if A is a friend of B, and B is a friend of C, is A always a friend of C? So, is the relation "is a friend of" transitive?', o: ['yes, it is transitive', 'no, it is not transitive'], k: 'b' },
+        { t: 'Is the relation "is older than" transitive? (A is older than B, B is older than C …)', o: ['yes, it is transitive', 'no, it is not transitive'], k: 'a' },
+        { t: 'Is the relation "beats" in rock–paper–scissors transitive? (rock beats scissors, scissors beat paper …)', o: ['yes, it is transitive', 'no, it is not transitive'], k: 'b' },
         { t: 'Can an indifference curve look like this?', fig: 'up', o: ['yes', 'no: it breaks completeness', 'no: it breaks more is better', 'no: it breaks convexity'], k: 'c' },
         { t: 'Can two indifference curves cross like this?', fig: 'cross', o: ['no: with more is better, it breaks transitivity', 'no: it breaks convexity', 'no: it breaks completeness', 'yes, curves can cross'], k: 'a' },
         { t: 'Three chatbot plans. You are indifferent between A and B (A ∼ B), and you strictly prefer B to C (B ≻ C). Your preferences are transitive. How do A and C compare?', o: ['A ∼ C', 'C ≻ A', 'A ≻ C', "can't tell"], k: 'c' },
