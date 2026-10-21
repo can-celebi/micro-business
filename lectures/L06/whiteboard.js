@@ -9,7 +9,7 @@
 
   const css = document.createElement('style');
   css.textContent = `
-  .wb-open { position: fixed; left: 92px; bottom: 10px; z-index: 61; font: 13px "IBM Plex Mono", ui-monospace, monospace; background: #fff; color: #333; border: 1px solid #c9cfd8; border-radius: 4px; padding: 3px 10px; cursor: pointer; }
+  .wb-open { position: fixed; left: 10px; top: 10px; z-index: 61; font: 13px "IBM Plex Mono", ui-monospace, monospace; background: #fff; color: #333; border: 1px solid #c9cfd8; border-radius: 4px; padding: 3px 10px; cursor: pointer; }
   .wb { position: fixed; z-index: 70; background: #fff; display: none; box-shadow: 0 0 0 1px #d9dde3; }
   .wb.on { display: block; }
   .wb canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; cursor: crosshair; }
