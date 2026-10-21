@@ -64,7 +64,7 @@
     const pts = [], N = 160;
     for (let i = 0; i <= N; i++) {
       const xx = A.x0 + (A.x1 - A.x0) * i / N; if (xx <= 0) continue;
-      const yy = k / xx; if (yy < A.y0 - (A.y1 - A.y0) || yy > A.y1 + (A.y1 - A.y0)) continue;
+      const yy = typeof k === 'function' ? k(xx) : k / xx; if (!isFinite(yy)) continue; if (yy < A.y0 - (A.y1 - A.y0) || yy > A.y1 + (A.y1 - A.y0)) continue;
       pts.push(A.X(xx).toFixed(1) + ',' + A.Y(yy).toFixed(1));
     }
     return pts.length > 1 ? '<polyline points="' + pts.join(' ') + '" fill="none" stroke="' + col + '" stroke-width="' + w + '"' + (extra || '') + '/>' : '';
@@ -159,7 +159,9 @@
     const a0 = readA(box, '4,30'), xmax = +box.dataset.xmax || 12, ymax = +box.dataset.ymax || 60;
     const xname = box.dataset.xname || 'coffees', xone = box.dataset.xone || 'coffee';
     const f = frame(box), st = { z: 1, dx: 1 }, id = 'ppc' + (++NID);
-    const [xa, ya] = a0, k = xa * ya, mrs = ya / xa;
+    const [xa, ya] = a0, SQ = box.dataset.curve === 'sqrt', c = Math.sqrt(xa) + Math.sqrt(ya);
+    // data-curve="sqrt" (Murat, 21.10: slide D2 uses √x + √y = 6): y = (c − √x)², MRS = √(y/x); default x·y = k, MRS = y/x
+    const k = SQ ? (x => x <= c * c ? Math.pow(c - Math.sqrt(x), 2) : NaN) : xa * ya, yOf = SQ ? k : (x => xa * ya / x), mrs = SQ ? Math.sqrt(ya / xa) : ya / xa;
     function draw() {
       // the view: the whole box at 1×, then centred on A and shrinking around it
       const t = Math.min(1, (st.z - 1) / 1.5), cx = xmax / 2 + (xa - xmax / 2) * t, cy = ymax / 2 + (ya - ymax / 2) * t;
@@ -168,7 +170,7 @@
       s += curve(Ax, k, BLUE, 4);
       s += '<line x1="' + X(xa - 3 * hw) + '" y1="' + Y(ya + mrs * 3 * hw) + '" x2="' + X(xa + 3 * hw) + '" y2="' + Y(ya - mrs * 3 * hw) + '" stroke="' + PURPLE + '" stroke-width="2.5" stroke-dasharray="10 6"/>';
       // the step: along the curve and along the tangent
-      const x2 = xa + st.dx, yc = k / x2, yt = ya - mrs * st.dx;
+      const x2 = xa + st.dx, yc = yOf(x2), yt = ya - mrs * st.dx;
       s += '<line x1="' + X(xa) + '" y1="' + Y(ya) + '" x2="' + X(x2) + '" y2="' + Y(ya) + '" stroke="#555" stroke-width="1.5"/>';
       s += '<line x1="' + X(x2) + '" y1="' + Y(ya) + '" x2="' + X(x2) + '" y2="' + Y(Math.min(yc, yt)) + '" stroke="#555" stroke-width="1" stroke-dasharray="3 4"/>';
       s += '<line x1="' + X(x2) + '" y1="' + Y(yc) + '" x2="' + X(x2) + '" y2="' + Y(yt) + '" stroke="#C2410C" stroke-width="5" opacity="0.75"/>';
@@ -182,10 +184,10 @@
       f.eq.innerHTML = '<div class="pp-disp">' + m('Δ' + ITY + ' ≈ −MRS · Δ' + ITX) + '</div><div class="pp-disp-sub">' + m('MRS = ' + r1(mrs)) + ' at A</div>';
       const mi = v => (v < 0 ? '−' : '') + r3(Math.abs(v));
       f.status.innerHTML = '<div>step ' + m('Δ' + ITX + ' = ' + r2(st.dx)) + ': along the curve ' + m('Δ' + ITY + ' = ' + mi(dyc)) + ' euros, the tangent says ' + m('−' + r1(mrs) + ' · ' + r2(st.dx) + ' = ' + mi(dyt)) + '</div>' +
-        '<div><b style="color:#C2410C">error ' + r3(Math.abs(dyc - dyt)) + '</b> (' + (Math.abs(dyt) > 0 ? Math.round(100 * Math.abs(dyc - dyt) / Math.abs(dyt)) : 0) + '% of the tangent’s answer)</div>';
+        '<div><b style="color:#C2410C">off by €' + r3(Math.abs(dyc - dyt)) + '</b> (' + (Math.abs(dyt) > 0 ? Math.round(100 * Math.abs(dyc - dyt) / Math.abs(dyt)) : 0) + '% of the tangent’s answer)</div>';
     }
     slider(f.ctl, 'zoom', 0, 5, 0.05, 0, (v, o) => { st.z = Math.pow(2, v); o.innerHTML = r1(st.z) + '×'; draw(); });
-    slider(f.ctl, 'step Δ' + ITX, 0.05, Math.min(4, xmax - xa), 0.05, 1, (v, o) => { st.dx = v; o.innerHTML = r2(v); draw(); });
+    slider(f.ctl, 'step Δ' + ITX, 0.05, Math.min(+box.dataset.stepmax || (SQ ? 8 : 4), xmax - xa, SQ ? c * c - xa : Infinity), 0.05, 1, (v, o) => { st.dx = v; o.innerHTML = r2(v); draw(); });
     draw();
   }
 
