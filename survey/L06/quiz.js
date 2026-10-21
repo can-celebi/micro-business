@@ -27,14 +27,14 @@
 
   // ---------- the quizzes ----------
   const QUIZZES = {
-    q1: { title: 'quiz 1 · the budget line', setup: [['story', 'your AI influencer account, one month'], ['x', 'AI videos · p<sub>x</sub> = €4'], ['y', 'everything else (composite good, in €) · p<sub>y</sub> = 1'], ['B', '<b class="bud">B = €80</b>']],
+    q1: { title: 'quiz 1 · the budget line', setup: [['x', 'coffees · p<sub>x</sub> = €4'], ['y', 'everything else (composite good, in €) · p<sub>y</sub> = 1'], ['B', '<b class="bud">B = €80</b>']],
       qs: [
-        { t: 'How many AI videos can you buy at most?', o: ['16', '20', '80', '320'], k: 'b' },
+        { t: 'How many coffees can you buy at most?', o: ['16', '20', '80', '320'], k: 'b' },
         { t: 'How much can you spend on everything else at most?', o: ['€4', '€20', '€80', '€76'], k: 'c' },
         { t: 'Your budget rises to €100, prices stay the same. The budget line …', o: ['shifts out, parallel', 'rotates out, the end on the y-axis stays', 'rotates out, the end on the x-axis stays', 'does not move'], k: 'a' },
-        { t: 'Back to €80. The price of a video rises to €5. The budget line …', o: ['shifts in, parallel', 'rotates in, the end on the x-axis stays', 'rotates in, the end on the y-axis stays', 'shifts out, parallel'], k: 'c' },
-        { t: 'y is a composite good with p<sub>y</sub> = 1. One unit of y is …', o: ['one other product', '€1 spent on everything else', 'one AI video', 'nothing: y is only a label'], k: 'b' },
-        { t: 'At p<sub>x</sub> = €4: one more AI video costs you how much of everything else?', o: ['€1', '€20', '€80', '€4'], k: 'd' }
+        { t: 'Back to €80. The price of a coffee rises to €5. The budget line …', o: ['shifts in, parallel', 'rotates in, the end on the x-axis stays', 'rotates in, the end on the y-axis stays', 'shifts out, parallel'], k: 'c' },
+        { t: 'y is a composite good with p<sub>y</sub> = 1. One unit of y is …', o: ['one other product', '€1 spent on everything else', 'one coffee', 'nothing: y is only a label'], k: 'b' },
+        { t: 'At p<sub>x</sub> = €4: one more coffee costs you how much of everything else?', o: ['€1', '€20', '€80', '€4'], k: 'd' }
       ] },
     q2: { title: 'quiz 2 · preferences and indifference curves', setup: [['transitive', 'if A … B and B … C, then always A … C'], ['goods', 'x and y are both goods: more of each is better']],
       qs: [
@@ -43,12 +43,12 @@
         { t: 'Is the relation "beats" in rock–paper–scissors transitive? (rock beats scissors, scissors beat paper …)', o: ['yes, it is transitive', 'no, it is not transitive'], k: 'b' },
         { t: 'Can an indifference curve look like this?', fig: 'up', o: ['yes', 'no: it breaks completeness', 'no: it breaks more is better', 'no: it breaks convexity'], k: 'c' },
         { t: 'Can two indifference curves cross like this?', fig: 'cross', o: ['no: with more is better, it breaks transitivity', 'no: it breaks convexity', 'no: it breaks completeness', 'yes, curves can cross'], k: 'a' },
-        { t: 'Three chatbot plans. You are indifferent between A and B (A ∼ B), and you strictly prefer B to C (B ≻ C). Your preferences are transitive. How do A and C compare?', o: ['A ∼ C', 'C ≻ A', 'A ≻ C', "can't tell"], k: 'c' },
-        { t: 'For a week you are indifferent between X = (20 text prompts a day, 0 image generations) and Y = (0 prompts, 20 images). Your preferences are convex. The half-half mix M = (10, 10) is …', o: ['worse than X and Y', 'at least as good as X and Y', "can't tell without knowing your tastes"], k: 'b' },
-        { t: 'Sam strictly prefers Bot A to Bot B, Bot B to Bot C, and Bot C to Bot A. Sam has Bot C and pays €1 for every swap to a plan Sam prefers. You offer C → B → A → C. How much has Sam paid when Sam holds Bot C again?', o: ['€0', '€1', '€3', '€6'], k: 'c' }
+        { t: 'Three bundles A, B, C. You are indifferent between A and B (A ∼ B), and you strictly prefer B to C (B ≻ C). Your preferences are transitive. How do A and C compare?', o: ['A ∼ C', 'C ≻ A', 'A ≻ C', "can't tell"], k: 'c' },
+        { t: 'You are indifferent between X = (20 apples, 0 bananas) and Y = (0 apples, 20 bananas). Your preferences are convex. The half-half mix M = (10, 10) is …', o: ['worse than X and Y', 'at least as good as X and Y', "can't tell without knowing your tastes"], k: 'b' },
+        { t: 'Sam strictly prefers bundle A to B, B to C, and C to A. Sam has C and pays €1 for every swap to a bundle Sam prefers. You offer C → B → A → C. How much has Sam paid when Sam holds C again?', o: ['€0', '€1', '€3', '€6'], k: 'c' }
       ] },
     q3: { title: 'quiz 3 · your choices on budget lines', budget: true,
-      setup: [['story', 'each round you get a new budget for two AI services'], ['x', 'GPU hours'], ['y', 'API credits'], ['task', 'tap the bundle you like best on each line (any point, also the ends)']],
+      setup: [['story', 'each round you get a new budget for two goods you like, x and y'], ['task', 'tap the bundle you like best on each line (any point, also the ends)']],
       lines: (window.L06_LINES || []) }
   };
   const QZ = QUIZZES[Q];
@@ -129,12 +129,12 @@
       let s = `<div class="round">round ${k + 1} of ${L.length}</div><svg id="bs" viewBox="0 0 ${W} ${W}" class="fig budget">`;
       for (let g = 20; g <= 100; g += 20) s += `<line x1="${px(g)}" y1="${py(0)}" x2="${px(g)}" y2="${py(100)}" stroke="#eee"/><line x1="${px(0)}" y1="${py(g)}" x2="${px(100)}" y2="${py(g)}" stroke="#eee"/><text x="${px(g)}" y="${py(0) + 15}" font-size="10" text-anchor="middle">${g}</text><text x="${px(0) - 5}" y="${py(g) + 3}" font-size="10" text-anchor="end">${g}</text>`;
       s += `<line x1="${px(0)}" y1="${py(0)}" x2="${px(100)}" y2="${py(0)}" stroke="#222"/><line x1="${px(0)}" y1="${py(0)}" x2="${px(0)}" y2="${py(100)}" stroke="#222"/>`;
-      s += `<text x="${px(100)}" y="${py(0) + 28}" font-size="11" text-anchor="end">x · GPU hours</text><text x="${px(0) + 26}" y="${py(100) + 10}" font-size="11">y · API credits</text>`;
+      s += `<text x="${px(100)}" y="${py(0) + 28}" font-size="11" text-anchor="end">x</text><text x="${px(0) + 26}" y="${py(100) + 10}" font-size="11">y</text>`;
       s += `<line x1="${px(Ix)}" y1="${py(0)}" x2="${px(0)}" y2="${py(Iy)}" stroke="#0062C4" stroke-width="4" stroke-linecap="round"/>`;
       s += `<line id="hit" x1="${px(Ix)}" y1="${py(0)}" x2="${px(0)}" y2="${py(Iy)}" stroke="transparent" stroke-width="40"/>`;
       if (p != null) { const x = p * Ix, y = (1 - p) * Iy; s += `<circle cx="${px(x)}" cy="${py(y)}" r="8" fill="#D9480F"/>`; }
       s += '</svg>';
-      const cur = p == null ? 'tap the line' : `your bundle: ${(p * Ix).toFixed(1)} GPU hours, ${((1 - p) * Iy).toFixed(1)} API credits`;
+      const cur = p == null ? 'tap the line' : `your bundle: ${(p * Ix).toFixed(1)} of x, ${((1 - p) * Iy).toFixed(1)} of y`;
       s += `<div class="cur">${cur}</div><div class="nav">${k ? '<button class="opt" id="prev" type="button">← back</button>' : ''}` +
         (k < L.length - 1 ? `<button class="go" id="next" type="button" ${p == null ? 'disabled' : ''}>[ next line ]</button>` : `<button class="go" id="go" type="button" ${p == null ? 'disabled' : ''}>[ submit all ${L.length} ]</button>`) + '</div><div class="msg" id="msg"></div>';
       $('bt').innerHTML = s;
