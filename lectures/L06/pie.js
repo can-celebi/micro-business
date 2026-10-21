@@ -2,9 +2,13 @@
 // Markup: <div class="l06-pie" data-poll="L06-B1-pick" data-options="A,B"></div>. Lecturer only, and it loads only on
 // [ refresh ] (one results() call), so the student decks cost nothing.
 (function () {
+  // colours: A blue, B orange, indifferent purple (Can, 21.10); the indifferent button is purple for everyone
+  const COLS = ['#0062C4', '#D9480F', '#7A3DB8', '#1B7F3B'];
+  const tint = () => document.querySelectorAll('.l06-pick .poll button').forEach(b => { if (/indifferent/.test(b.textContent)) { b.style.color = '#7A3DB8'; b.style.borderColor = '#7A3DB8'; } });
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => setTimeout(tint, 300)); else setTimeout(tint, 300);
+  setTimeout(tint, 1500);
   const P = window.MicroPoll;
   if (!P || !P.teacher) return;
-  const COLS = ['#0062C4', '#D9480F', '#1B7F3B', '#7A3DB8'];
   function pie(counts, labels) {
     const n = counts.reduce((a, b) => a + b, 0), R = 46, c = 52;
     if (!n) return '<div class="dim">no answers yet</div>';
