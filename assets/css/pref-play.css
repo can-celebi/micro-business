@@ -9,9 +9,10 @@
 .pp-m sub { font-size: 0.65em; vertical-align: -0.25em; font-style: normal; }
 .pp-fr { display: inline-flex; flex-direction: column; vertical-align: middle; text-align: center; margin: 0 0.12em; line-height: 1.05; font-size: 0.9em; }
 .pp-fr > span:first-child { border-bottom: 1px solid currentColor; padding: 0 0.15em; }
-.pp-svg { width: 100%; height: auto; max-height: 300px; display: block; touch-action: none; user-select: none; }
+.pp-svg { width: 100%; max-width: 760px; height: auto; max-height: 400px; display: block; margin: 0 auto; touch-action: none; user-select: none; }
 .pp-map .pp-svg { cursor: grab; }
-.pp-svg text { font-family: "STIX Two Text", "Cambria Math", Georgia, serif; font-size: 16px; }
+.pp-svg text { font-family: "STIX Two Text", "Cambria Math", Georgia, serif; font-size: 17px; }
+/* in a deck the svg is ~667 px wide (400 px high) on a 600-unit viewBox: 16 units ≈ 17.8 px on the slide (Kamuran R22: labels ≥ 17 px, widget ≥ half the slide) */
 .pp-ctl { display: grid; grid-template-columns: 1fr 1fr; column-gap: 2.5em; }
 .pp-ctl label { display: grid; grid-template-columns: 4.5em 1fr 4em; align-items: center; gap: 0.6em; margin: 0.15em 0; }
 .pp-ctl label b { font-family: "STIX Two Text", "Cambria Math", Georgia, serif; font-weight: 400; font-size: 1.2em; }
