@@ -179,13 +179,15 @@
             g.buckets.map(([l, k]) => `<div class="bar"><span class="lab">CCEI ${l}</span><span class="fill" style="width:${100 * k / g.n}%"></span><span class="num">${pc(k, g.n)} (${k})</span></div>`).join('') +
             `<p class="s">clicking at random on these lines would violate GARP ${pc(g.random, 1)} of the time</p>` : '');
         }
-        else QZ.qs.forEach((q, i) => {
-          const c = {}; vals.forEach(v => { const a = v[i] || '-'; c[a] = (c[a] || 0) + 1; });
-          h += `<div class="rq"><div class="t"><b>${i + 1}.</b> ${q.t}</div>` + q.o.map((o, j) => {
-            const a = 'abcd'[j], n = c[a] || 0, pc = r.n ? Math.round(100 * n / r.n) : 0;
-            return `<div class="bar${a === q.k ? ' ok' : ''}"><span class="lab">${a}) ${o}${a === q.k ? ' ✓' : ''}</span><span class="fill" style="width:${pc}%"></span><span class="num">${pc}% (${n})</span></div>`;
-          }).join('') + (c['-'] ? `<div class="s">skipped: ${c['-']}</div>` : '') + '</div>';
-        });
+        else {
+          // progress only, no answers (Can, 21.10): how many answered each question, and how complete the submissions are
+          const n = QZ.qs.length, per = QZ.qs.map((q, k) => vals.filter(v => (v[k] || '-') !== '-').length);
+          const done = vals.map(v => [...v].filter(a => a !== '-').length), all = done.filter(d => d === n).length;
+          const pc = (a, b) => b ? Math.round(100 * a / b) + '%' : '–';
+          if (signed) h += `<div class="bar"><span class="lab">submitted</span><span class="fill" style="width:${100 * r.n / signed}%"></span><span class="num">${pc(r.n, signed)} (${r.n} of ${signed})</span></div>`;
+          h += `<p class="s" style="margin-top:1rem">answered per question (of ${r.n} submitted)</p>` + per.map((c, k) => `<div class="bar"><span class="lab">question ${k + 1}</span><span class="fill" style="width:${r.n ? 100 * c / r.n : 0}%"></span><span class="num">${pc(c, r.n)} (${c})</span></div>`).join('');
+          h += `<p class="s" style="margin-top:1rem">all ${n} questions answered: ${all} of ${r.n}</p><p class="s">the results come on the next slide</p>`;
+        }
         $('res').innerHTML = h;
       } catch (e) { $('res').textContent = 'could not load: tap [ refresh ] again'; }
     }
