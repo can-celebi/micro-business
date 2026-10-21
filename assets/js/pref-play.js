@@ -139,13 +139,15 @@
       s += axisLines(Ax, xname + ' ' + iv('x'), '€ on everything else ' + iv('y'));
       if (st.map) {
         const lab = (c, t) => { const xx = xmax * 0.98, yy = k * c / xx; if (yy < ymax * 0.95) s += '<text x="' + X(xx) + '" y="' + (Y(yy) - 8) + '" text-anchor="end" fill="' + BLUE + '" font-size="16" opacity="0.85" ' + halo + '>' + t + '</text>'; };
-        lab(0.45, 'worse curve'); lab(2.1, 'better curve');
+        // labels as in the deck (Kamuran R42): u₁ < u₂ < u₃, further out is better; the word "utility" never appears here
+        const U = n => '<tspan font-family=\'' + MATH + '\' font-style="italic" font-size="19">u</tspan><tspan font-size="16" dy="4">' + n + '</tspan>';
+        lab(0.45, U(1)); lab(1, U(2)); lab(2.1, U(3));
       }
       s += '<line x1="' + X(xa) + '" y1="' + Y(ya) + '" x2="' + X(xa) + '" y2="' + (T + ph) + '" stroke="' + GREEN + '" opacity="0.45"/><line x1="' + L + '" y1="' + Y(ya) + '" x2="' + X(xa) + '" y2="' + Y(ya) + '" stroke="' + GREEN + '" opacity="0.45"/>';
       s += '<circle cx="' + X(xa) + '" cy="' + Y(ya) + '" r="9" fill="' + GREEN + '" stroke="#fff" stroke-width="2"/><text x="' + (xa > 0.7 * xmax ? X(xa) - 13 : X(xa) + 13) + '" y="' + (Y(ya) - 12) + '"' + (xa > 0.7 * xmax ? ' text-anchor="end"' : '') + ' fill="' + GREEN + '" ' + halo + '>A (' + r1(xa) + ', €' + r1(ya) + ')</text>';
       f.svg.innerHTML = s;
       f.eq.innerHTML = /^(0|off|no)$/.test(box.dataset.hint || '') ? '' : '<span class="dim">drag A</span>';   // data-hint="off": the slide already says it
-      f.status.innerHTML = st.mrs ? '<div><span style="color:' + PURPLE + '"><b>MRS at A = ' + r1(mrs) + '</b></span>: you would give about €' + r1(mrs) + ' for one more ' + xone + '</div><div class="dim">drag A to the right: the curve flattens, the MRS falls</div>' : '';
+      f.status.innerHTML = (st.map ? '<div>' + m('<i>u</i><sub>1</sub> &lt; <i>u</i><sub>2</sub> &lt; <i>u</i><sub>3</sub>') + ': further out is better</div>' : '') + (st.mrs ? '<div><span style="color:' + PURPLE + '"><b>MRS at A = ' + r1(mrs) + '</b></span>: you would give about €' + r1(mrs) + ' for one more ' + xone + '</div><div class="dim">drag A to the right: the curve flattens, the MRS falls</div>' : '');
     }
     drag(f.svg, () => Ax, (x, y) => { st.a = [Math.max(0.5, Math.min(xmax - 0.5, Math.round(x * 4) / 4)), Math.max(2, Math.min(ymax - 2, Math.round(y)))]; draw(); });
     const bar = el('div', 'pp-bar'); f.ctl.appendChild(bar);
