@@ -2,6 +2,8 @@
 .pp-budget, .pp-map, .pp-zoom { font-size: 0.5em; text-align: left; margin-top: 0.6em; }
 .pp-eq { font-size: 1.1em; line-height: 1.7; margin-bottom: 0.2em; }
 .pp-sep { color: #aaa; margin: 0 0.5em; }
+.pp-disp { text-align: center; font-size: 1.35em; margin: 0.1em 0 0.2em; }
+.pp-disp-sub { text-align: center; margin-bottom: 0.2em; }
 .pp-m { font-family: "STIX Two Text", "Cambria Math", Georgia, serif; font-size: 1.15em; white-space: nowrap; }
 .pp-m i { font-style: italic; }
 .pp-m sub { font-size: 0.65em; vertical-align: -0.25em; font-style: normal; }

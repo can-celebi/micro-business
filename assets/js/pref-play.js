@@ -11,7 +11,7 @@
 //   <div class="pp-zoom" data-a="4,30"></div>
 //       zoom slider: the curve around A until it looks straight (it hugs the tangent); step slider Δx: the curve's
 //       real Δy against the tangent's −MRS·Δx, and the error, which grows with the step.
-// Options: data-xmax, data-ymax (axis ends), data-xname ("coffees"), data-xone ("coffee").
+// Options: data-xmax, data-ymax (axis ends), data-xname ("coffees"), data-xone ("coffee"); pp-map: data-mrs="off" hides [show MRS].
 // The curves are the indifference curves of x·y (MRS = y/x); the formula is not shown (utility comes tomorrow).
 (function () {
   const NS = 'http://www.w3.org/2000/svg';
@@ -103,12 +103,11 @@
       if (yi <= ymax) s += '<circle cx="' + L + '" cy="' + A.Y(yi) + '" r="6" fill="' + BLUE + '"/><text x="' + (L - 8) + '" y="' + (A.Y(yi) + 5) + '" text-anchor="end" fill="' + BLUE + '" font-weight="600">' + r1(yi) + '</text>';
       if (xi <= xmax) s += '<circle cx="' + A.X(xi) + '" cy="' + (T + ph) + '" r="6" fill="' + BLUE + '"/><text x="' + A.X(xi) + '" y="' + (T + ph + 20) + '" text-anchor="middle" fill="' + BLUE + '" font-weight="600">' + r1(xi) + '</text>';
       f.svg.innerHTML = s;
-      f.eq.innerHTML = m(r2(st.px) + '&#8202;' + ITX + ' + ' + ITY + ' = ' + r2(st.B)) +
-        '<span class="pp-sep">·</span>ends ' + m(fr(BB, PX) + ' = ' + fr(r2(st.B), r2(st.px)) + ' = ' + r1(xi)) + ' ' + xname + ' and ' + m(fr(BB, PY) + ' = €' + r2(st.B)) +
-        '<span class="pp-sep">·</span>slope ' + m('−' + fr(PX, PY) + ' = −' + r2(st.px));
-      f.status.innerHTML = 'one more ' + xone + ' costs €' + r2(st.px) + ' of everything else' +
-        (st.B !== B0 && st.px === P0 ? ' · <b>income changed: the line moved parallel</b>' : st.px !== P0 && st.B === B0 ? ' · <b>price of x changed: the line turned around the end on the y-axis</b>' : '') +
-        '<span class="dim"> · faint line = where you started</span>';
+      f.eq.innerHTML = '<div class="pp-disp">' + m(r2(st.px) + '&#8202;' + ITX + ' + ' + ITY + ' = ' + r2(st.B)) + '</div>' +
+        '<div>ends: ' + m(fr(BB, PX) + ' = ' + fr(r2(st.B), r2(st.px)) + ' = ' + r1(xi)) + ' ' + xname + ', ' + m(fr(BB, PY) + ' = €' + r2(st.B)) +
+        ' &nbsp; slope: ' + m('−' + fr(PX, PY) + ' = −' + r2(st.px)) + '</div>';
+      const moved = st.B !== B0 && st.px === P0 ? 'income ' + (st.B > B0 ? 'up: the line moved out' : 'down: the line moved in') + ', parallel' : st.px !== P0 && st.B === B0 ? 'the price of a ' + xone + ' changed: the line turned around its end on the y-axis' : st.px !== P0 ? 'both changed' : '';
+      f.status.innerHTML = '<div>one more ' + xone + ' costs €' + r2(st.px) + ' of everything else</div>' + (moved ? '<div><b>' + moved + '</b> <span class="dim">(faint line: where you started)</span></div>' : '');
     }
     slider(f.ctl, BB, 0, Math.max(160, 2 * B0), 5, B0, (v, o) => { st.B = v; o.innerHTML = '€' + v; draw(); });
     slider(f.ctl, PX, 0.5, Math.max(10, 2 * P0), 0.5, P0, (v, o) => { st.px = v; o.innerHTML = '€' + r2(v); draw(); });
@@ -144,14 +143,13 @@
       s += '<line x1="' + X(xa) + '" y1="' + Y(ya) + '" x2="' + X(xa) + '" y2="' + (T + ph) + '" stroke="' + GREEN + '" opacity="0.45"/><line x1="' + L + '" y1="' + Y(ya) + '" x2="' + X(xa) + '" y2="' + Y(ya) + '" stroke="' + GREEN + '" opacity="0.45"/>';
       s += '<circle cx="' + X(xa) + '" cy="' + Y(ya) + '" r="9" fill="' + GREEN + '" stroke="#fff" stroke-width="2"/><text x="' + (xa > 0.7 * xmax ? X(xa) - 13 : X(xa) + 13) + '" y="' + (Y(ya) - 12) + '"' + (xa > 0.7 * xmax ? ' text-anchor="end"' : '') + ' fill="' + GREEN + '" font-weight="700" ' + halo + '>A (' + r1(xa) + ', €' + r1(ya) + ')</text>';
       f.svg.innerHTML = s;
-      f.eq.innerHTML = 'the curve through A: every bundle exactly as good as A <span class="pp-sep">·</span> it must slope down: more coffee only stays as good with less of everything else';
-      f.status.innerHTML = (st.mrs ? '<span style="color:' + PURPLE + '"><b>MRS at A = ' + r1(mrs) + '</b></span>: at A you would give about €' + r1(mrs) + ' for one more ' + xone + ' (the slope of the tangent, without the minus sign) · ' : '') +
-        '<span class="dim">drag A: further right, fewer euros for one more ' + xone + ' (the curve flattens)</span>';
+      f.eq.innerHTML = '<span class="dim">drag A</span>';
+      f.status.innerHTML = st.mrs ? '<div><span style="color:' + PURPLE + '"><b>MRS at A = ' + r1(mrs) + '</b></span>: you would give about €' + r1(mrs) + ' for one more ' + xone + '</div><div class="dim">drag A to the right: the curve flattens, the MRS falls</div>' : '';
     }
     drag(f.svg, () => Ax, (x, y) => { st.a = [Math.max(0.5, Math.min(xmax - 0.5, Math.round(x * 4) / 4)), Math.max(2, Math.min(ymax - 2, Math.round(y)))]; draw(); });
     const bar = el('div', 'pp-bar'); f.ctl.appendChild(bar);
     toggle(bar, 'show the map', v => { st.map = v; draw(); });
-    toggle(bar, 'show MRS', v => { st.mrs = v; draw(); });
+    if (!/^(0|off|no)$/.test(box.dataset.mrs || '')) toggle(bar, 'show MRS', v => { st.mrs = v; draw(); });   // data-mrs="0": before the MRS is taught (Kamuran R15)
     const back = el('button', 'btn ghost', 'back to start'); back.type = 'button'; back.onclick = e => { e.stopPropagation(); st.a = a0.slice(); draw(); }; bar.appendChild(back);
     draw();
   }
@@ -181,10 +179,10 @@
       s += '<text x="' + (L + 8) + '" y="' + (T + 18) + '" fill="#555" font-size="14" ' + halo + '>zoom ' + r1(st.z) + '× · window ' + r2(2 * hw) + ' ' + xname + ' wide</text>';
       f.svg.innerHTML = s;
       const dyc = yc - ya, dyt = -mrs * st.dx;
-      f.eq.innerHTML = 'tangent at A: ' + m('Δ' + ITY + ' ≈ −MRS · Δ' + ITX) + ' with ' + m('MRS = ' + r1(mrs)) + '<span class="pp-sep">·</span>zoom in: the curve hugs the dashed tangent';
+      f.eq.innerHTML = '<div class="pp-disp">' + m('Δ' + ITY + ' ≈ −MRS · Δ' + ITX) + '</div><div class="pp-disp-sub">' + m('MRS = ' + r1(mrs)) + ' at A</div>';
       const mi = v => (v < 0 ? '−' : '') + r3(Math.abs(v));
-      f.status.innerHTML = 'step ' + m('Δ' + ITX + ' = ' + r2(st.dx)) + ': along the curve ' + m('Δ' + ITY + ' = ' + mi(dyc)) + ', the tangent says ' + m('−' + r1(mrs) + ' · ' + r2(st.dx) + ' = ' + mi(dyt)) +
-        ' · <b style="color:#C2410C">error ' + r3(Math.abs(dyc - dyt)) + '</b> (' + (Math.abs(dyt) > 0 ? Math.round(100 * Math.abs(dyc - dyt) / Math.abs(dyt)) : 0) + '% of the tangent’s answer)<span class="dim"> · y in euros</span>';
+      f.status.innerHTML = '<div>step ' + m('Δ' + ITX + ' = ' + r2(st.dx)) + ': along the curve ' + m('Δ' + ITY + ' = ' + mi(dyc)) + ' euros, the tangent says ' + m('−' + r1(mrs) + ' · ' + r2(st.dx) + ' = ' + mi(dyt)) + '</div>' +
+        '<div><b style="color:#C2410C">error ' + r3(Math.abs(dyc - dyt)) + '</b> (' + (Math.abs(dyt) > 0 ? Math.round(100 * Math.abs(dyc - dyt) / Math.abs(dyt)) : 0) + '% of the tangent’s answer)</div>';
     }
     slider(f.ctl, 'zoom', 0, 5, 0.05, 0, (v, o) => { st.z = Math.pow(2, v); o.innerHTML = r1(st.z) + '×'; draw(); });
     slider(f.ctl, 'step Δ' + ITX, 0.05, Math.min(4, xmax - xa), 0.05, 1, (v, o) => { st.dx = v; o.innerHTML = r2(v); draw(); });
