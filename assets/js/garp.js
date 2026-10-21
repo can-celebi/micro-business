@@ -144,6 +144,12 @@
     node.innerHTML = '';
     if (!B) { node.appendChild(el('div', 'dim', 'no choices from this device yet: do quiz 3 first, on this device')); return; }
     const res = check(lines, B), cyc0 = cycles(lines, B);
+    // the clash that lasts longest first (Deniz, 21.10: one number): a cycle that still exists one step above the
+    // efficiency score; it is gone exactly at floor(100·CCEI)%, so the first clash and the score show the same number
+    if (cyc0.length) {
+      const top = cycles(lines, B, (Math.floor(100 * res.ccei) + 1) / 100)[0];
+      if (top) { const key = c => c.slice().sort((a, b) => a - b).join(','), i = cyc0.findIndex(c => key(c) === key(top)); if (i >= 0) cyc0.splice(i, 1); cyc0.unshift(top); }
+    }
     let e = 1, k = 0;
     const W = 420, H = 420, L = 40, Bm = 34, T = 12, Rm = 24, pw = W - L - Rm, ph = H - T - Bm;
     const X = v => L + v / 100 * pw, Y = v => T + ph - v / 100 * ph;
@@ -162,7 +168,9 @@
     function clash(c) {
       const st = c.map((a, i) => { const b = c[(i + 1) % c.length]; return { a, b, r: cost(a, B[b]) / cost(a, B[a]), strict: i === c.length - 1 }; });
       const top = st.reduce((m, x) => x.r > m.r ? x : m, st[0]);
-      return { st, top, alive: st.every(x => x.strict ? e > x.r + EPS : e >= x.r - EPS) };
+      const alive = f => st.every(x => x.strict ? f > x.r + EPS : f >= x.r - EPS);
+      let gone = 100; while (gone > 0 && alive(gone / 100)) gone--;   // the largest whole % at which this clash is gone
+      return { st, top, gone, alive: alive(e) };
     }
     if (cyc0.length) {
       shr.innerHTML = '<label><b>shrink every budget to</b><input type="range" min="' + Math.max(0.2, Math.floor(100 * res.ccei) / 100 - 0.05).toFixed(2) + '" max="1" step="0.01" value="1"><span class="gm-e">100%</span></label>';
@@ -206,9 +214,9 @@
         : '<div>' + c.map(nm).join(' → ') + ': on each line, the next line’s bundle was affordable, so each bundle is at least as good as the next.</div><div>But on ' + nm(c[c.length - 1]) + ' the ' + nm(c[0]) + ' bundle was even cheaper: so the last is strictly better than the first. A cycle, like the money pump.</div>';
       const left = e < 1 ? cycles(lines, B, e).length : cyc0.length;
       now.innerHTML = e >= 1 ? '<div class="dim">move the slider: shrink every budget until this clash is gone</div>'
-        : C.alive ? '<div>at ' + pct(e) + ' this clash is <b style="color:' + RED + '">still there</b> <span class="dim">(gone below ' + (100 * C.top.r).toFixed(1) + '%)</span></div>'
+        : C.alive ? '<div>at ' + pct(e) + ' this clash is <b style="color:' + RED + '">still there</b> <span class="dim">(gone at ' + C.gone + '%)</span></div>'
         : '<div>at ' + pct(e) + ' this clash is <b>gone</b>: the ' + nm(C.top.b) + ' bundle (ring) is outside the shrunk ' + nm(C.top.a) + ' budget (dashed)</div>';
-      effEl.innerHTML = '<b>efficiency (CCEI) ' + Math.floor(100 * res.ccei) + '%</b>: ' + (demo ? 'this chooser' : 'you') + ' could have spent ' + (100 - Math.floor(100 * res.ccei)) + '% less on every line and still been consistent';
+      effEl.innerHTML = '<b>efficiency (CCEI) ' + Math.floor(100 * res.ccei) + '%</b>: ' + (demo ? 'this chooser’s choices are' : 'your choices are') + ' consistent once we forgive wasting up to ' + (100 - Math.floor(100 * res.ccei)) + '% of a budget';
       ok.innerHTML = '<b style="color:' + RED + '">consistent ✗</b>' + (e < 1 && !left ? ' at 100% · <b style="color:' + GREEN + '">✓ at ' + pct(e) + '</b>' : '');
     }
     draw();
