@@ -184,11 +184,13 @@
       for (let g = 20; g <= 100; g += 20) s += '<line x1="' + X(g) + '" y1="' + Y(0) + '" x2="' + X(g) + '" y2="' + Y(100) + '" stroke="#eee"/><line x1="' + X(0) + '" y1="' + Y(g) + '" x2="' + X(100) + '" y2="' + Y(g) + '" stroke="#eee"/><text x="' + X(g) + '" y="' + (Y(0) + 20) + '" text-anchor="middle" font-size="18" fill="#555">' + g + '</text><text x="' + (X(0) - 7) + '" y="' + (Y(g) + 5) + '" text-anchor="end" font-size="18" fill="#555">' + g + '</text>';
       s += '<line x1="' + X(0) + '" y1="' + Y(0) + '" x2="' + X(100) + '" y2="' + Y(0) + '" stroke="#222"/><line x1="' + X(0) + '" y1="' + Y(0) + '" x2="' + X(0) + '" y2="' + Y(100) + '" stroke="#222"/>';
       s += '<text x="' + X(100) + '" y="' + (Y(0) - 8) + '" text-anchor="end" font-size="20" fill="#555" ' + halo + '><tspan font-family=\'' + MATH + '\' font-style="italic">x</tspan></text><text x="' + (X(0) + 8) + '" y="' + (Y(100) + 18) + '" font-size="20" fill="#555" ' + halo + '><tspan font-family=\'' + MATH + '\' font-style="italic">y</tspan></text>';
-      // all lines faint; the clash's lines red; shrunk to e: the full line faint, the shrunk budget dashed
-      lines.forEach(([Lx, Ly], i) => {
-        const hot = on.has(i), col = hot ? (C.alive ? RED : '#E8A0A0') : '#9DB7D5';
-        s += '<line x1="' + X(Lx) + '" y1="' + Y(0) + '" x2="' + X(0) + '" y2="' + Y(Ly) + '" stroke="' + col + '" stroke-width="' + (hot ? 3.5 : 1.5) + '" opacity="' + (hot ? (e < 1 ? 0.45 : 1) : 0.7) + '"/>';
-        if (e < 1 && hot) s += '<line x1="' + X(e * Lx) + '" y1="' + Y(0) + '" x2="' + X(0) + '" y2="' + Y(e * Ly) + '" stroke="' + (C.alive ? RED : '#777') + '" stroke-width="3" stroke-dasharray="9 6"/>';
+      // all lines faint, the clash's lines red (drawn last, on top). Shrunk to e (Can, 21.10: every budget shrinks, not only
+      // the pair): every line gets its dashed shrunk copy; the full lines fade
+      const order = lines.map((_, i) => i).sort((a, b) => on.has(a) - on.has(b));
+      order.forEach(i => {
+        const [Lx, Ly] = lines[i], hot = on.has(i), col = hot ? (C.alive ? RED : '#E8A0A0') : '#9DB7D5';
+        s += '<line x1="' + X(Lx) + '" y1="' + Y(0) + '" x2="' + X(0) + '" y2="' + Y(Ly) + '" stroke="' + col + '" stroke-width="' + (hot ? 3.5 : 1.5) + '" opacity="' + (hot ? (e < 1 ? 0.45 : 1) : (e < 1 ? 0.35 : 0.7)) + '"/>';
+        if (e < 1) s += '<line x1="' + X(e * Lx) + '" y1="' + Y(0) + '" x2="' + X(0) + '" y2="' + Y(e * Ly) + '" stroke="' + (hot ? (C.alive ? RED : '#777') : '#7C93AE') + '" stroke-width="' + (hot ? 3 : 1.5) + '" stroke-dasharray="' + (hot ? '9 6' : '5 5') + '"' + (hot ? '' : ' opacity="0.8"') + '/>';
       });
       lines.forEach(([Lx, Ly], i) => {
         if (!B[i]) return; const hot = on.has(i), [bx, by] = B[i];
