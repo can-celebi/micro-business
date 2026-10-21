@@ -6,7 +6,8 @@
 // - Answers: ONE submit per student (Ali, 21.10: one write each, results() reads all in one call):
 //   q1/q2 = one letter per question ('a'…'d', '-' = skipped), e.g. 'bcacbd';
 //   q3 = 'b' + two digits per line (v = round(99·x / x-intercept): 00 = all on y, 99 = all on x).
-// - Teacher view: [open] [close] + [refresh] = answered count and the share per option (one results() call).
+// - Teacher view: [open] [close] + [refresh] = progress only (submitted of signed in, answered per question; Can, R40).
+//   No answers or shares here: the results are on the slide after each quiz (quizres.js; quiz 3: garp.js on L06-F3).
 (function () {
   const Q = window.QUIZ, P = window.MicroPoll;
   const GATE_CHECK = {
@@ -173,11 +174,11 @@
         const r = await P.results(POLL), vals = r.responses.map(x => String(x.value));
         let signed = null; try { const wm = await P.whereMap('L06'); signed = Object.keys(wm || {}).length; } catch (e) {}
         let h = `<p class="big">${r.n} answered${signed ? ` <span class="s">of ${signed} signed in today</span>` : ''}</p>`;
-        if (QZ.budget && window.MicroGARP) {
-          const g = window.MicroGARP.summary(QZ.lines, r.responses), pc = (a, b) => b ? Math.round(100 * a / b) + '%' : '–';
-          h += `<p>on all ${QZ.lines.length} lines: ${g.all}</p>` + (g.n ? `<p>consistent (no GARP violation): <b>${g.n - g.violate}</b> of ${g.n} (${pc(g.n - g.violate, g.n)})<br>at least one violation: <b>${g.violate}</b> of ${g.n} (${pc(g.violate, g.n)})<br>efficiency (CCEI): mean ${g.mean.toFixed(2)} · median ${g.median.toFixed(2)}</p>` +
-            g.buckets.map(([l, k]) => `<div class="bar"><span class="lab">CCEI ${l}</span><span class="fill" style="width:${100 * k / g.n}%"></span><span class="num">${pc(k, g.n)} (${k})</span></div>`).join('') +
-            `<p class="s">clicking at random on these lines would violate GARP ${pc(g.random, 1)} of the time</p>` : '');
+        if (QZ.budget) {
+          // progress only during the quiz (Can, R40); the consistency results are on slide L06-F3 afterwards
+          const all = vals.filter(v => /^b\d+$/.test(v) && v.length === 1 + 2 * QZ.lines.length).length, pc = (a, b) => b ? Math.round(100 * a / b) + '%' : '–';
+          if (signed) h += `<div class="bar"><span class="lab">submitted</span><span class="fill" style="width:${100 * r.n / signed}%"></span><span class="num">${pc(r.n, signed)} (${r.n} of ${signed})</span></div>`;
+          h += `<p class="s" style="margin-top:1rem">all ${QZ.lines.length} lines answered: ${all} of ${r.n}</p><p class="s">the results come on the slide "how consistent were you?"</p>`;
         }
         else {
           // progress only, no answers (Can, 21.10): how many answered each question, and how complete the submissions are
