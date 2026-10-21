@@ -13,7 +13,6 @@
   .three { display: grid; grid-template-columns: 1fr minmax(0, 560px) 1fr; gap: 20px; align-items: start; }
   .side { text-align: left; font-size: .85rem; padding-top: 10px; }
   .side h2 { font-size: .9rem; margin: 0 0 6px; padding-bottom: 4px; border-bottom: 1.5px solid var(--line); }
-  .side.here h2 { color: #2a7a2a; } .side.away h2 { color: #b33; }
   .side div { padding: 3px 0; border-bottom: 1px dotted #ddd; cursor: pointer; }
   .side div:hover { text-decoration: line-through; }
   .side .t { color: var(--dim); font-size: .72rem; }
@@ -26,11 +25,10 @@
   .row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
   .b { font-family: var(--mono); font-size: 1.05rem; padding: 10px 20px; border: 1.5px solid var(--line); border-radius: 2px; cursor: pointer; background: #fff; }
   .b.spin { background: var(--p-yellow); font-size: 1.3rem; padding: 12px 34px; }
-  .b.here { background: var(--p-green); } .b.away { background: var(--p-pink); }
   .b:disabled { opacity: .35; cursor: default; }
   .count { color: var(--dim); font-size: .8rem; margin-top: 14px; }
   .foot { margin-top: 26px; font-size: .72rem; color: var(--dim); }
-  /* names are recorded (here / not here, time, download) but not listed on screen (Can, 08.10) */
+  /* the called list is kept on this device for today but not listed on screen (Can, 08.10) */
   .side { display: none; }
   .three { grid-template-columns: minmax(0, 560px); justify-content: center; }
   /* compact: inside the deck's small box (top-left over the slide) */
@@ -53,14 +51,11 @@
 <main>
   <h1>&gt; wheel of fortune</h1>
   <div class="three">
-  <div class="side here"><h2>here ✓ <span id="nh"></span></h2><div id="listhere" style="cursor:default;border:0;padding:0"></div></div>
   <div class="mid">
   <div class="wheelbox"><div class="pointer"></div><canvas id="c" width="900" height="900"></canvas></div>
   <div class="name" id="name">&nbsp;</div>
   <div class="row">
     <button class="b spin" id="spin">[ spin ]</button>
-    <button class="b here" id="here" disabled>here ✓</button>
-    <button class="b away" id="away" disabled>not here ✗</button>
   </div>
   <div class="count" id="count"></div>
   <div class="who" id="who">
@@ -71,10 +66,9 @@
   </div>
   <div class="src" id="src"></div>
   </div>
-  <div class="side away"><h2>not here ✗ <span id="na"></span></h2><div id="listaway" style="cursor:default;border:0;padding:0"></div></div>
   </div>
   <div class="foot">
-    <button class="link" id="export">download today</button> · <button class="link" id="reset">start over today</button>
+    <button class="link" id="reset">start over today</button>
   </div>
 </main>
 <script src="../assets/js/config.js?v=20261014a"></script>
@@ -86,15 +80,15 @@
 // one entry per device and per nickname, NICKNAMES ONLY (the encrypted name is never read). Lecture: the deck the wheel
 // is opened from, else today's lecture (config.js dates), else ?lec=L06. [refresh] = 2 calls (today's sign-ins + the
 // nickname list); each nickname text is downloaded once and kept on this device. No timer. The old encrypted class list
-// (roster.enc.js) is no longer loaded. "here" and "not here" take a nickname off the wheel for today; "download today"
-// saves who was called as a CSV.
+// (roster.enc.js) is no longer loaded. A spin takes the picked nickname off the wheel for today (no "here" / "not here"
+// buttons since 21.10, Can: "let's kill the 'here' and 'not here' buttons"); "start over today" puts everyone back.
 const K = { names: 'wheel-names', day: d => 'wheel-class-' + d };
 const ls = { get: k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } }, set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} } };
 const day = new Date().toISOString().slice(0, 10);
 let names = [];
 let signed = [];   // [{nick, where: 'in_class'|'at_home'}] for today
 let whoMode = 'all';
-let cls = ls.get(K.day(day)) || [];   // [{name, status: 'here'|'away', t}]
+let cls = ls.get(K.day(day)) || [];   // today's called nicknames [{name, t}]
 let current = null, angle = 0, spinning = false;
 const cv = document.getElementById('c'), ctx = cv.getContext('2d');
 const COLS = ['#E6F5E6', '#FFF9D0', '#FDE4E6', '#E4EFFA', '#F1E6FA', '#E6F3F5'];
@@ -123,32 +117,20 @@ function picked() {
   return R[Math.floor(a / seg) % R.length];
 }
 function spin() {
-  if (spinning || current || !remaining().length) return;
+  if (spinning || !remaining().length) return;
   spinning = true; buttons(); $('name').innerHTML = '&nbsp;';
   // fast (Can, 08.10: "even even smaller"): about 0.5 s, with a short ease-out so the result is readable
   const start = angle, total = 2 * Math.PI * (1 + Math.random()) + Math.random() * 2 * Math.PI, dur = 500, t0 = performance.now();
   (function step(now) {
     const t = Math.min(1, (now - t0) / dur); angle = start + total * (1 - Math.pow(1 - t, 3)); draw();
-    if (t < 1) requestAnimationFrame(step); else { spinning = false; current = picked(); $('name').textContent = current; draw(); buttons(); }
+    // the picked nickname comes off today's wheel at once (Can, 21.10: no "here" / "not here" buttons any more)
+    if (t < 1) requestAnimationFrame(step); else { spinning = false; const who = picked(); cls.push({ name: who, t: new Date().toLocaleTimeString('de-AT', { hour: '2-digit', minute: '2-digit' }) }); save(); $('name').textContent = who; render(); }
   })(t0);
 }
-function mark(status) {
-  if (!current) return;
-  cls.push({ name: current, status: status, t: new Date().toLocaleTimeString('de-AT', { hour: '2-digit', minute: '2-digit' }) });
-  save(); current = null; render();
-  if (status === 'away') spin();
-}
-function buttons() { $('spin').disabled = spinning || !!current || !remaining().length; $('here').disabled = $('away').disabled = !current; }
+function buttons() { $('spin').disabled = spinning || !remaining().length; }
 function render() {
-  draw(); buttons(); if (!current) $('name').innerHTML = '&nbsp;';
-  const here = cls.filter(x => x.status === 'here').length;
-  // the two lists left and right, newest on top; click a name to put it back on the wheel (a mistake)
-  const item = x => `<div data-n="${x.name.replace(/"/g, '&quot;')}" title="click: back on the wheel">${x.name.replace(/</g, '&lt;')} <span class="t">${x.t}</span></div>`;
-  $('listhere').innerHTML = cls.filter(x => x.status === 'here').slice().reverse().map(item).join('');
-  $('listaway').innerHTML = cls.filter(x => x.status === 'away').slice().reverse().map(item).join('');
-  $('nh').textContent = here ? '(' + here + ')' : ''; $('na').textContent = cls.length - here ? '(' + (cls.length - here) + ')' : '';
-  document.querySelectorAll('.side div[data-n]').forEach(d => d.onclick = () => { if (spinning) return; cls = cls.filter(x => x.name !== d.dataset.n); save(); render(); });
-  $('count').textContent = names.length ? `here ${here} · not here ${cls.length - here} · on the wheel ${remaining().length}` : '';
+  draw(); buttons();
+  $('count').textContent = names.length ? `called today ${cls.filter(x => names.includes(x.name)).length} · on the wheel ${remaining().length}` : '';
 }
 // today's lecture: the deck around the wheel, else the config date of today (Vienna), else ?lec=
 const viennaDay = ts => new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Vienna', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(ts));
@@ -191,13 +173,9 @@ async function load() {
 }
 document.querySelectorAll('#who [data-w]').forEach(b => b.onclick = () => { whoMode = b.dataset.w; document.querySelectorAll('#who [data-w]').forEach(x => x.classList.toggle('on', x === b)); applyWho(); render(); });
 $('refresh').onclick = load;
-$('spin').onclick = spin; $('here').onclick = () => mark('here'); $('away').onclick = () => mark('away');
-$('reset').onclick = () => { cls = []; current = null; save(); render(); };
-$('export').onclick = () => {
-  const csv = 'date,lecture,nickname,status,time\n' + cls.map(x => [day, LEC, '"' + x.name.replace(/"/g, '""') + '"', x.status === 'here' ? 'here' : 'not here', x.t].join(',')).join('\n');
-  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['﻿' + csv], { type: 'text/csv' })); a.download = 'wheel-' + day + '.csv'; a.click();
-};
-document.addEventListener('keydown', e => { if (e.target && e.target.tagName === 'INPUT') return; if (e.key === ' ') { e.preventDefault(); spin(); } if (e.key === 'y') mark('here'); if (e.key === 'n') mark('away'); });
+$('spin').onclick = spin;
+$('reset').onclick = () => { cls = []; current = null; save(); $('name').innerHTML = '&nbsp;'; render(); };
+document.addEventListener('keydown', e => { if (e.target && e.target.tagName === 'INPUT') return; if (e.key === ' ') { e.preventDefault(); spin(); } });
 if (/[?&]compact\b/.test(location.search)) document.body.classList.add('compact');
 render();
 load();
