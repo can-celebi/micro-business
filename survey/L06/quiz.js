@@ -10,9 +10,9 @@
 (function () {
   const Q = window.QUIZ, P = window.MicroPoll;
   const GATE_CHECK = {
-    q1: '17a365ada595a05b714219c7c1c62e89ae2c809fab4811b4f2070bb027740c75',
-    q2: '19298b8e274eff73fedd60a5e4a3fe8d7793ebccc51c2f727b2db4ac5222d970',
-    q3: '81441812bc875faf64fc193d97f642f689219b887932f5c0663e6c0eacd5c69f' };
+    q1: { open: 'c1adb4e2fc1bb14cc6fb655548af8b6add7e529765a0b8691594bcf978e1c85a', closed: 'ac14ca852cc74f21d84829e01f3ebcef5c0816553e5bff5b37e9a5852f6a8221' },
+    q2: { open: '763380a8a8e07e1041733f48d55aab47494669d546cab64738eaad9fdacf7de6', closed: 'a0152530b95bd78a917eed74c191d98136de61fb6b381db90b279bee27f4f55b' },
+    q3: { open: '3ea429423ae401b4aee584b3343d3acacd0ba9726c000537001b044222e38c5e', closed: '861bafe4207838fea0354aae6cacb7d1c79be6c88059149a0ad8f0a6a86bca12' } };
   const BOARD = {
     q1: 'e0bc31c0f8e0c165692593335439f23a8e571b0e23ac01510ebb4e0c725bf0de',
     q2: '5cb10a0574d2ea62bc7a24939cd52b3de8c9cd837fed3f2628d350bb9fc130d9',
@@ -22,7 +22,7 @@
   const ax = (inner, w, h) => `<svg viewBox="0 0 ${w || 260} ${h || 220}" class="fig"><line x1="30" y1="10" x2="30" y2="190" stroke="#222" stroke-width="1.5"/><line x1="30" y1="190" x2="250" y2="190" stroke="#222" stroke-width="1.5"/><text x="12" y="20" font-size="13">y</text><text x="240" y="208" font-size="13">x</text>${inner}</svg>`;
   const FIG = {
     up: ax('<path d="M45 175 Q 120 150 230 40" fill="none" stroke="#0062C4" stroke-width="3.5"/><circle cx="95" cy="152" r="5" fill="#222"/><text x="100" y="170" font-size="13">A</text><circle cx="183" cy="84" r="5" fill="#222"/><text x="189" y="100" font-size="13">B</text>'),
-    cross: ax('<path d="M45 30 Q 80 150 235 175" fill="none" stroke="#0062C4" stroke-width="3.5"/><path d="M50 95 Q 110 140 235 150" fill="none" stroke="#D9480F" stroke-width="3.5" stroke-dasharray="9 6"/><text x="200" y="168" font-size="13" fill="#0062C4">I₁</text><text x="212" y="140" font-size="13" fill="#D9480F">I₂</text>')
+    cross: ax('<path d="M45 30 Q 80 150 235 175" fill="none" stroke="#0062C4" stroke-width="3.5"/><path d="M50 95 Q 110 140 235 150" fill="none" stroke="#D9480F" stroke-width="3.5" stroke-dasharray="9 6"/><text x="150" y="185" font-size="13" fill="#0062C4">I₁</text><text x="212" y="140" font-size="13" fill="#D9480F">I₂</text>')
   };
 
   // ---------- the quizzes ----------
@@ -59,13 +59,13 @@
 
   // gate: latest valid answer decides
   async function gateState() {
-    const r = await P.results(GATE), valid = [];
+    // Ali/Murat (21.10): a separate tag per action; any valid 'closed' wins, else any valid 'open', else locked
+    const r = await P.results(GATE); let open = false, closed = false;
     for (const x of r.responses) {
       const m = /^(open|closed)-([0-9a-f]{8})$/.exec(String(x.value));
-      if (m && await sha('micro-gate-check:' + m[2]) === GATE_CHECK[Q]) valid.push({ t: x.time, s: m[1] });
+      if (m && await sha('micro-gate-check:' + m[2]) === GATE_CHECK[Q][m[1]]) { if (m[1] === 'open') open = true; else closed = true; }
     }
-    valid.sort((a, b) => a.t < b.t ? -1 : 1);
-    return valid.length ? valid[valid.length - 1].s : 'locked';
+    return closed ? 'closed' : open ? 'open' : 'locked';
   }
 
   // ---------- student view ----------
@@ -154,12 +154,12 @@
   // ---------- teacher view ----------
   async function teacher() {
     const code = LS('micro-teacher-code') || '';
-    const tag = (await sha('micro-gate:' + code.trim() + ':L06-' + Q)).slice(0, 8);
+    const tag = async a => (await sha('micro-gate:' + code.trim() + ':L06-' + Q + ':' + a)).slice(0, 8);
     $('app').innerHTML = `<h1>${QZ.title} · lecturer</h1><p class="s">state: <b id="st">…</b></p>
       <div class="opts"><button class="go" id="op" type="button">[ open ]</button><button class="opt" id="cl" type="button">[ close ]</button><button class="opt" id="rf" type="button">[ refresh ]</button></div>
       <div id="res" class="res"></div>`;
-    const setState = async v => { $('st').textContent = 'saving…'; try { await P.submit(GATE, v + '-' + tag); $('st').textContent = v; } catch (e) { $('st').textContent = 'not saved, tap again'; } };
-    $('op').onclick = () => setState('open'); $('cl').onclick = () => setState('closed');
+    const setState = async v => { $('st').textContent = 'saving…'; try { await P.submit(GATE, v + '-' + await tag(v)); $('st').textContent = v; } catch (e) { $('st').textContent = 'not saved, tap again'; } };
+    $('op').onclick = () => setState('open'); $('cl').onclick = () => { if ($('cl').dataset.sure) setState('closed'); else { $('cl').dataset.sure = 1; $('st').textContent = 'tap [ close ] again: closing is final for this quiz'; } };
     async function refresh() {
       $('res').textContent = 'loading…';
       try {
