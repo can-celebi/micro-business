@@ -41,10 +41,11 @@
 <script>
 // Opening survey L06 (Can, 21.10): problem set 2, how did it go (after the deadline), and today's concepts (how well
 // do you know them already? 1–5). All answers go into ONE record (poll "L06-survey"), read by the lecturer screen
-// (slides L06-03r, L06-03s). Field keys: ps2 hard (1–5), time, how, worst, vs1; today: pref, rules, ic, mrs, subcomp, util.
+// (slides L06-03r, L06-03s). Field keys: PS2 p1–p6 (1–5, '-' = did not do it), time, how; today: pref, compl, trans, mono, convex, ic, mrs, subs, comp, util (1–5).
 const POLL = 'L06-survey';
 const LIK = ['1','2','3','4','5'];
-const TODAY = [['pref','preferences: ≿ (at least as good), ≻ (strictly better), ∼ (indifferent)'],['rules','the rules: completeness, transitivity, more is better, convexity'],['ic','indifference curves'],['mrs','the marginal rate of substitution (MRS)'],['subcomp','perfect substitutes and perfect complements'],['util','utility functions']];
+const TODAY = [['pref','preferences: ≿ (at least as good), ≻ (strictly better), ∼ (indifferent)'],['compl','completeness'],['trans','transitivity'],['mono','more is better'],['convex','convexity'],['ic','indifference curves'],['mrs','the marginal rate of substitution (MRS)'],['subs','perfect substitutes'],['comp','perfect complements'],['util','utility functions']];
+const PS2 = [['p1','Q1 · real estate: why not perfectly competitive?'],['p2','Q2 · electric cars: why not perfectly competitive?'],['p3','Q3 · which conditions do not fit perfect competition?'],['p4','Q4 · demand Q = 10 − 20P, supply Q = 5 + 60P: inverse curves, equilibrium, shifts'],['p5','Q5 · a tax of 15 on buyers: prices and shares of the burden'],['p6','Q6 · more electric cars: the price of electricity and of gasoline']];
 const ans = {}, f = document.getElementById('f');
 
 function likert(id, label, lo, hi, extra) {
@@ -64,18 +65,16 @@ function choice(id, label, opts) {
 }
 function head(t, s) { f.insertAdjacentHTML('beforeend', '<h2>' + t + '</h2>' + (s ? '<p class="s">' + s + '</p>' : '')); }
 
-head('problem set 2', 'how did it go? (it closed on Monday)');
-f.appendChild(likert('hard', 'how hard was problem set 2 overall?', 'very easy', 'very hard'));
+head('problem set 2', 'how hard was each question? (it closed on Monday)');
+PS2.forEach(([id, l]) => f.appendChild(likert(id, l, 'very easy', 'very hard', 'did not do it')));
 f.appendChild(choice('time', 'how long did it take you?', [['1','less than 1 hour'],['2','1–2 hours'],['3','2–4 hours'],['4','more than 4 hours'],['0','I did not do it']]));
 f.appendChild(choice('how', 'how did you work on it?', [['alone','alone'],['group','with others'],['both','both']]));
-f.appendChild(choice('worst', 'which question was the hardest?', [['1','Q1'],['2','Q2'],['3','Q3'],['4','Q4'],['5','Q5'],['6','Q6'],['0','none']]));
-f.appendChild(choice('vs1', 'compared with problem set 1, it was …', [['1','easier'],['2','about the same'],['3','harder']]));
 head('today', 'how well do you know these already?');
 TODAY.forEach(([id, l]) => f.appendChild(likert(id, l, 'never heard of it', 'I could explain it')));
 
 async function submit() {
   const msg = document.getElementById('msg');
-  const need = ['hard','time','how','worst','vs1'].concat(TODAY.map(x => x[0]));
+  const need = PS2.map(x => x[0]).concat(['time','how'], TODAY.map(x => x[0]));
   const missing = need.filter(id => !ans[id]);
   document.querySelectorAll('.q').forEach(d => d.classList.remove('missing'));
   missing.forEach(id => { const d = document.getElementById('q-' + id); if (d) d.classList.add('missing'); });
