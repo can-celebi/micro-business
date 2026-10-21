@@ -9,8 +9,8 @@
 //       a bundle A you drag; better (up-right) and worse (down-left) regions, the indifference curve through A;
 //       [show the map] adds a worse and a better curve; [show MRS] draws the tangent at A with its slope.
 //   <div class="pp-zoom" data-a="4,30"></div>
-//       zoom slider: the curve around A until it looks straight (it hugs the tangent); step slider Δx: the curve's
-//       real Δy against the tangent's −MRS·Δx, and the error, which grows with the step.
+//       zoom slider: the curve around A until it looks straight (it hugs the short tangent); step slider Δx: the step
+//       triangle and the curve's own trade-off per coffee −Δy/Δx, which settles at the slope at A (the MRS) as Δx shrinks.
 // Options: data-xmax, data-ymax (axis ends), data-xname ("coffees"), data-xone ("coffee"); pp-map: data-mrs="off" hides [show MRS].
 // The curves are the indifference curves of x·y (MRS = y/x); the formula is not shown (utility comes tomorrow).
 (function () {
@@ -174,32 +174,31 @@
       // as far as the step), cut at the window; on screen it grows as the student zooms in
       const h = xmax / 8, ta = Math.max(Ax.x0 - xa, (ya - Ax.y1) / mrs, -h), tb = Math.min(Ax.x1 - xa, (ya - Ax.y0) / mrs, Math.max(h, st.dx));
       if (tb > ta) s += '<line x1="' + X(xa + ta) + '" y1="' + Y(ya - mrs * ta) + '" x2="' + X(xa + tb) + '" y2="' + Y(ya - mrs * tb) + '" stroke="' + PURPLE + '" stroke-width="2.5" stroke-dasharray="10 6"/>';
-      // the step: along the curve and along the tangent
-      const x2 = xa + st.dx, yc = yOf(x2), yt = ya - mrs * st.dx;
+      // the step (Can, 21.10: "I just don't want this formula" Δy ≈ −MRS·Δx): the curve's own trade-off per coffee, −Δy/Δx,
+      // read off the step triangle A → (x2, y on the curve); as the step shrinks it settles at the slope at A (the MRS)
+      const x2 = xa + st.dx, yc = yOf(x2), dy = yc - ya, per = -dy / st.dx;
       const cl = (v, lo, hi) => Math.max(lo, Math.min(hi, v)), CX = v => cl(X(v), L - 4, L + pw + 4), CY = v => cl(Y(v), T - 4, T + ph + 4);
       const inX = v => v >= Ax.x0 && v <= Ax.x1, inY = v => v >= Ax.y0 && v <= Ax.y1;
       s += '<line x1="' + CX(xa) + '" y1="' + CY(ya) + '" x2="' + CX(x2) + '" y2="' + CY(ya) + '" stroke="#555" stroke-width="1.5"/>';
-      s += '<line x1="' + CX(x2) + '" y1="' + CY(ya) + '" x2="' + CX(x2) + '" y2="' + CY(Math.min(yc, yt)) + '" stroke="#555" stroke-width="1" stroke-dasharray="3 4"/>';
-      s += '<line x1="' + CX(x2) + '" y1="' + CY(yc) + '" x2="' + CX(x2) + '" y2="' + CY(yt) + '" stroke="#C2410C" stroke-width="5" opacity="0.75"/>';
-      if (inX(x2) && inY(yc)) s += '<circle cx="' + X(x2) + '" cy="' + Y(yc) + '" r="6" fill="' + BLUE + '"/>'; if (inX(x2) && inY(yt)) s += '<circle cx="' + X(x2) + '" cy="' + Y(yt) + '" r="6" fill="' + PURPLE + '"/>';
-      // the step triangle in numbers (R34: people need to see Δx and Δy)
+      s += '<line x1="' + CX(x2) + '" y1="' + CY(ya) + '" x2="' + CX(x2) + '" y2="' + CY(yc) + '" stroke="#555" stroke-width="1.5"/>';
+      // the straight line from A to the new bundle: its steepness is the trade-off per coffee
+      s += '<line x1="' + CX(xa) + '" y1="' + CY(ya) + '" x2="' + CX(x2) + '" y2="' + CY(yc) + '" stroke="' + BLUE + '" stroke-width="2.5" stroke-dasharray="6 5"/>';
+      if (inX(x2) && inY(yc)) s += '<circle cx="' + X(x2) + '" cy="' + Y(yc) + '" r="6" fill="' + BLUE + '"/>';
       if (inX(x2)) {
-        const it = v => '<tspan font-family=\'' + MATH + '\' font-style="italic">' + v + '</tspan>', sg = v => (v < 0 ? '−' : '') + r2(Math.abs(v));
+        const it = v => '<tspan font-family=\'' + MATH + '\' font-style="italic">' + v + '</tspan>', sg = v => (v < 0 ? '−' : '') + (st.dx < 1 ? r3 : r2)(Math.abs(v));
         const ym = CY(ya), xm = (CX(xa) + CX(x2)) / 2;
         if (CX(x2) - CX(xa) >= 90) s += '<text x="' + xm + '" y="' + (ym - 8) + '" text-anchor="middle" font-size="17" fill="#333" ' + halo + '>Δ' + it('x') + ' = ' + r2(st.dx) + '</text>';
-        if (inY(yc)) s += '<text x="' + (X(x2) + 10) + '" y="' + (Y(yc) + (yc > yt ? -8 : 18)) + '" font-size="17" fill="' + BLUE + '" ' + halo + '>Δ' + it('y') + ' = ' + sg(yc - ya) + '</text>';
-        if (inY(yt)) s += '<text x="' + (X(x2) + 10) + '" y="' + (Y(yt) + (yt < yc ? 18 : -8)) + '" font-size="17" fill="' + PURPLE + '" ' + halo + '>tangent: ' + sg(yt - ya) + '</text>';
+        if (inY(yc)) s += '<text x="' + (X(x2) + 10) + '" y="' + (Y(yc) + 18) + '" font-size="17" fill="' + BLUE + '" ' + halo + '>Δ' + it('y') + ' = ' + sg(dy) + '</text>';
       }
       s += '</g>';
       s += '<rect x="' + L + '" y="' + T + '" width="' + pw + '" height="' + ph + '" fill="none" stroke="#ccc"/>';
       s += '<circle cx="' + X(xa) + '" cy="' + Y(ya) + '" r="8" fill="' + GREEN + '" stroke="#fff" stroke-width="2"/><text x="' + (X(xa) - 12) + '" y="' + (Y(ya) - 10) + '" text-anchor="end" fill="' + GREEN + '" ' + halo + '>A</text>';
       s += '<text x="' + (L + 8) + '" y="' + (T + 18) + '" fill="#555" font-size="16" ' + halo + '>zoom ' + r1(st.z) + '× · window ' + r2(2 * hw) + ' ' + xname + ' wide</text>';
       f.svg.innerHTML = s;
-      const dyc = yc - ya, dyt = -mrs * st.dx;
-      f.eq.innerHTML = '<div class="pp-disp">' + m('Δ' + ITY + ' ≈ −MRS · Δ' + ITX) + '</div><div class="pp-disp-sub">' + m('MRS = ' + r1(mrs)) + ' at A</div>';
-      const mi = v => (v < 0 ? '−' : '') + r3(Math.abs(v));
-      f.status.innerHTML = '<div>step ' + m('Δ' + ITX + ' = ' + r2(st.dx)) + ': along the curve ' + m('Δ' + ITY + ' = ' + mi(dyc)) + ' euros, the tangent says ' + m('−' + r1(mrs) + ' · ' + r2(st.dx) + ' = ' + mi(dyt)) + '</div>' +
-        '<div><b style="color:#C2410C">off by €' + r3(Math.abs(dyc - dyt)) + '</b> (' + (Math.abs(dyt) > 0 ? Math.round(100 * Math.abs(dyc - dyt) / Math.abs(dyt)) : 0) + '% of the tangent’s answer)</div>';
+      f.eq.innerHTML = '<div class="pp-disp">trade-off per ' + xone + ' = ' + m(fr('−Δ' + ITY, 'Δ' + ITX)) + '</div><div class="pp-disp-sub">the slope of the curve at A: ' + m('MRS = ' + r2(mrs)) + '</div>';
+      const close = Math.abs(per - mrs) < 0.005, rr = v => st.dx < 1 ? r3(v) : r2(v);   // small steps: 3 decimals, so 0.099 / 0.1 reads right
+      f.status.innerHTML = '<div>step ' + m('Δ' + ITX + ' = ' + r2(st.dx)) + ': you give up ' + rr(-dy) + ' euros for ' + r2(st.dx) + ' ' + (st.dx === 1 ? xone : xname) + ', so ' + m(fr(rr(-dy), r2(st.dx)) + ' = ' + r2(per)) + ' euros per ' + xone + '</div>' +
+        '<div class="dim">' + (close ? 'this is the slope at A: the MRS (' + r2(mrs) + ')' : 'make the step smaller: the trade-off settles at ' + r2(mrs) + ', the slope at A (the MRS)') + '</div>';
     }
     slider(f.ctl, 'zoom', 0, 5, 0.05, 0, (v, o) => { st.z = Math.pow(2, v); o.innerHTML = r1(st.z) + '×'; draw(); });
     slider(f.ctl, 'step Δ' + ITX, 0.05, Math.min(+box.dataset.stepmax || (SQ ? 8 : 4), xmax - xa, SQ ? c * c - xa : Infinity), 0.05, 1, (v, o) => { st.dx = v; o.innerHTML = r2(v); draw(); });
