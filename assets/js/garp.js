@@ -177,6 +177,7 @@
       const inp = shr.querySelector('input');
       inp.addEventListener('input', () => { e = +inp.value; shr.querySelector('.gm-e').textContent = pct(e); draw(); });
       inp.addEventListener('keydown', ev => ev.stopPropagation());
+      inp.addEventListener('pointerup', () => inp.blur());   // after a mouse drag the clicker moves the slides again
     }
     function draw() {
       const c = cyc0.length ? cyc0[k] : [], on = new Set(c), C = cyc0.length ? clash(c) : null;
