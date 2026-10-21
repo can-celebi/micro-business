@@ -19,10 +19,10 @@
     q3: '9fc88bd2049362329b1d2dbff5fa70fdd99f841705df64577f63c0e227b2a04d' };
 
   // ---------- figures (SVG) ----------
-  const ax = (inner, w, h) => `<svg viewBox="0 0 ${w || 260} ${h || 220}" class="fig"><line x1="30" y1="10" x2="30" y2="190" stroke="#222" stroke-width="1.5"/><line x1="30" y1="190" x2="250" y2="190" stroke="#222" stroke-width="1.5"/><text x="12" y="20" font-size="13">y</text><text x="240" y="208" font-size="13">x</text>${inner}</svg>`;
+  const ax = (inner, w, h) => `<svg viewBox="0 0 ${w || 260} ${h || 220}" class="fig"><line x1="30" y1="10" x2="30" y2="190" stroke="#222" stroke-width="1.5"/><line x1="30" y1="190" x2="250" y2="190" stroke="#222" stroke-width="1.5"/><text x="12" y="20" font-size="15" font-style="italic" font-family="STIX Two Text, Georgia, serif">y</text><text x="240" y="208" font-size="15" font-style="italic" font-family="STIX Two Text, Georgia, serif">x</text>${inner}</svg>`;
   const FIG = {
-    up: ax('<path d="M45 175 Q 120 150 230 40" fill="none" stroke="#0062C4" stroke-width="3.5"/><circle cx="95" cy="152" r="5" fill="#222"/><text x="100" y="170" font-size="13">A</text><circle cx="183" cy="84" r="5" fill="#222"/><text x="189" y="100" font-size="13">B</text>'),
-    cross: ax('<path d="M45 30 Q 80 150 235 175" fill="none" stroke="#0062C4" stroke-width="3.5"/><path d="M50 95 Q 110 140 235 150" fill="none" stroke="#D9480F" stroke-width="3.5" stroke-dasharray="9 6"/><text x="150" y="185" font-size="13" fill="#0062C4">I₁</text><text x="212" y="140" font-size="13" fill="#D9480F">I₂</text>')
+    up: ax('<path d="M45 175 Q 120 150 230 40" fill="none" stroke="#0062C4" stroke-width="3.5"/><circle cx="95" cy="152" r="5" fill="#222"/><text x="100" y="170" font-size="15" font-style="italic" font-family="STIX Two Text, Georgia, serif">A</text><circle cx="183" cy="84" r="5" fill="#222"/><text x="189" y="100" font-size="15" font-style="italic" font-family="STIX Two Text, Georgia, serif">B</text>'),
+    cross: ax('<path d="M45 30 Q 80 150 235 175" fill="none" stroke="#0062C4" stroke-width="3.5"/><path d="M50 95 Q 110 140 235 150" fill="none" stroke="#D9480F" stroke-width="3.5" stroke-dasharray="9 6"/><text x="150" y="185" font-size="15" font-style="italic" font-family="STIX Two Text, Georgia, serif" fill="#0062C4">I₁</text><text x="212" y="140" font-size="15" font-style="italic" font-family="STIX Two Text, Georgia, serif" fill="#D9480F">I₂</text>')
   };
 
   // ---------- the quizzes ----------
@@ -33,10 +33,10 @@
         { t: 'How much can you spend on everything else at most?', o: ['€4', '€20', '€80', '€76'], k: 'c' },
         { t: 'Your budget rises to €100, prices stay the same. The budget line …', o: ['shifts out, parallel', 'rotates out, the end on the y-axis stays', 'rotates out, the end on the x-axis stays', 'does not move'], k: 'a' },
         { t: 'Back to €80. The price of a coffee rises to €5. The budget line …', o: ['shifts in, parallel', 'rotates in, the end on the x-axis stays', 'rotates in, the end on the y-axis stays', 'shifts out, parallel'], k: 'c' },
-        { t: 'y is a composite good with <span class="m"><i>p</i><sub>y</sub> = 1</span>. One unit of y is …', o: ['one other product', '€1 spent on everything else', 'one coffee', 'nothing: y is only a label'], k: 'b' },
+        { t: '<span class="m"><i>y</i></span> is a composite good with <span class="m"><i>p</i><sub>y</sub> = 1</span>. One unit of y is …', o: ['one other product', '€1 spent on everything else', 'one coffee', 'nothing: y is only a label'], k: 'b' },
         { t: 'At <span class="m"><i>p</i><sub>x</sub> = €4</span>: one more coffee costs you how much of everything else?', o: ['€1', '€20', '€80', '€4'], k: 'd' }
       ] },
-    q2: { title: 'quiz 2 · preferences and indifference curves', setup: [['transitive', 'if A … B and B … C, then always A … C'], ['goods', 'x and y are both goods: more of each is better']],
+    q2: { title: 'quiz 2 · preferences and indifference curves', setup: [['transitive', 'a relation is transitive if, whenever A is related to B and B to C, A is related to C'], ['goods', 'x and y are both goods: more of each is better']],
       qs: [
         { t: 'Your friend\'s friend: if A is a friend of B, and B is a friend of C, is A always a friend of C? So, is the relation "is a friend of" transitive?', o: ['yes, it is transitive', 'no, it is not transitive'], k: 'b' },
         { t: 'Is the relation "is older than" transitive? (A is older than B, B is older than C …)', o: ['yes, it is transitive', 'no, it is not transitive'], k: 'a' },
@@ -44,7 +44,7 @@
         { t: 'Can an indifference curve look like this?', fig: 'up', o: ['yes', 'no: it breaks completeness', 'no: it breaks more is better', 'no: it breaks convexity'], k: 'c' },
         { t: 'Can two indifference curves cross like this?', fig: 'cross', o: ['no: with more is better, it breaks transitivity', 'no: it breaks convexity', 'no: it breaks completeness', 'yes, curves can cross'], k: 'a' },
         { t: 'Three bundles A, B, C. You are indifferent between A and B (<span class="m"><i>A</i> ∼ <i>B</i></span>), and you strictly prefer B to C (<span class="m"><i>B</i> ≻ <i>C</i></span>). Your preferences are transitive. How do A and C compare?', o: ['<span class="m"><i>A</i> ∼ <i>C</i></span>', '<span class="m"><i>C</i> ≻ <i>A</i></span>', '<span class="m"><i>A</i> ≻ <i>C</i></span>', "can't tell"], k: 'c' },
-        { t: 'You are indifferent between X = (20 apples, 0 bananas) and Y = (0 apples, 20 bananas). Your preferences are convex. The half-half mix M = (10, 10) is …', o: ['worse than X and Y', 'at least as good as X and Y', "can't tell without knowing your tastes"], k: 'b' },
+        { t: 'You are indifferent between <span class="m"><i>X</i> = (20, 0)</span> and <span class="m"><i>Y</i> = (0, 20)</span> (apples, bananas). Your preferences are convex. The half-half mix <span class="m"><i>M</i> = (10, 10)</span> is …', o: ['worse than X and Y', 'at least as good as X and Y', "can't tell without knowing your tastes"], k: 'b' },
         { t: 'Sam strictly prefers bundle A to B, B to C, and C to A. Sam has C and pays €1 for every swap to a bundle Sam prefers. You offer C → B → A → C. How much has Sam paid when Sam holds C again?', o: ['€0', '€1', '€3', '€6'], k: 'c' }
       ] },
     q3: { title: 'quiz 3 · your choices on budget lines', budget: true,
@@ -52,6 +52,9 @@
       lines: (window.L06_LINES || []) }
   };
   const QZ = QUIZZES[Q];
+  // back to the slide AFTER this quiz (Can, 21.10), in the whole window (the quiz may sit in a frame on the slide)
+  const NEXT = { q1: 'L06-B1', q2: 'L06-C9', q3: 'L06-F2' }[Q];
+  const BACK = `<a href="../../../lectures/L06/index.html#/${NEXT}" target="_top">→ back to the slides</a>`;
 
   // ---------- helpers ----------
   const $ = id => document.getElementById(id);
@@ -93,7 +96,7 @@
     built = true;
     const done = LS('micro-l06-done-' + P.session + '-' + Q);
     let h = `<h1>${QZ.title}</h1>` + setupHTML();
-    if (done) { $('app').innerHTML = h + '<p class="msg">saved, thank you! Wait for the discussion. <br><a href="../../../lectures/L06/index.html">→ back to the slides</a></p>'; return; }
+    if (done) { $('app').innerHTML = h + '<p class="msg">saved, thank you! Wait for the discussion. <br>' + BACK + '</p>'; return; }
     if (QZ.budget) return buildBudget(h);
     QZ.qs.forEach((q, i) => {
       h += `<div class="q" id="q${i}"><div class="t"><b>${i + 1}.</b> ${q.t}</div>${q.fig ? FIG[q.fig] : ''}<div class="opts">` +
@@ -112,7 +115,7 @@
     try {
       await P.submit(POLL, value, n => msg.textContent = 'busy, retry ' + n + '…');
       SS('micro-l06-done-' + P.session + '-' + Q, value);
-      msg.innerHTML = 'saved, thank you! Wait for the discussion. <br><a href="../../../lectures/L06/index.html">→ back to the slides</a>';
+      msg.innerHTML = 'saved, thank you! Wait for the discussion. <br>' + BACK;
       go.style.display = 'none';
     } catch (e) { msg.textContent = 'not saved (offline?). please try again'; go.disabled = false; }
   }
