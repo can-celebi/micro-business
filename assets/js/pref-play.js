@@ -65,7 +65,8 @@
     for (let i = 0; i <= N; i++) {
       const xx = A.x0 + (A.x1 - A.x0) * i / N; if (xx <= 0) continue;
       const yy = typeof k === 'function' ? k(xx) : k / xx; if (!isFinite(yy)) continue; if (yy < A.y0 - (A.y1 - A.y0) || yy > A.y1 + (A.y1 - A.y0)) continue;
-      pts.push(A.X(xx).toFixed(1) + ',' + A.Y(yy).toFixed(1));
+      // y kept just outside the plot (the clip hides it), so the drawing's box never reaches far below the slide
+      pts.push(A.X(xx).toFixed(1) + ',' + Math.max(T - 4, Math.min(T + ph + 4, A.Y(yy))).toFixed(1));
     }
     return pts.length > 1 ? '<polyline points="' + pts.join(' ') + '" fill="none" stroke="' + col + '" stroke-width="' + w + '"' + (extra || '') + '/>' : '';
   }
@@ -168,13 +169,17 @@
       const hw = xmax / 2 / st.z, hh = ymax / 2 / st.z, Ax = axes(cx - hw, cx + hw, cy - hh, cy + hh), X = Ax.X, Y = Ax.Y;
       let s = clip(id) + '<g clip-path="url(#' + id + ')">';
       s += curve(Ax, k, BLUE, 4);
-      s += '<line x1="' + X(xa - 3 * hw) + '" y1="' + Y(ya + mrs * 3 * hw) + '" x2="' + X(xa + 3 * hw) + '" y2="' + Y(ya - mrs * 3 * hw) + '" stroke="' + PURPLE + '" stroke-width="2.5" stroke-dasharray="10 6"/>';
+      // the tangent, cut exactly at the edges of the window (Filiz's overflow check measured the uncut line at 890 px)
+      const ta = Math.max(Ax.x0 - xa, (ya - Ax.y1) / mrs), tb = Math.min(Ax.x1 - xa, (ya - Ax.y0) / mrs);
+      if (tb > ta) s += '<line x1="' + X(xa + ta) + '" y1="' + Y(ya - mrs * ta) + '" x2="' + X(xa + tb) + '" y2="' + Y(ya - mrs * tb) + '" stroke="' + PURPLE + '" stroke-width="2.5" stroke-dasharray="10 6"/>';
       // the step: along the curve and along the tangent
       const x2 = xa + st.dx, yc = yOf(x2), yt = ya - mrs * st.dx;
-      s += '<line x1="' + X(xa) + '" y1="' + Y(ya) + '" x2="' + X(x2) + '" y2="' + Y(ya) + '" stroke="#555" stroke-width="1.5"/>';
-      s += '<line x1="' + X(x2) + '" y1="' + Y(ya) + '" x2="' + X(x2) + '" y2="' + Y(Math.min(yc, yt)) + '" stroke="#555" stroke-width="1" stroke-dasharray="3 4"/>';
-      s += '<line x1="' + X(x2) + '" y1="' + Y(yc) + '" x2="' + X(x2) + '" y2="' + Y(yt) + '" stroke="#C2410C" stroke-width="5" opacity="0.75"/>';
-      s += '<circle cx="' + X(x2) + '" cy="' + Y(yc) + '" r="6" fill="' + BLUE + '"/><circle cx="' + X(x2) + '" cy="' + Y(yt) + '" r="6" fill="' + PURPLE + '"/>';
+      const cl = (v, lo, hi) => Math.max(lo, Math.min(hi, v)), CX = v => cl(X(v), L - 4, L + pw + 4), CY = v => cl(Y(v), T - 4, T + ph + 4);
+      const inX = v => v >= Ax.x0 && v <= Ax.x1, inY = v => v >= Ax.y0 && v <= Ax.y1;
+      s += '<line x1="' + CX(xa) + '" y1="' + CY(ya) + '" x2="' + CX(x2) + '" y2="' + CY(ya) + '" stroke="#555" stroke-width="1.5"/>';
+      s += '<line x1="' + CX(x2) + '" y1="' + CY(ya) + '" x2="' + CX(x2) + '" y2="' + CY(Math.min(yc, yt)) + '" stroke="#555" stroke-width="1" stroke-dasharray="3 4"/>';
+      s += '<line x1="' + CX(x2) + '" y1="' + CY(yc) + '" x2="' + CX(x2) + '" y2="' + CY(yt) + '" stroke="#C2410C" stroke-width="5" opacity="0.75"/>';
+      if (inX(x2) && inY(yc)) s += '<circle cx="' + X(x2) + '" cy="' + Y(yc) + '" r="6" fill="' + BLUE + '"/>'; if (inX(x2) && inY(yt)) s += '<circle cx="' + X(x2) + '" cy="' + Y(yt) + '" r="6" fill="' + PURPLE + '"/>';
       s += '</g>';
       s += '<rect x="' + L + '" y="' + T + '" width="' + pw + '" height="' + ph + '" fill="none" stroke="#ccc"/>';
       s += '<circle cx="' + X(xa) + '" cy="' + Y(ya) + '" r="8" fill="' + GREEN + '" stroke="#fff" stroke-width="2"/><text x="' + (X(xa) + 12) + '" y="' + (Y(ya) - 12) + '" fill="' + GREEN + '" font-weight="700" ' + halo + '>A</text>';
