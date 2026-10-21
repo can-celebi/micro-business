@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>Before We Start</title>
+<link rel="stylesheet" href="../../assets/css/console-light.css?v=20261014a">
+<style>
+  body { margin: 0; font-family: var(--mono); color: var(--ink); background: var(--bg); }
+  main { max-width: 680px; margin: 0 auto; padding: 28px 16px 80px; }
+  h1 { font-size: 1.2rem; margin: 0; }
+  h2 { font-size: .95rem; margin: 1.8rem 0 .2rem; border-top: 1.5px solid var(--line); padding-top: .7rem; }
+  .s { color: var(--dim); font-size: .85rem; margin: .3rem 0 1rem; }
+  .q { margin: 0 0 1.1rem; }
+  .q .t { font-size: .92rem; margin-bottom: .4rem; }
+  .opts { display: flex; flex-wrap: wrap; gap: 6px; }
+  .opt { font-family: var(--mono); font-size: .9rem; background: #fff; color: var(--ink); border: 1.5px solid #bbb; border-radius: 2px; padding: 6px 12px; cursor: pointer; }
+  .opt.on { background: var(--p-green); border-color: var(--line); }
+  .likert .opt { min-width: 44px; }
+  .scale { display: flex; justify-content: space-between; font-size: .7rem; color: var(--dim); max-width: 300px; margin-top: 3px; }
+  .chk { display: block; font-size: .88rem; margin: 6px 0; }
+  .diff { margin: 2px 0 10px 1.6em; }
+  textarea { font-family: var(--mono); font-size: .9rem; width: 100%; min-height: 4em; border: 1.5px solid #bbb; border-radius: 2px; padding: 6px; }
+  .go { font-family: var(--mono); font-size: 1rem; padding: 10px 22px; background: var(--p-yellow); border: 1.5px solid var(--line); border-radius: 2px; cursor: pointer; margin-top: .6rem; }
+  .msg { margin-top: .8rem; font-size: .9rem; }
+  .missing .t { color: var(--bad); }
+  a { color: var(--ink); }
+</style>
+</head>
+<body>
+<main id="app">
+  <h1>&gt; before we start<span class="cursor"></span></h1>
+  <p class="s">anonymous · about 3 minutes · microeconomics · lecture 6</p>
+  <div id="f"></div>
+  <button class="go" id="go" type="button">[ submit ]</button>
+  <div class="msg" id="msg"></div>
+</main>
+<script src="../../assets/js/config.js?v=20261014a"></script>
+<script src="../../assets/js/interactive.js?v=20261014a"></script>
+<script>
+// Opening survey L06 (Can, 21.10): problem set 2, how did it go (after the deadline), and today's concepts (how well
+// do you know them already? 1–5). All answers go into ONE record (poll "L06-survey"), read by the lecturer screen
+// (slides L06-03r, L06-03s). Field keys: PS2 p1–p6 (1–5, '-' = did not do it), time, how, sub (yes/moodle/time/other); today: pref, compl, trans, mono, convex, ic, mrs, subs, comp, util (1–5).
+const POLL = 'L06-survey';
+const LIK = ['1','2','3','4','5'];
+const TODAY = [['pref','preferences: ≿ (at least as good), ≻ (strictly better), ∼ (indifferent)'],['compl','completeness'],['trans','transitivity'],['mono','more is better'],['convex','convexity'],['ic','indifference curves'],['mrs','the marginal rate of substitution (MRS)'],['subs','perfect substitutes'],['comp','perfect complements'],['util','utility functions']];
+const PS2 = [['p1','Q1 · real estate: why not perfectly competitive?'],['p2','Q2 · electric cars: why not perfectly competitive?'],['p3','Q3 · which conditions do not fit perfect competition?'],['p4','Q4 · supply and demand: inverse curves, equilibrium, shifts'],['p5','Q5 · a tax on buyers: prices and who bears it'],['p6','Q6 · more electric cars: the price of electricity and of gasoline']];
+const ans = {}, f = document.getElementById('f');
+
+function likert(id, label, lo, hi, extra) {
+  const d = document.createElement('div'); d.className = 'q likert'; d.id = 'q-' + id;
+  d.innerHTML = '<div class="t">' + label + '</div>';
+  const box = document.createElement('div'); box.className = 'opts';
+  LIK.concat(extra ? [extra] : []).forEach(v => { const b = document.createElement('button'); b.type = 'button'; b.className = 'opt'; b.textContent = v; b.onclick = () => { ans[id] = v === extra ? '-' : v; box.querySelectorAll('.opt').forEach(x => x.classList.toggle('on', x === b)); }; box.appendChild(b); });
+  d.appendChild(box); d.insertAdjacentHTML('beforeend', '<div class="scale"><span>1 · ' + lo + '</span><span>5 · ' + hi + '</span></div>');
+  return d;
+}
+function choice(id, label, opts) {
+  const d = document.createElement('div'); d.className = 'q'; d.id = 'q-' + id;
+  d.innerHTML = '<div class="t">' + label + '</div>';
+  const box = document.createElement('div'); box.className = 'opts';
+  opts.forEach(([c, l]) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'opt'; b.textContent = l; b.onclick = () => { ans[id] = c; box.querySelectorAll('.opt').forEach(x => x.classList.toggle('on', x === b)); }; box.appendChild(b); });
+  d.appendChild(box); return d;
+}
+function head(t, s) { f.insertAdjacentHTML('beforeend', '<h2>' + t + '</h2>' + (s ? '<p class="s">' + s + '</p>' : '')); }
+
+head('problem set 2', 'how hard was each question? (it closed on Monday)');
+PS2.forEach(([id, l]) => f.appendChild(likert(id, l, 'very easy', 'very hard', 'did not do it')));
+f.appendChild(choice('time', 'how long did it take you?', [['1','less than 1 hour'],['2','1–2 hours'],['3','2–4 hours'],['4','more than 4 hours'],['0','I did not do it']]));
+f.appendChild(choice('how', 'how did you work on it?', [['alone','alone'],['group','with others'],['both','both']]));
+// Can (21.10, after Moodle went offline today): did the submission work?
+f.appendChild(choice('sub', 'were you able to submit your answers for problem set 2?', [['yes','yes'],['moodle','no: Moodle was offline'],['time','no: I ran out of time'],['other','no: another reason']]));
+head('today', 'how well do you know these already?');
+TODAY.forEach(([id, l]) => f.appendChild(likert(id, l, 'never heard of it', 'I could explain it')));
+
+async function submit() {
+  const msg = document.getElementById('msg');
+  const need = PS2.map(x => x[0]).concat(['time','how','sub'], TODAY.map(x => x[0]));
+  const missing = need.filter(id => !ans[id]);
+  document.querySelectorAll('.q').forEach(d => d.classList.remove('missing'));
+  missing.forEach(id => { const d = document.getElementById('q-' + id); if (d) d.classList.add('missing'); });
+  if (missing.length) { msg.textContent = 'please answer all questions (' + missing.length + ' missing, in red)'; return; }
+  const go = document.getElementById('go'); if (go.disabled) return; go.disabled = true;  // no double records from a double tap
+  msg.textContent = 'saving…';
+  try {
+    await window.MicroPoll.submitText(POLL, { answers: ans }, n => msg.textContent = 'busy, retry ' + n + '…');
+    msg.innerHTML = 'saved, thank you! <br><a href="../../lectures/L06/index.html#/L06-03r" target="_top">→ back to the slides</a>';
+    document.getElementById('go').style.display = 'none';
+  } catch (e) { msg.textContent = 'not saved (offline?). please try again'; go.disabled = false; }
+}
+document.getElementById('go').onclick = submit;
+</script>
+</body>
+</html>

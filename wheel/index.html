@@ -13,7 +13,6 @@
   .three { display: grid; grid-template-columns: 1fr minmax(0, 560px) 1fr; gap: 20px; align-items: start; }
   .side { text-align: left; font-size: .85rem; padding-top: 10px; }
   .side h2 { font-size: .9rem; margin: 0 0 6px; padding-bottom: 4px; border-bottom: 1.5px solid var(--line); }
-  .side.here h2 { color: #2a7a2a; } .side.away h2 { color: #b33; }
   .side div { padding: 3px 0; border-bottom: 1px dotted #ddd; cursor: pointer; }
   .side div:hover { text-decoration: line-through; }
   .side .t { color: var(--dim); font-size: .72rem; }
@@ -26,11 +25,10 @@
   .row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
   .b { font-family: var(--mono); font-size: 1.05rem; padding: 10px 20px; border: 1.5px solid var(--line); border-radius: 2px; cursor: pointer; background: #fff; }
   .b.spin { background: var(--p-yellow); font-size: 1.3rem; padding: 12px 34px; }
-  .b.here { background: var(--p-green); } .b.away { background: var(--p-pink); }
   .b:disabled { opacity: .35; cursor: default; }
   .count { color: var(--dim); font-size: .8rem; margin-top: 14px; }
   .foot { margin-top: 26px; font-size: .72rem; color: var(--dim); }
-  /* names are recorded (here / not here, time, download) but not listed on screen (Can, 08.10) */
+  /* the called list is kept on this device for today but not listed on screen (Can, 08.10) */
   .side { display: none; }
   .three { grid-template-columns: minmax(0, 560px); justify-content: center; }
   /* compact: inside the deck's small box (top-left over the slide) */
@@ -42,6 +40,10 @@
   body.compact .b { font-size: .8rem; padding: 6px 10px; } body.compact .b.spin { font-size: .9rem; padding: 6px 16px; }
   body.compact .row { gap: 6px; }
   body.compact .count { margin-top: 6px; font-size: .7rem; } body.compact .foot { margin-top: 8px; font-size: .65rem; }
+  .who { margin: 10px 0 2px; display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; align-items: center; }
+  .who .b { font-size: .85rem; padding: 6px 12px; } .who .b.on { background: var(--p-green); }
+  .src { color: var(--dim); font-size: .78rem; margin-top: 6px; }
+  body.compact .who .b { font-size: .7rem; padding: 4px 8px; } body.compact .src { font-size: .62rem; margin-top: 3px; }
   .link { background: none; border: none; color: var(--dim); text-decoration: underline; cursor: pointer; font-family: var(--mono); font-size: .72rem; padding: 0; }
 </style>
 </head>
@@ -49,36 +51,44 @@
 <main>
   <h1>&gt; wheel of fortune</h1>
   <div class="three">
-  <div class="side here"><h2>here ✓ <span id="nh"></span></h2><div id="listhere" style="cursor:default;border:0;padding:0"></div></div>
   <div class="mid">
   <div class="wheelbox"><div class="pointer"></div><canvas id="c" width="900" height="900"></canvas></div>
   <div class="name" id="name">&nbsp;</div>
   <div class="row">
     <button class="b spin" id="spin">[ spin ]</button>
-    <button class="b here" id="here" disabled>here ✓</button>
-    <button class="b away" id="away" disabled>not here ✗</button>
   </div>
   <div class="count" id="count"></div>
+  <div class="who" id="who">
+    <button class="b on" data-w="all" type="button">in class + online</button>
+    <button class="b" data-w="in_class" type="button">only in class</button>
+    <button class="b" data-w="at_home" type="button">only online</button>
+    <button class="b" id="refresh" type="button">[ refresh ]</button>
   </div>
-  <div class="side away"><h2>not here ✗ <span id="na"></span></h2><div id="listaway" style="cursor:default;border:0;padding:0"></div></div>
+  <div class="src" id="src"></div>
+  </div>
   </div>
   <div class="foot">
-    <span id="lock" hidden>lecturer code: <input type="password" id="code" size="12" style="font-family:var(--mono)"> <button class="link" id="open">open</button> · </span>
-    <button class="link" id="export">download today</button> · <button class="link" id="reset">start over today</button>
+    <button class="link" id="reset">start over today</button>
   </div>
 </main>
-<script src="roster.enc.js?v=20261014a"></script>
+<script src="../assets/js/config.js?v=20261014a"></script>
+<script src="../assets/js/interactive.js?v=20261014a"></script>
 <script>
 // Wheel of fortune for cold-calling (Can, 07.10: "super simple: the list, spin, here or not here").
-// The class list is built in (wheel/roster.enc.js, made by tools/roster_encrypt.py), ENCRYPTED with the teacher code,
-// because the site is public. It opens by itself in a browser where the teacher code was entered (deck: T + code),
-// otherwise type the code once below the wheel. "here" and "not here" both take the name off
-// the wheel for today; "download today" saves who was here as a CSV.
+// Since 21.10 (Can: "a wheel of the people who signed in, using their nicknames; only those online or in class today
+// and no one else"): the wheel = today's sign-ins for the current lecture (deck 👤: poll <LEC>-where, in class / online),
+// one entry per device and per nickname, NICKNAMES ONLY (the encrypted name is never read). Lecture: the deck the wheel
+// is opened from, else today's lecture (config.js dates), else ?lec=L06. [refresh] = 2 calls (today's sign-ins + the
+// nickname list); each nickname text is downloaded once and kept on this device. No timer. The old encrypted class list
+// (roster.enc.js) is no longer loaded. A spin takes the picked nickname off the wheel for today (no "here" / "not here"
+// buttons since 21.10, Can: "let's kill the 'here' and 'not here' buttons"); "start over today" puts everyone back.
 const K = { names: 'wheel-names', day: d => 'wheel-class-' + d };
 const ls = { get: k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } }, set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} } };
 const day = new Date().toISOString().slice(0, 10);
 let names = [];
-let cls = ls.get(K.day(day)) || [];   // [{name, status: 'here'|'away', t}]
+let signed = [];   // [{nick, where: 'in_class'|'at_home'}] for today
+let whoMode = 'all';
+let cls = ls.get(K.day(day)) || [];   // today's called nicknames [{name, t}]
 let current = null, angle = 0, spinning = false;
 const cv = document.getElementById('c'), ctx = cv.getContext('2d');
 const COLS = ['#E6F5E6', '#FFF9D0', '#FDE4E6', '#E4EFFA', '#F1E6FA', '#E6F3F5'];
@@ -89,7 +99,7 @@ function save() { ls.set(K.day(day), cls); }
 function draw() {
   const R = remaining(), W = cv.width, c = W / 2, r = W / 2 - 10;
   ctx.clearRect(0, 0, W, W);
-  if (!R.length) { ctx.font = '600 40px IBM Plex Mono, monospace'; ctx.fillStyle = '#777'; ctx.textAlign = 'center'; ctx.fillText(names.length ? 'everyone has been called' : 'lecturer code ↓', c, c); return; }
+  if (!R.length) { ctx.font = '600 40px IBM Plex Mono, monospace'; ctx.fillStyle = '#777'; ctx.textAlign = 'center'; ctx.fillText(names.length ? 'everyone has been called' : (loading ? 'loading…' : 'nobody signed in yet'), c, c); return; }
   const seg = 2 * Math.PI / R.length;
   R.forEach((n, i) => {
     const a0 = angle + i * seg;
@@ -107,70 +117,68 @@ function picked() {
   return R[Math.floor(a / seg) % R.length];
 }
 function spin() {
-  if (spinning || current || !remaining().length) return;
+  if (spinning || !remaining().length) return;
   spinning = true; buttons(); $('name').innerHTML = '&nbsp;';
   // fast (Can, 08.10: "even even smaller"): about 0.5 s, with a short ease-out so the result is readable
   const start = angle, total = 2 * Math.PI * (1 + Math.random()) + Math.random() * 2 * Math.PI, dur = 500, t0 = performance.now();
   (function step(now) {
     const t = Math.min(1, (now - t0) / dur); angle = start + total * (1 - Math.pow(1 - t, 3)); draw();
-    if (t < 1) requestAnimationFrame(step); else { spinning = false; current = picked(); $('name').textContent = current; draw(); buttons(); }
+    // the picked nickname comes off today's wheel at once (Can, 21.10: no "here" / "not here" buttons any more)
+    if (t < 1) requestAnimationFrame(step); else { spinning = false; const who = picked(); cls.push({ name: who, t: new Date().toLocaleTimeString('de-AT', { hour: '2-digit', minute: '2-digit' }) }); save(); $('name').textContent = who; render(); }
   })(t0);
 }
-function mark(status) {
-  if (!current) return;
-  cls.push({ name: current, status: status, t: new Date().toLocaleTimeString('de-AT', { hour: '2-digit', minute: '2-digit' }) });
-  save(); current = null; render();
-  if (status === 'away') spin();
-}
-function buttons() { $('spin').disabled = spinning || !!current || !remaining().length; $('here').disabled = $('away').disabled = !current; }
+function buttons() { $('spin').disabled = spinning || !remaining().length; }
 function render() {
-  draw(); buttons(); if (!current) $('name').innerHTML = '&nbsp;';
-  const here = cls.filter(x => x.status === 'here').length;
-  // the two lists left and right, newest on top; click a name to put it back on the wheel (a mistake)
-  const item = x => `<div data-n="${x.name.replace(/"/g, '&quot;')}" title="click: back on the wheel">${x.name.replace(/</g, '&lt;')} <span class="t">${x.t}</span></div>`;
-  $('listhere').innerHTML = cls.filter(x => x.status === 'here').slice().reverse().map(item).join('');
-  $('listaway').innerHTML = cls.filter(x => x.status === 'away').slice().reverse().map(item).join('');
-  $('nh').textContent = here ? '(' + here + ')' : ''; $('na').textContent = cls.length - here ? '(' + (cls.length - here) + ')' : '';
-  document.querySelectorAll('.side div[data-n]').forEach(d => d.onclick = () => { if (spinning) return; cls = cls.filter(x => x.name !== d.dataset.n); save(); render(); });
-  $('count').textContent = names.length ? `here ${here} · not here ${cls.length - here} · on the wheel ${remaining().length}` : '';
+  draw(); buttons();
+  $('count').textContent = names.length ? `called today ${cls.filter(x => names.includes(x.name)).length} · on the wheel ${remaining().length}` : '';
 }
-// u:space list: "No.<tab>Surname, First name, 12345678" → "First name Surname" (the number is dropped);
-// otherwise a Moodle export (first name / last name columns) or one name per line
-function parseList(text) {
-  const lines = text.replace(/^﻿/, '').split(/\r?\n/).filter(l => l.trim());
-  const us = lines.map(l => l.split('\t')).filter(c => c.length >= 2 && /^\d+$/.test(c[0].trim()) && /,.*,\s*\d{6,}\s*$/.test(c[1]));
-  if (us.length >= 3) return us.map(c => { const p = c[1].split(',').map(s => s.trim()); return (p[1] + ' ' + p[0]).trim(); });
-  const split = l => l.split(/[,;\t]/).map(s => s.replace(/"/g, '').trim());
-  const head = split(lines[0]).map(h => h.toLowerCase());
-  const fi = head.findIndex(h => /first ?name|vorname/.test(h)), la = head.findIndex(h => /last ?name|nachname|surname/.test(h));
-  if (fi >= 0 && la >= 0) return lines.slice(1).map(split).map(r => ((r[fi] || '') + ' ' + (r[la] || '')).trim()).filter(Boolean);
-  return lines.map(l => l.trim()).filter(Boolean);
+// today's lecture: the deck around the wheel, else the config date of today (Vienna), else ?lec=
+const viennaDay = ts => new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Vienna', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(ts));
+const today = viennaDay(Date.now());
+function lecture() {
+  const q = /[?&]lec=(L\d\d)/.exec(location.search); if (q) return q[1];
+  try { const l = window.parent !== window && window.parent.document.body.dataset.lecture; if (l) return l; } catch (e) {}
+  const L = (window.MICRO_CONFIG || {}).lectures || {}; return Object.keys(L).find(k => L[k] === today) || '';
 }
-// open the built-in list with the teacher code (the one the deck stores, or typed here once)
-async function unlock(code) {
-  const E = window.ROSTER_ENC; if (!E || !code) return false;
-  const b = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+const LEC = lecture();
+let loading = false;
+function applyWho() { names = signed.filter(x => whoMode === 'all' || x.where === whoMode).map(x => x.nick); }
+async function load() {
+  const P = window.MicroPoll;
+  if (!LEC) { $('src').textContent = 'no lecture today (add ?lec=L06 to the address)'; return; }
+  if (!P || !P.hasToken) { $('src').textContent = 'could not reach the class data'; return; }
+  loading = true; $('refresh').disabled = true; $('src').textContent = 'loading today’s sign-ins…'; render();
   try {
-    const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(code.trim()), 'PBKDF2', false, ['deriveKey']);
-    const key = await crypto.subtle.deriveKey({ name: 'PBKDF2', salt: b(E.salt), iterations: E.rounds, hash: 'SHA-256' }, base, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
-    const list = JSON.parse(new TextDecoder().decode(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b(E.iv) }, key, b(E.ct))));
-    names = list; try { localStorage.setItem('micro-teacher-code', code.trim()); } catch (e) {}
-    $('lock').hidden = true; render(); return true;
-  } catch (e) { return false; }
+    // 1) today's sign-ins: latest "in class / online" per device, taps of today only
+    const by = await P.allAnswers(LEC + '-where/'), latest = {};
+    (by[LEC + '-where'] || []).forEach(a => { if (viennaDay(a.ts) !== today) return; if (!latest[a.client] || latest[a.client].ts < a.ts) latest[a.client] = a; });
+    // 2) nicknames: the latest sign-in record per device (refs/tags/t/<session>/reg/…); its text holds the nickname
+    const reg = {}; (await P.tagRefs('reg/')).forEach(r => { if (r.poll === 'reg' && (!reg[r.client] || reg[r.client].ts < r.ts)) reg[r.client] = r; });
+    const devices = Object.keys(latest).filter(c => latest[c].value === 'in_class' || latest[c].value === 'at_home');
+    const out = [], seen = new Set(); let noNick = 0;
+    for (let i = 0; i < devices.length; i += 8) {
+      await Promise.all(devices.slice(i, i + 8).map(async c => {
+        const r = reg[c]; if (!r) { noNick++; return; }
+        let nick = ''; try { nick = String((await P.blob(r.sha)).nick || '').trim(); } catch (e) {}
+        if (!nick) { noNick++; return; }
+        const k = nick.toLowerCase(); if (seen.has(k)) return; seen.add(k);   // one entry per nickname (laptop + phone)
+        out.push({ nick: nick.slice(0, 30), where: latest[c].value });
+      }));
+    }
+    signed = out.sort((a, b) => a.nick.localeCompare(b.nick));
+    const inC = signed.filter(x => x.where === 'in_class').length;
+    $('src').textContent = LEC + ' · signed in today: ' + inC + ' in class, ' + (signed.length - inC) + ' online' + (noNick ? ' · ' + noNick + ' device' + (noNick === 1 ? '' : 's') + ' without a nickname' : '') + (P.session !== 'ws26' ? ' · test session' : '');
+  } catch (e) { $('src').textContent = 'could not load: tap [ refresh ] again'; }
+  loading = false; $('refresh').disabled = false; applyWho(); render();
 }
-$('open').onclick = async () => { if (!(await unlock($('code').value))) { $('code').value = ''; $('code').placeholder = 'wrong code'; } };
-$('code').addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Enter') $('open').click(); });
-$('spin').onclick = spin; $('here').onclick = () => mark('here'); $('away').onclick = () => mark('away');
-$('reset').onclick = () => { cls = []; current = null; save(); render(); };
-$('export').onclick = () => {
-  const csv = 'date,name,status,time\n' + cls.map(x => [day, '"' + x.name.replace(/"/g, '""') + '"', x.status === 'here' ? 'here' : 'not here', x.t].join(',')).join('\n');
-  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['﻿' + csv], { type: 'text/csv' })); a.download = 'wheel-' + day + '.csv'; a.click();
-};
-document.addEventListener('keydown', e => { if (e.key === ' ') { e.preventDefault(); spin(); } if (e.key === 'y') mark('here'); if (e.key === 'n') mark('away'); });
+document.querySelectorAll('#who [data-w]').forEach(b => b.onclick = () => { whoMode = b.dataset.w; document.querySelectorAll('#who [data-w]').forEach(x => x.classList.toggle('on', x === b)); applyWho(); render(); });
+$('refresh').onclick = load;
+$('spin').onclick = spin;
+$('reset').onclick = () => { cls = []; current = null; save(); $('name').innerHTML = '&nbsp;'; render(); };
+document.addEventListener('keydown', e => { if (e.target && e.target.tagName === 'INPUT') return; if (e.key === ' ') { e.preventDefault(); spin(); } });
 if (/[?&]compact\b/.test(location.search)) document.body.classList.add('compact');
-names = [];  // never from an old loaded file: always the built-in list
 render();
-unlock(localStorage.getItem('micro-teacher-code') || '').then(ok => { if (!ok) { $('lock').hidden = false; render(); } });
+load();
 </script>
 </body>
 </html>

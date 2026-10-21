@@ -1,0 +1,1 @@
+window.L06_LINES = [[48,72],[84,13],[29,82],[58,29],[17,96],[43,62],[84,45],[27,94],[67,22],[38,72],[18,92],[39,59]]; // Deniz (Games & experiments), 21.10: Choi rule, random clicking violates GARP 98.1%; order mixed by Filiz
