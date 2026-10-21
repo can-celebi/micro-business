@@ -16,7 +16,7 @@
       <button class="h3-b" data-a="reset" type="button">reset</button>
     </div>`;
   const cv = box.querySelector('canvas'), cx = cv.getContext('2d');
-  const W = 900, H = 370, DPR = Math.min(2, window.devicePixelRatio || 1);
+  const PRINT = /print-pdf/.test(location.search), W = 900, H = 370, DPR = PRINT ? 3 : Math.min(2, window.devicePixelRatio || 1);
   cv.width = W * DPR; cv.height = H * DPR; cx.scale(DPR, DPR);
   const slider = box.querySelector('input'), hOut = box.querySelector('.h3-h');
   const FONT = '"STIX Two Text", "Cambria Math", Georgia, serif';
@@ -127,7 +127,8 @@
     st.curves.forEach(c => { if (c.falling) { c.drop = Math.min(1, c.drop + dt * 1.1); if (c.drop >= 1) c.falling = false; } });
     if (seq) seq(dt);
     draw();
-    if (running) requestAnimationFrame(tick);
+    const busy = drag || seq || st.curves.some(c => c.falling) || ['th', 'ph', 'grow', 'shape'].some(a => Math.abs(tgt[a] - st[a]) > 1e-3);
+    if (running && busy) requestAnimationFrame(tick); else running = false;
   }
   function start() { if (!running) { running = true; last = 0; requestAnimationFrame(tick); } }
   function stop() { running = false; }
@@ -175,7 +176,7 @@
   // ---- lecturer controls ----
   slider.addEventListener('input', () => { seq = null; st.note = ''; st.note2 = ''; tgt.grow = 1; st.cut = +slider.value; hOut.textContent = (+slider.value).toFixed(1); start(); });
   box.querySelectorAll('.h3-b').forEach(b => b.addEventListener('click', e => {
-    e.stopPropagation(); const a = b.dataset.a; tgt.grow = 1; start(); if (a !== 'keep') { st.note = ''; st.note2 = ''; }
+    e.stopPropagation(); b.blur(); const a = b.dataset.a; tgt.grow = 1; start(); if (a !== 'keep') { st.note = ''; st.note2 = ''; }
     if (a === 'keep') { keep(st.cut == null ? +slider.value : st.cut); }
     if (a === 'view') { const down = tgt.ph > 1.2; down ? look3D() : lookDown(); b.textContent = down ? 'from above' : '3D'; }
     if (a === 'play') { tgt.shape = 0; look3D(); st.curves = []; sweep([3, 5, 7]); }
@@ -185,12 +186,15 @@
   let drag = null;
   cv.addEventListener('pointerdown', e => { drag = { x: e.clientX, y: e.clientY, th: tgt.th, ph: tgt.ph }; cv.setPointerCapture(e.pointerId); e.stopPropagation(); start(); });
   cv.addEventListener('pointermove', e => {
-    if (!drag) return; const r = cv.getBoundingClientRect(), s = W / r.width;
+    if (!drag) return; start(); const r = cv.getBoundingClientRect(), s = W / r.width;
     tgt.th = drag.th - (e.clientX - drag.x) * s * 0.008;
     tgt.ph = Math.max(0.12, Math.min(Math.PI / 2, drag.ph + (e.clientY - drag.y) * s * 0.006));
   });
   ['pointerup', 'pointercancel'].forEach(ev => cv.addEventListener(ev, () => { drag = null; }));
-  ['mousedown', 'touchstart', 'touchmove', 'keydown'].forEach(ev => box.addEventListener(ev, e => e.stopPropagation(), { passive: true }));
+  ['mousedown', 'touchstart', 'touchmove'].forEach(ev => box.addEventListener(ev, e => e.stopPropagation(), { passive: true }));
+  slider.addEventListener('keydown', e => e.stopPropagation());   // arrow keys move the cut, not the slide
+  slider.addEventListener('pointerup', () => slider.blur());       // after a mouse drag the clicker moves the slides again
+  box.setAttribute('data-prevent-swipe', '');
 
   // ---- follow the deck ----
   function sync() {
@@ -205,6 +209,6 @@
   // print / PDF: the final picture, all curves, tilted view
   if (/print-pdf/.test(location.search)) {
     Object.assign(st, { grow: 1, shape: 0 }); [3, 5, 7].forEach(keep); st.curves.forEach(c => { c.drop = 1; c.falling = false; });
-    st.note = 'each cut = one indifference curve'; draw();
+    st.note = 'each cut = one indifference curve'; draw(); if (document.fonts && document.fonts.ready) document.fonts.ready.then(draw);
   } else { draw(); hook(); }
 })();
