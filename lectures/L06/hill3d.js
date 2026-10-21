@@ -11,7 +11,7 @@
     <div class="h3-bar">
       <label>cut at height <input type="range" min="0.6" max="9.4" step="0.1" value="4"> <b class="h3-h">4.0</b></label>
       <button class="h3-b" data-a="keep" type="button">keep this curve</button>
-      <button class="h3-b" data-a="view" type="button">from above</button>
+      <button class="h3-b" data-a="view" type="button">3D</button>
       <button class="h3-b" data-a="play" type="button">play</button>
       <button class="h3-b" data-a="reset" type="button">reset</button>
     </div>`;
@@ -24,14 +24,14 @@
 
   // ---- state (animated values ease towards targets) ----
   const st = {
-    th: -0.78, ph: 0.42,           // camera: turn and tilt (radians); tilt π/2 = straight down
+    th: 0, ph: Math.PI / 2,           // camera: turn and tilt (radians); tilt π/2 = straight down
     grow: 0,                       // 0 = flat floor, 1 = full hill
     shape: 0,                      // 0 = the hill u, 1 = a different hill with the same map
     cut: null,                     // height of the cutting plane, or null
     curves: [],                    // kept cuts: {c, drop: 0…1}
     note: '', note2: ''
   };
-  const tgt = { th: -0.78, ph: 0.42, grow: 0, shape: 0 };
+  const tgt = { th: 0, ph: Math.PI / 2, grow: 0, shape: 0 };
   let seq = null;                  // running scripted animation
   let step = -1;
 
@@ -151,20 +151,23 @@
   }
   const look3D = () => { tgt.th = -0.78; tgt.ph = 0.42; };
   const lookDown = () => { tgt.th = 0; tgt.ph = Math.PI / 2; };
+  // Can (21.10): start fresh, seen from above; the button turns it into 3D (its label always names the other view)
+  const setView = down => { down ? lookDown() : look3D(); const vb = box.querySelector('[data-a="view"]'); if (vb) vb.textContent = down ? '3D' : 'from above'; };
+  function fresh() { seq = null; st.cut = null; st.curves = []; Object.assign(tgt, { grow: 1, shape: 0 }); st.note = ''; st.note2 = ''; slider.value = 4; hOut.textContent = '4.0'; setView(true); }
 
   // ---- the click steps (rows of the slide) ----
   function setStep(n) {
     if (n === step) return; step = n; seq = null;
-    if (n <= 0) { Object.assign(tgt, { grow: 0, shape: 0 }); look3D(); st.cut = null; st.curves = []; st.note = ''; st.note2 = ''; }
-    if (n === 1) { Object.assign(tgt, { grow: 1, shape: 0 }); look3D(); st.cut = null; st.curves = []; st.note = 'higher = you like the bundle more'; st.note2 = ''; }
-    if (n === 2) { tgt.grow = 1; tgt.shape = 0; look3D(); st.curves = []; st.note = 'cut the mountain at one height'; st.note2 = 'each cut = one indifference curve'; sweep([3, 5, 7]); }
+    if (n <= 0) fresh();
+    if (n === 1) { tgt.grow = 1; tgt.shape = 0; st.cut = null; st.curves = []; st.note = 'higher = you like the bundle more'; st.note2 = ''; }
+    if (n === 2) { tgt.grow = 1; tgt.shape = 0; setView(false); st.curves = []; st.note = 'cut the mountain at one height'; st.note2 = 'each cut = one indifference curve'; sweep([3, 5, 7]); }
     if (n === 3) {
       tgt.grow = 1; tgt.shape = 0; st.cut = null; [3, 5, 7].forEach(keep); st.curves.forEach(c => { c.drop = 1; c.falling = false; });
-      lookDown(); st.note = 'from above: a hiking map'; st.note2 = 'each line joins points of the same height';
+      setView(true); st.note = 'from above: a hiking map'; st.note2 = 'each line joins points of the same height';
     }
     if (n >= 4) {
       tgt.grow = 1; st.cut = null; if (!st.curves.length) [3, 5, 7].forEach(keep); st.curves.forEach(c => { c.drop = 1; c.falling = false; });
-      look3D(); tgt.shape = 1; st.note = 'a different mountain, the same map'; st.note2 = 'only the order u₁ < u₂ < u₃ matters';
+      setView(false); tgt.shape = 1; st.note = 'a different mountain, the same map'; st.note2 = 'only the order u₁ < u₂ < u₃ matters';
     }
     start();
   }
@@ -178,9 +181,9 @@
   box.querySelectorAll('.h3-b').forEach(b => b.addEventListener('click', e => {
     e.stopPropagation(); b.blur(); const a = b.dataset.a; tgt.grow = 1; start(); if (a !== 'keep') { st.note = ''; st.note2 = ''; }
     if (a === 'keep') { keep(st.cut == null ? +slider.value : st.cut); }
-    if (a === 'view') { const down = tgt.ph > 1.2; down ? look3D() : lookDown(); b.textContent = down ? 'from above' : '3D'; }
-    if (a === 'play') { tgt.shape = 0; look3D(); st.curves = []; sweep([3, 5, 7]); }
-    if (a === 'reset') { step = -1; setStep(stepNow()); box.querySelector('[data-a="view"]').textContent = 'from above'; }
+    if (a === 'view') setView(tgt.ph < 1.2);
+    if (a === 'play') { tgt.shape = 0; setView(false); st.curves = []; sweep([3, 5, 7]); }
+    if (a === 'reset') fresh();
   }));
   // drag to turn and tilt the mountain
   let drag = null;
@@ -208,7 +211,7 @@
   }
   // print / PDF: the final picture, all curves, tilted view
   if (/print-pdf/.test(location.search)) {
-    Object.assign(st, { grow: 1, shape: 0 }); [3, 5, 7].forEach(keep); st.curves.forEach(c => { c.drop = 1; c.falling = false; });
+    Object.assign(st, { grow: 1, shape: 0, th: -0.78, ph: 0.42 }); [3, 5, 7].forEach(keep); st.curves.forEach(c => { c.drop = 1; c.falling = false; });
     st.note = 'each cut = one indifference curve'; draw(); if (document.fonts && document.fonts.ready) document.fonts.ready.then(draw);
   } else { draw(); hook(); }
 })();
