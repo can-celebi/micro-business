@@ -41,7 +41,7 @@
 <script>
 // Opening survey L06 (Can, 21.10): problem set 2, how did it go (after the deadline), and today's concepts (how well
 // do you know them already? 1–5). All answers go into ONE record (poll "L06-survey"), read by the lecturer screen
-// (slides L06-03r, L06-03s). Field keys: PS2 p1–p6 (1–5, '-' = did not do it), time, how; today: pref, compl, trans, mono, convex, ic, mrs, subs, comp, util (1–5).
+// (slides L06-03r, L06-03s). Field keys: PS2 p1–p6 (1–5, '-' = did not do it), time, how, sub (yes/moodle/time/other); today: pref, compl, trans, mono, convex, ic, mrs, subs, comp, util (1–5).
 const POLL = 'L06-survey';
 const LIK = ['1','2','3','4','5'];
 const TODAY = [['pref','preferences: ≿ (at least as good), ≻ (strictly better), ∼ (indifferent)'],['compl','completeness'],['trans','transitivity'],['mono','more is better'],['convex','convexity'],['ic','indifference curves'],['mrs','the marginal rate of substitution (MRS)'],['subs','perfect substitutes'],['comp','perfect complements'],['util','utility functions']];
@@ -69,12 +69,14 @@ head('problem set 2', 'how hard was each question? (it closed on Monday)');
 PS2.forEach(([id, l]) => f.appendChild(likert(id, l, 'very easy', 'very hard', 'did not do it')));
 f.appendChild(choice('time', 'how long did it take you?', [['1','less than 1 hour'],['2','1–2 hours'],['3','2–4 hours'],['4','more than 4 hours'],['0','I did not do it']]));
 f.appendChild(choice('how', 'how did you work on it?', [['alone','alone'],['group','with others'],['both','both']]));
+// Can (21.10, after Moodle went offline today): did the submission work?
+f.appendChild(choice('sub', 'were you able to submit your answers for problem set 2?', [['yes','yes'],['moodle','no: Moodle was offline'],['time','no: I ran out of time'],['other','no: another reason']]));
 head('today', 'how well do you know these already?');
 TODAY.forEach(([id, l]) => f.appendChild(likert(id, l, 'never heard of it', 'I could explain it')));
 
 async function submit() {
   const msg = document.getElementById('msg');
-  const need = PS2.map(x => x[0]).concat(['time','how'], TODAY.map(x => x[0]));
+  const need = PS2.map(x => x[0]).concat(['time','how','sub'], TODAY.map(x => x[0]));
   const missing = need.filter(id => !ans[id]);
   document.querySelectorAll('.q').forEach(d => d.classList.remove('missing'));
   missing.forEach(id => { const d = document.getElementById('q-' + id); if (d) d.classList.add('missing'); });
