@@ -198,7 +198,7 @@
       f.eq.innerHTML = '<div class="pp-disp">trade-off per ' + xone + ' = ' + m(fr('−Δ' + ITY, 'Δ' + ITX)) + '</div><div class="pp-disp-sub">the slope of the curve at A: ' + m('MRS = ' + r2(mrs)) + '</div>';
       const close = Math.abs(per - mrs) < 0.005, rr = v => st.dx < 1 ? r3(v) : r2(v);   // small steps: 3 decimals, so 0.099 / 0.1 reads right
       f.status.innerHTML = '<div>step ' + m('Δ' + ITX + ' = ' + r2(st.dx)) + ': you give up ' + rr(-dy) + ' euros for ' + r2(st.dx) + ' ' + (st.dx === 1 ? xone : xname) + ', so ' + m(fr(rr(-dy), r2(st.dx)) + ' = ' + r2(per)) + ' euros per ' + xone + '</div>' +
-        '<div class="dim">' + (close ? 'this is the slope at A: the MRS (' + r2(mrs) + ')' : 'make the step smaller: the trade-off settles at ' + r2(mrs) + ', the slope at A (the MRS)') + '</div>';
+        '<div class="dim">' + (close ? 'almost exactly the slope at A: the MRS (' + r2(mrs) + ')' : 'make the step smaller: the trade-off settles at ' + r2(mrs) + ', the slope at A (the MRS)') + '</div>';
     }
     slider(f.ctl, 'zoom', 0, 5, 0.05, 0, (v, o) => { st.z = Math.pow(2, v); o.innerHTML = r1(st.z) + '×'; draw(); });
     slider(f.ctl, 'step Δ' + ITX, 0.05, Math.min(+box.dataset.stepmax || (SQ ? 8 : 4), xmax - xa, SQ ? c * c - xa : Infinity), 0.05, 1, (v, o) => { st.dx = v; o.innerHTML = r2(v); draw(); });
