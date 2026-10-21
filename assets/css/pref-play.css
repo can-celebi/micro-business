@@ -1,0 +1,25 @@
+/* L06 playgrounds (assets/js/pref-play.js; Can, 21.10): text line on top, graph, sliders + toggles, status line. Quiet, light. */
+.pp-budget, .pp-map, .pp-zoom { font-size: 0.5em; text-align: left; margin-top: 0.6em; }
+.pp-eq { font-size: 1.1em; line-height: 1.7; margin-bottom: 0.2em; }
+.pp-sep { color: #aaa; margin: 0 0.5em; }
+.pp-m { font-family: "STIX Two Text", "Cambria Math", Georgia, serif; font-size: 1.15em; white-space: nowrap; }
+.pp-m i { font-style: italic; }
+.pp-m sub { font-size: 0.65em; vertical-align: -0.25em; font-style: normal; }
+.pp-fr { display: inline-flex; flex-direction: column; vertical-align: middle; text-align: center; margin: 0 0.12em; line-height: 1.05; font-size: 0.9em; }
+.pp-fr > span:first-child { border-bottom: 1px solid currentColor; padding: 0 0.15em; }
+.pp-svg { width: 100%; height: auto; max-height: 300px; display: block; touch-action: none; user-select: none; }
+.pp-map .pp-svg { cursor: grab; }
+.pp-svg text { font-family: "STIX Two Text", "Cambria Math", Georgia, serif; font-size: 16px; }
+.pp-ctl { display: grid; grid-template-columns: 1fr 1fr; column-gap: 2.5em; }
+.pp-ctl label { display: grid; grid-template-columns: 4.5em 1fr 4em; align-items: center; gap: 0.6em; margin: 0.15em 0; }
+.pp-ctl label b { font-family: "STIX Two Text", "Cambria Math", Georgia, serif; font-weight: 400; font-size: 1.2em; }
+.pp-ctl label b i { font-style: italic; }
+.pp-ctl label b sub { font-size: 0.65em; vertical-align: -0.25em; }
+.pp-ctl input[type=range] { accent-color: #0062C4; height: 1.5em; width: 100%; }
+.pp-v { text-align: right; font-weight: 600; }
+.pp-bar { grid-column: 1 / -1; display: flex; gap: 0.5em; flex-wrap: wrap; margin: 0.3em 0; }
+.pp-bar .btn { font-size: 0.95em; }
+.pp-bar .btn.on { background: var(--p-green, #E3F2E6); }
+.pp-status { font-size: 1.05em; margin-top: 0.25em; line-height: 1.6; }
+html.mobile .pp-budget, html.mobile .pp-map, html.mobile .pp-zoom { font-size: 0.85em; }
+html.mobile .pp-ctl { grid-template-columns: 1fr; }
