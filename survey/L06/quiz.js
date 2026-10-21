@@ -27,14 +27,14 @@
 
   // ---------- the quizzes ----------
   const QUIZZES = {
-    q1: { title: 'quiz 1 · the budget line', setup: [['x', 'coffees · p<sub>x</sub> = €4'], ['y', 'everything else (composite good, in €) · p<sub>y</sub> = 1'], ['B', '<b class="bud">B = €80</b>']],
+    q1: { title: 'quiz 1 · the budget line', setup: [['x', 'coffees · <span class="m"><i>p</i><sub>x</sub> = €4</span>'], ['y', 'everything else (composite good, in €) · <span class="m"><i>p</i><sub>y</sub> = 1</span>'], ['B', '<span class="m bud"><i>B</i> = €80</span>']],
       qs: [
         { t: 'How many coffees can you buy at most?', o: ['16', '20', '80', '320'], k: 'b' },
         { t: 'How much can you spend on everything else at most?', o: ['€4', '€20', '€80', '€76'], k: 'c' },
         { t: 'Your budget rises to €100, prices stay the same. The budget line …', o: ['shifts out, parallel', 'rotates out, the end on the y-axis stays', 'rotates out, the end on the x-axis stays', 'does not move'], k: 'a' },
         { t: 'Back to €80. The price of a coffee rises to €5. The budget line …', o: ['shifts in, parallel', 'rotates in, the end on the x-axis stays', 'rotates in, the end on the y-axis stays', 'shifts out, parallel'], k: 'c' },
-        { t: 'y is a composite good with p<sub>y</sub> = 1. One unit of y is …', o: ['one other product', '€1 spent on everything else', 'one coffee', 'nothing: y is only a label'], k: 'b' },
-        { t: 'At p<sub>x</sub> = €4: one more coffee costs you how much of everything else?', o: ['€1', '€20', '€80', '€4'], k: 'd' }
+        { t: 'y is a composite good with <span class="m"><i>p</i><sub>y</sub> = 1</span>. One unit of y is …', o: ['one other product', '€1 spent on everything else', 'one coffee', 'nothing: y is only a label'], k: 'b' },
+        { t: 'At <span class="m"><i>p</i><sub>x</sub> = €4</span>: one more coffee costs you how much of everything else?', o: ['€1', '€20', '€80', '€4'], k: 'd' }
       ] },
     q2: { title: 'quiz 2 · preferences and indifference curves', setup: [['transitive', 'if A … B and B … C, then always A … C'], ['goods', 'x and y are both goods: more of each is better']],
       qs: [
@@ -43,7 +43,7 @@
         { t: 'Is the relation "beats" in rock–paper–scissors transitive? (rock beats scissors, scissors beat paper …)', o: ['yes, it is transitive', 'no, it is not transitive'], k: 'b' },
         { t: 'Can an indifference curve look like this?', fig: 'up', o: ['yes', 'no: it breaks completeness', 'no: it breaks more is better', 'no: it breaks convexity'], k: 'c' },
         { t: 'Can two indifference curves cross like this?', fig: 'cross', o: ['no: with more is better, it breaks transitivity', 'no: it breaks convexity', 'no: it breaks completeness', 'yes, curves can cross'], k: 'a' },
-        { t: 'Three bundles A, B, C. You are indifferent between A and B (A ∼ B), and you strictly prefer B to C (B ≻ C). Your preferences are transitive. How do A and C compare?', o: ['A ∼ C', 'C ≻ A', 'A ≻ C', "can't tell"], k: 'c' },
+        { t: 'Three bundles A, B, C. You are indifferent between A and B (<span class="m"><i>A</i> ∼ <i>B</i></span>), and you strictly prefer B to C (<span class="m"><i>B</i> ≻ <i>C</i></span>). Your preferences are transitive. How do A and C compare?', o: ['<span class="m"><i>A</i> ∼ <i>C</i></span>', '<span class="m"><i>C</i> ≻ <i>A</i></span>', '<span class="m"><i>A</i> ≻ <i>C</i></span>', "can't tell"], k: 'c' },
         { t: 'You are indifferent between X = (20 apples, 0 bananas) and Y = (0 apples, 20 bananas). Your preferences are convex. The half-half mix M = (10, 10) is …', o: ['worse than X and Y', 'at least as good as X and Y', "can't tell without knowing your tastes"], k: 'b' },
         { t: 'Sam strictly prefers bundle A to B, B to C, and C to A. Sam has C and pays €1 for every swap to a bundle Sam prefers. You offer C → B → A → C. How much has Sam paid when Sam holds C again?', o: ['€0', '€1', '€3', '€6'], k: 'c' }
       ] },

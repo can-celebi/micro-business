@@ -24,3 +24,4 @@ h1 { font-size: 1.3rem; margin: 0 0 .8rem; font-weight: 600; }
 .bar.ok .fill { background: #CDEBCD; } .bar .lab, .bar .num { position: relative; z-index: 1; }
 .bar .num { position: absolute; right: 8px; top: 6px; color: #444; }
 .setup.small { font-size: .9rem; padding: 6px 12px; margin-bottom: .6rem; }
+.m { font-family: "STIX Two Text", "Cambria Math", Georgia, serif; font-size: 1.1em; white-space: nowrap; } .m i { font-style: italic; } .m sub { font-size: .65em; vertical-align: -.25em; }
