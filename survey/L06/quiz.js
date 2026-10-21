@@ -171,7 +171,8 @@
       try {
         $('st').textContent = await gateState();
         const r = await P.results(POLL), vals = r.responses.map(x => String(x.value));
-        let h = `<p class="big">${r.n} answered</p>`;
+        let signed = null; try { const wm = await P.whereMap('L06'); signed = Object.keys(wm || {}).length; } catch (e) {}
+        let h = `<p class="big">${r.n} answered${signed ? ` <span class="s">of ${signed} signed in today</span>` : ''}</p>`;
         if (QZ.budget && window.MicroGARP) {
           const g = window.MicroGARP.summary(QZ.lines, r.responses), pc = (a, b) => b ? Math.round(100 * a / b) + '%' : '–';
           h += `<p>on all ${QZ.lines.length} lines: ${g.all}</p>` + (g.n ? `<p>consistent (no GARP violation): <b>${g.n - g.violate}</b> of ${g.n} (${pc(g.n - g.violate, g.n)})<br>at least one violation: <b>${g.violate}</b> of ${g.n} (${pc(g.violate, g.n)})<br>efficiency (CCEI): mean ${g.mean.toFixed(2)} · median ${g.median.toFixed(2)}</p>` +
