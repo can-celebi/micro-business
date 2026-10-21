@@ -134,7 +134,7 @@
       s += '<g clip-path="url(#' + id + ')">';
       if (st.map) [0.45, 2.1].forEach(c => { s += curve(Ax, k * c, BLUE, 2.2, ' opacity="0.45"'); });
       s += curve(Ax, k, BLUE, 4);
-      if (st.mrs) { const dx = xmax; s += '<line x1="' + X(xa - dx) + '" y1="' + Y(ya + mrs * dx) + '" x2="' + X(xa + dx) + '" y2="' + Y(ya - mrs * dx) + '" stroke="' + PURPLE + '" stroke-width="2.5"/>'; }
+      if (st.mrs) { const dx = xmax / 8; s += '<line x1="' + X(xa - dx) + '" y1="' + Y(ya + mrs * dx) + '" x2="' + X(xa + dx) + '" y2="' + Y(ya - mrs * dx) + '" stroke="' + PURPLE + '" stroke-width="2.5"/>'; }
       s += '</g>';
       s += axisLines(Ax, xname + ' ' + iv('x'), '€ on everything else ' + iv('y'));
       if (st.map) {
@@ -170,7 +170,9 @@
       let s = clip(id) + '<g clip-path="url(#' + id + ')">';
       s += curve(Ax, k, BLUE, 4);
       // the tangent, cut exactly at the edges of the window (Filiz's overflow check measured the uncut line at 890 px)
-      const ta = Math.max(Ax.x0 - xa, (ya - Ax.y1) / mrs), tb = Math.min(Ax.x1 - xa, (ya - Ax.y0) / mrs);
+      // Kamuran R34 (Can, 21.10: "make the tangent lines shorter"): a local segment around A, xmax/8 each side (and at least
+      // as far as the step), cut at the window; on screen it grows as the student zooms in
+      const h = xmax / 8, ta = Math.max(Ax.x0 - xa, (ya - Ax.y1) / mrs, -h), tb = Math.min(Ax.x1 - xa, (ya - Ax.y0) / mrs, Math.max(h, st.dx));
       if (tb > ta) s += '<line x1="' + X(xa + ta) + '" y1="' + Y(ya - mrs * ta) + '" x2="' + X(xa + tb) + '" y2="' + Y(ya - mrs * tb) + '" stroke="' + PURPLE + '" stroke-width="2.5" stroke-dasharray="10 6"/>';
       // the step: along the curve and along the tangent
       const x2 = xa + st.dx, yc = yOf(x2), yt = ya - mrs * st.dx;
@@ -180,9 +182,17 @@
       s += '<line x1="' + CX(x2) + '" y1="' + CY(ya) + '" x2="' + CX(x2) + '" y2="' + CY(Math.min(yc, yt)) + '" stroke="#555" stroke-width="1" stroke-dasharray="3 4"/>';
       s += '<line x1="' + CX(x2) + '" y1="' + CY(yc) + '" x2="' + CX(x2) + '" y2="' + CY(yt) + '" stroke="#C2410C" stroke-width="5" opacity="0.75"/>';
       if (inX(x2) && inY(yc)) s += '<circle cx="' + X(x2) + '" cy="' + Y(yc) + '" r="6" fill="' + BLUE + '"/>'; if (inX(x2) && inY(yt)) s += '<circle cx="' + X(x2) + '" cy="' + Y(yt) + '" r="6" fill="' + PURPLE + '"/>';
+      // the step triangle in numbers (R34: people need to see Δx and Δy)
+      if (inX(x2)) {
+        const it = v => '<tspan font-family=\'' + MATH + '\' font-style="italic">' + v + '</tspan>', sg = v => (v < 0 ? '−' : '') + r2(Math.abs(v));
+        const ym = CY(ya), xm = (CX(xa) + CX(x2)) / 2;
+        if (CX(x2) - CX(xa) >= 90) s += '<text x="' + xm + '" y="' + (ym - 8) + '" text-anchor="middle" font-size="17" fill="#333" ' + halo + '>Δ' + it('x') + ' = ' + r2(st.dx) + '</text>';
+        if (inY(yc)) s += '<text x="' + (X(x2) + 10) + '" y="' + (Y(yc) + (yc > yt ? -8 : 18)) + '" font-size="17" fill="' + BLUE + '" ' + halo + '>Δ' + it('y') + ' = ' + sg(yc - ya) + '</text>';
+        if (inY(yt)) s += '<text x="' + (X(x2) + 10) + '" y="' + (Y(yt) + (yt < yc ? 18 : -8)) + '" font-size="17" fill="' + PURPLE + '" ' + halo + '>tangent: ' + sg(yt - ya) + '</text>';
+      }
       s += '</g>';
       s += '<rect x="' + L + '" y="' + T + '" width="' + pw + '" height="' + ph + '" fill="none" stroke="#ccc"/>';
-      s += '<circle cx="' + X(xa) + '" cy="' + Y(ya) + '" r="8" fill="' + GREEN + '" stroke="#fff" stroke-width="2"/><text x="' + (X(xa) + 12) + '" y="' + (Y(ya) - 12) + '" fill="' + GREEN + '" ' + halo + '>A</text>';
+      s += '<circle cx="' + X(xa) + '" cy="' + Y(ya) + '" r="8" fill="' + GREEN + '" stroke="#fff" stroke-width="2"/><text x="' + (X(xa) - 12) + '" y="' + (Y(ya) - 10) + '" text-anchor="end" fill="' + GREEN + '" ' + halo + '>A</text>';
       s += '<text x="' + (L + 8) + '" y="' + (T + 18) + '" fill="#555" font-size="16" ' + halo + '>zoom ' + r1(st.z) + '× · window ' + r2(2 * hw) + ' ' + xname + ' wide</text>';
       f.svg.innerHTML = s;
       const dyc = yc - ya, dyt = -mrs * st.dx;
