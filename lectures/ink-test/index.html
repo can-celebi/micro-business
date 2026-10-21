@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ink test · two pages</title>
+<style>
+  /* Test page (Can, 21.10): can the deck take pictures of the screen, with the iPad app's ink on top?
+     Nothing is uploaded: the pictures stay in this tab until you download them. */
+  body { margin: 0; font-family: "IBM Plex Mono", ui-monospace, monospace; color: #1a1a1a; background: #fdfdfb; }
+  .bar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; padding: 10px 16px; border-bottom: 1px solid #e4e4e4; font-size: 15px; }
+  .bar button { font: inherit; background: #fff; border: 1.5px solid #bbb; border-radius: 4px; padding: 6px 14px; cursor: pointer; }
+  .bar button.go { background: #FFF9D0; border-color: #333; }
+  .bar .st { color: #6b6b6b; }
+  .bar .st.on { color: #B71C1C; }
+  .page { display: none; height: calc(100vh - 230px); min-height: 360px; margin: 14px 16px; border: 1.5px solid #ddd; border-radius: 8px; padding: 24px 32px; box-sizing: border-box; position: relative;
+    background-image: linear-gradient(#f0f0f0 1px, transparent 1px), linear-gradient(90deg, #f0f0f0 1px, transparent 1px); background-size: 40px 40px; }
+  .page.on { display: block; }
+  .page h1 { font-size: 34px; margin: 0 0 10px; }
+  .page p { font-size: 20px; color: #555; margin: 0; }
+  .page .n { position: absolute; right: 24px; bottom: 16px; font-size: 18px; color: #9a9a9a; }
+  .shots { padding: 0 16px 30px; font-size: 14px; }
+  .shots h2 { font-size: 16px; margin: 10px 0 6px; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+  .row figure { margin: 0; width: 220px; }
+  .row img { width: 220px; border: 1px solid #ccc; border-radius: 4px; display: block; }
+  .row figcaption { color: #6b6b6b; font-size: 12px; margin-top: 2px; }
+</style>
+</head>
+<body>
+<div class="bar">
+  <button class="go" id="rec" type="button">record ink</button>
+  <button id="snap" type="button" disabled>take a picture now</button>
+  <button id="stop" type="button" disabled>stop</button>
+  <span class="st" id="st">not recording</span>
+  <span style="flex:1"></span>
+  <button id="prev" type="button">← page 1</button>
+  <button id="next" type="button">page 2 →</button>
+  <button id="dl" type="button" disabled>download all pictures</button>
+</div>
+
+<div class="page on" data-p="1"><h1>page 1</h1><p>Draw something here with the iPad pen: a curve, a word, a number.</p><div class="n">1 / 2</div></div>
+<div class="page" data-p="2"><h1>page 2</h1><p>Now draw something different here. Then press "page 1" or "page 2" to switch, or wait 15 seconds.</p><div class="n">2 / 2</div></div>
+
+<div class="shots" id="shots"><h2>pictures so far</h2><div class="dim" id="none" style="color:#9a9a9a">none yet: press "record ink", choose "Entire screen", then "Allow".</div></div>
+
+<script>
+(function () {
+  const $ = id => document.getElementById(id);
+  let stream = null, video = null, timer = null, page = 1;
+  const shots = [];   // {page, time, url}
+
+  function show(p) {
+    if (stream) grab('leaving page ' + page);   // the picture is taken BEFORE the page changes
+    page = p;
+    document.querySelectorAll('.page').forEach(d => d.classList.toggle('on', +d.dataset.p === p));
+  }
+  $('prev').onclick = () => show(1);
+  $('next').onclick = () => show(2);
+  document.addEventListener('keydown', e => { if (e.key === 'ArrowRight' || e.key === 'PageDown') show(2); if (e.key === 'ArrowLeft' || e.key === 'PageUp') show(1); });
+
+  $('rec').onclick = async () => {
+    try {
+      stream = await navigator.mediaDevices.getDisplayMedia({ video: { cursor: 'never' }, audio: false });
+    } catch (e) { $('st').textContent = 'not allowed (' + (e.name || 'error') + ')'; return; }
+    video = document.createElement('video'); video.muted = true; video.srcObject = stream; await video.play();
+    stream.getVideoTracks()[0].addEventListener('ended', stop);
+    $('st').textContent = '● recording: a picture on every page change and every 15 s'; $('st').classList.add('on');
+    $('rec').disabled = true; $('snap').disabled = false; $('stop').disabled = false;
+    timer = setInterval(() => grab('every 15 s'), 15000);
+    setTimeout(() => grab('start'), 600);
+  };
+  $('snap').onclick = () => grab('by hand');
+  $('stop').onclick = stop;
+  function stop() {
+    if (timer) clearInterval(timer); timer = null;
+    if (stream) stream.getTracks().forEach(t => t.stop()); stream = null;
+    $('st').textContent = 'stopped'; $('st').classList.remove('on');
+    $('rec').disabled = false; $('snap').disabled = true; $('stop').disabled = true;
+  }
+  function grab(why) {
+    if (!video || !video.videoWidth) return;
+    const c = document.createElement('canvas'); c.width = video.videoWidth; c.height = video.videoHeight;
+    c.getContext('2d').drawImage(video, 0, 0);
+    const t = new Date(), url = c.toDataURL('image/png');
+    shots.push({ page, time: t, url, why });
+    $('none').style.display = 'none'; $('dl').disabled = false;
+    let row = document.querySelector('.row[data-p="' + page + '"]');
+    if (!row) { $('shots').insertAdjacentHTML('beforeend', '<h2>page ' + page + '</h2><div class="row" data-p="' + page + '"></div>'); row = document.querySelector('.row[data-p="' + page + '"]'); }
+    row.insertAdjacentHTML('beforeend', '<figure><a href="' + url + '" target="_blank"><img src="' + url + '" alt="page ' + page + '"></a><figcaption>' + t.toLocaleTimeString() + ' · ' + why + ' · ' + c.width + '×' + c.height + '</figcaption></figure>');
+  }
+  $('dl').onclick = () => shots.forEach((s, i) => {
+    const a = document.createElement('a'); a.href = s.url;
+    a.download = 'ink-page' + s.page + '-' + s.time.toTimeString().slice(0, 8).replace(/:/g, '') + '-' + (i + 1) + '.png';
+    document.body.appendChild(a); a.click(); a.remove();
+  });
+})();
+</script>
+</body>
+</html>
