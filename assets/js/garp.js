@@ -155,7 +155,7 @@
     node.setAttribute('data-prevent-swipe', '');
     const who = demo ? 'these example choices' : 'your choices', yr = demo ? 'the' : 'your';
     const eff = res.ccei >= 1 - EPS ? yr + ' efficiency (CCEI) is 1: no budget wasted'
-      : yr + ' efficiency (CCEI) is ' + res.ccei.toFixed(2) + ': shrink every budget to ' + Math.round(100 * res.ccei) + '% and no contradiction is left';
+      : yr + ' efficiency (CCEI) is ' + res.ccei.toFixed(2) + ': shrink every budget to ' + Math.floor(100 * res.ccei) + '% and no contradiction is left';
     // shrink slider (idea from the llm-rationality lessons, lab 7): all budgets × e; contradictions that survive stay red
     if (cyc0.length) {
       shr.innerHTML = '<label><b>shrink every budget to</b><input type="range" min="' + Math.max(0.2, Math.floor(100 * res.ccei) / 100 - 0.05).toFixed(2) + '" max="1" step="0.01" value="1"><span class="gm-e">100%</span></label>';
