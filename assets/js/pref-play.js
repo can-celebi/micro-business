@@ -38,6 +38,7 @@
     const inp = l.querySelector('input'), v = l.querySelector('.pp-v');
     inp.addEventListener('input', () => on(+inp.value, v));
     inp.addEventListener('keydown', e => e.stopPropagation());
+    inp.addEventListener('pointerup', () => inp.blur());   // after a mouse drag the clicker / arrow keys move the slides again (Filiz, 21.10)
     ctl.appendChild(l); on(+inp.value, v, true);
     return inp;
   }
