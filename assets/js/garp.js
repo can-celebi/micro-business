@@ -145,11 +145,13 @@
     if (!B) { node.appendChild(el('div', 'dim', 'no choices from this device yet: do quiz 3 first, on this device')); return; }
     const res = check(lines, B), cyc0 = cycles(lines, B);
     let cyc = cyc0, e = 1, k = 0;
-    const W = 600, H = 600, L = 52, Bm = 44, T = 16, Rm = 16, pw = W - L - Rm, ph = H - T - Bm;
+    const W = 420, H = 420, L = 40, Bm = 34, T = 12, Rm = 24, pw = W - L - Rm, ph = H - T - Bm;
     const X = v => L + v / 100 * pw, Y = v => T + ph - v / 100 * ph;
     const head = el('div', 'gm-head'), svg = document.createElementNS(NS, 'svg'), nav = el('div', 'gm-nav'), say = el('div', 'gm-say'), shr = el('div', 'gm-shrink');
     svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H); svg.setAttribute('class', 'gm-svg');
-    node.appendChild(head); node.appendChild(svg); node.appendChild(nav); node.appendChild(say); node.appendChild(shr);
+    // graph on the left, the words on the right (fits a 1280×720 slide under a two-line subtitle; stacked on phones)
+    const side = el('div', 'gm-side');
+    node.appendChild(svg); node.appendChild(side); side.appendChild(head); side.appendChild(nav); side.appendChild(say); side.appendChild(shr);
     node.setAttribute('data-prevent-swipe', '');
     const who = demo ? 'these example choices' : 'your choices', yr = demo ? 'the' : 'your';
     const eff = res.ccei >= 1 - EPS ? yr + ' efficiency (CCEI) is 1: no budget wasted'
@@ -167,9 +169,9 @@
           : e < 1 && cyc0.length ? 'at ' + Math.round(100 * e) + '% of every budget, no contradiction is left' : who + ' are consistent: no cycle') + '</b></div><div class="dim">' + eff + '</div>';
       const on = cyc.length ? new Set(cyc[k]) : new Set();
       let s = '<rect x="' + L + '" y="' + T + '" width="' + pw + '" height="' + ph + '" fill="#fff"/>';
-      for (let g = 20; g <= 100; g += 20) s += '<line x1="' + X(g) + '" y1="' + Y(0) + '" x2="' + X(g) + '" y2="' + Y(100) + '" stroke="#eee"/><line x1="' + X(0) + '" y1="' + Y(g) + '" x2="' + X(100) + '" y2="' + Y(g) + '" stroke="#eee"/><text x="' + X(g) + '" y="' + (Y(0) + 20) + '" text-anchor="middle" font-size="16" fill="#555">' + g + '</text><text x="' + (X(0) - 7) + '" y="' + (Y(g) + 5) + '" text-anchor="end" font-size="16" fill="#555">' + g + '</text>';
+      for (let g = 20; g <= 100; g += 20) s += '<line x1="' + X(g) + '" y1="' + Y(0) + '" x2="' + X(g) + '" y2="' + Y(100) + '" stroke="#eee"/><line x1="' + X(0) + '" y1="' + Y(g) + '" x2="' + X(100) + '" y2="' + Y(g) + '" stroke="#eee"/><text x="' + X(g) + '" y="' + (Y(0) + 20) + '" text-anchor="middle" font-size="18" fill="#555">' + g + '</text><text x="' + (X(0) - 7) + '" y="' + (Y(g) + 5) + '" text-anchor="end" font-size="18" fill="#555">' + g + '</text>';
       s += '<line x1="' + X(0) + '" y1="' + Y(0) + '" x2="' + X(100) + '" y2="' + Y(0) + '" stroke="#222"/><line x1="' + X(0) + '" y1="' + Y(0) + '" x2="' + X(0) + '" y2="' + Y(100) + '" stroke="#222"/>';
-      s += '<text x="' + X(100) + '" y="' + (Y(0) - 8) + '" text-anchor="end" font-size="17" fill="#555" ' + halo + '>GPU hours <tspan font-family=\'' + MATH + '\' font-style="italic">x</tspan></text><text x="' + (X(0) + 8) + '" y="' + (Y(100) + 16) + '" font-size="17" fill="#555" ' + halo + '>API credits <tspan font-family=\'' + MATH + '\' font-style="italic">y</tspan></text>';
+      s += '<text x="' + X(100) + '" y="' + (Y(0) - 8) + '" text-anchor="end" font-size="20" fill="#555" ' + halo + '><tspan font-family=\'' + MATH + '\' font-style="italic">x</tspan></text><text x="' + (X(0) + 8) + '" y="' + (Y(100) + 18) + '" font-size="20" fill="#555" ' + halo + '><tspan font-family=\'' + MATH + '\' font-style="italic">y</tspan></text>';
       // all lines faint, the ones in the shown contradiction strong; shrunk budgets dashed
       lines.forEach(([Lx, Ly], i) => {
         const hot = on.has(i);
@@ -179,7 +181,7 @@
       lines.forEach(([Lx, Ly], i) => {
         if (!B[i]) return; const hot = on.has(i), [bx, by] = B[i];
         s += '<circle cx="' + X(bx) + '" cy="' + Y(by) + '" r="' + (hot ? 9 : 6) + '" fill="' + (hot ? RED : cyc.length ? '#7C93AE' : GREEN) + '" stroke="#fff" stroke-width="2"/>';
-        if (hot) s += '<text x="' + (X(bx) + 12) + '" y="' + (Y(by) - 10) + '" font-size="17" font-weight="700" fill="' + RED + '" ' + halo + '>line ' + (i + 1) + '</text>';
+        if (hot) s += '<text x="' + (X(bx) + 12) + '" y="' + (Y(by) - 10) + '" font-size="19" font-weight="700" fill="' + RED + '" ' + halo + '>line ' + (i + 1) + '</text>';
       });
       svg.innerHTML = s;
       nav.innerHTML = '';
@@ -198,10 +200,13 @@
   }
 
   window.MicroGARP = { decode: decode, encode: encode, check: check, summary: summary, bronars: bronars, garpOK: garpOK, ccei: ccei, parseLines: parseLines, cycles: cycles };
-  const CSS = '.garp-mine{font-size:.55em;text-align:left;margin-top:.4em}.garp-mine .gm-head{line-height:1.6;margin-bottom:.3em}' +
-    '.garp-mine .gm-svg{width:100%;max-width:520px;max-height:430px;height:auto;display:block;margin:0 auto}' +
+  // Kamuran R22: the svg is 420 units drawn at 430 px, so labels of 18–20 units are ≥ 18 px on the slide; text ≥ .8em
+  const CSS = '.garp-mine{font-size:.8em;text-align:left;margin-top:.3em;display:grid;grid-template-columns:430px minmax(0,1fr);gap:1.1em;align-items:start}' +
+    '.garp-mine .gm-head{line-height:1.45;margin-bottom:.3em}.garp-mine .gm-side{font-size:1em}' +
+    '.garp-mine .gm-svg{width:430px;height:430px;display:block}' +
+    'html.mobile .garp-mine{display:block}html.mobile .garp-mine .gm-svg{width:100%;height:auto}html.mobile .garp-mine .gm-side{font-size:1em}' +
     '.garp-mine .gm-shrink label{display:grid;grid-template-columns:auto 1fr 3.5em;gap:.7em;align-items:center;margin-top:.4em}.garp-mine .gm-shrink input{accent-color:#C92A2A;width:100%}.garp-mine .gm-nav{display:flex;gap:.6em;justify-content:center;align-items:center;margin:.3em 0}.garp-mine .gm-say{line-height:1.6}' +
-    'html.mobile .garp-mine{font-size:.9em}';
+    '';
   function init() {
     if (document.querySelector('.garp-mine') && !document.getElementById('garp-mine-css')) { const st = document.createElement('style'); st.id = 'garp-mine-css'; st.textContent = CSS; document.head.appendChild(st); }
     document.querySelectorAll('.garp-summary').forEach(initBox); document.querySelectorAll('.garp-mine').forEach(initMine);
