@@ -93,7 +93,7 @@
         out.innerHTML = '';
         out.appendChild(el('div', 'answered', s.n + ' answered · ' + s.all + ' on all ' + lines.length + ' lines'));
         if (!s.n) return;
-        out.appendChild(el('div', 'garp-line', 'consistent (no GARP violation): ' + (s.n - s.violate) + ' of ' + s.n + ' (' + pct(s.n - s.violate, s.n) + ')'));
+        out.appendChild(el('div', 'garp-line', (node.dataset.word || 'consistent') + ' (no GARP violation): ' + (s.n - s.violate) + ' of ' + s.n + ' (' + pct(s.n - s.violate, s.n) + ')'));
         out.appendChild(el('div', 'garp-line', 'at least one violation: ' + s.violate + ' of ' + s.n + ' (' + pct(s.violate, s.n) + ')'));
         out.appendChild(el('div', 'garp-line', 'efficiency (CCEI): mean ' + s.mean.toFixed(2) + ' · median ' + s.median.toFixed(2)));
         s.buckets.forEach(([l, k]) => {
@@ -162,6 +162,7 @@
     node.appendChild(svg); node.appendChild(side); [tag, nav, say, shr, now, effEl, ok].forEach(x => side.appendChild(x));
     node.setAttribute('data-prevent-swipe', '');
     if (demo) tag.textContent = 'an example, not your answer';
+    const WORD = node.dataset.word || 'consistent';   // data-word="rational" (Can, 28.10)
     const cost = (a, z) => z[0] / lines[a][0] + z[1] / lines[a][1];   // what bundle z costs at line a's prices (budget = 1)
     // the clash on screen: every step a → b ("b was affordable on line a") and the closing strict step. It survives at e
     // while e × (line a's budget) still pays for bundle b on every step; the step with the largest cost share breaks first.
@@ -173,7 +174,7 @@
       return { st, top, gone, alive: alive(e) };
     }
     if (cyc0.length) {
-      shr.innerHTML = '<label><b>shrink every budget to</b><input type="range" min="' + Math.max(0.2, Math.floor(100 * res.ccei) / 100 - 0.05).toFixed(2) + '" max="1" step="0.01" value="1"><span class="gm-e">100%</span></label>';
+      shr.innerHTML = '<label><b>shift every budget inwards to</b><input type="range" min="' + Math.max(0.2, Math.floor(100 * res.ccei) / 100 - 0.05).toFixed(2) + '" max="1" step="0.01" value="1"><span class="gm-e">100%</span></label>';
       const inp = shr.querySelector('input');
       inp.addEventListener('input', () => { e = +inp.value; shr.querySelector('.gm-e').textContent = pct(e); draw(); });
       inp.addEventListener('keydown', ev => ev.stopPropagation());
@@ -203,8 +204,8 @@
       svg.innerHTML = s;
       nav.innerHTML = '';
       if (!cyc0.length) {
-        say.innerHTML = '<div>every bundle fits one consistent ranking: no clash between any two (or more) lines</div>';
-        effEl.innerHTML = 'efficiency (CCEI) 100%: no budget wasted'; ok.innerHTML = '<b style="color:' + GREEN + '">consistent ✓</b>'; return;
+        say.innerHTML = '<div>every bundle fits one ranking: no clash between any two (or more) lines</div>';
+        effEl.innerHTML = 'efficiency (CCEI) 100%: no budget wasted'; ok.innerHTML = '<b style="color:' + GREEN + '">' + WORD + ' ✓</b>'; return;
       }
       const p = el('button', 'btn ghost', '◀'), nx = el('button', 'btn ghost', '▶'); p.type = nx.type = 'button';
       p.onclick = ev => { ev.stopPropagation(); k = (k + cyc0.length - 1) % cyc0.length; draw(); }; nx.onclick = ev => { ev.stopPropagation(); k = (k + 1) % cyc0.length; draw(); };
@@ -216,11 +217,11 @@
         ? '<div>On ' + nm(c[0]) + ' you took your bundle although the ' + nm(c[1]) + ' bundle was affordable.</div><div>On ' + nm(c[1]) + ' you did the opposite, and the ' + nm(c[0]) + ' bundle was even cheaper. Both can’t be your favourite.</div>'
         : '<div>' + c.map(nm).join(' → ') + ': on each line, the next line’s bundle was affordable, so each bundle is at least as good as the next.</div><div>But on ' + nm(c[c.length - 1]) + ' the ' + nm(c[0]) + ' bundle was even cheaper: so the last is strictly better than the first. A cycle, like the money pump.</div>';
       const left = e < 1 ? cycles(lines, B, e).length : cyc0.length;
-      now.innerHTML = e >= 1 ? '<div class="dim">move the slider: shrink every budget until this clash is gone</div>'
+      now.innerHTML = e >= 1 ? '<div class="dim">move the slider: shift every budget inwards (burn budget) until this clash is gone</div>'
         : C.alive ? '<div>at ' + pct(e) + ' this clash is <b style="color:' + RED + '">still there</b> <span class="dim">(gone at ' + C.gone + '%)</span></div>'
-        : '<div>at ' + pct(e) + ' this clash is <b>gone</b>: the ' + nm(C.top.b) + ' bundle (ring) is outside the shrunk ' + nm(C.top.a) + ' budget (dashed)</div>';
-      effEl.innerHTML = '<b>efficiency (CCEI) ' + Math.floor(100 * res.ccei) + '%</b>: ' + (demo ? 'this chooser’s choices are' : 'your choices are') + ' consistent once we forgive wasting up to ' + (100 - Math.floor(100 * res.ccei)) + '% of a budget';
-      ok.innerHTML = '<b style="color:' + RED + '">consistent ✗</b>' + (e < 1 && !left ? ' at 100% · <b style="color:' + GREEN + '">✓ at ' + pct(e) + '</b>' : '');
+        : '<div>at ' + pct(e) + ' this clash is <b>gone</b>: the ' + nm(C.top.b) + ' bundle (ring) is outside the shifted-in ' + nm(C.top.a) + ' budget (dashed)</div>';
+      effEl.innerHTML = '<b>efficiency (CCEI) ' + Math.floor(100 * res.ccei) + '%</b>: ' + (demo ? 'this chooser’s choices are' : 'your choices are') + ' ' + WORD + ' once we forgive wasting up to ' + (100 - Math.floor(100 * res.ccei)) + '% of a budget';
+      ok.innerHTML = '<b style="color:' + RED + '">' + WORD + ' ✗</b>' + (e < 1 && !left ? ' at 100% · <b style="color:' + GREEN + '">✓ at ' + pct(e) + '</b>' : '');
     }
     draw();
   }
