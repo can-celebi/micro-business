@@ -31,7 +31,8 @@
     box.innerHTML = ''; box.setAttribute('data-prevent-swipe', '');
     const eq = el('div', 'op-eq'), svg = document.createElementNS(NS, 'svg'), ctl = el('div', 'op-ctl'), status = el('div', 'op-status');
     svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H); svg.setAttribute('class', 'op-svg');
-    box.appendChild(eq); box.appendChild(svg); box.appendChild(ctl); box.appendChild(status);
+    const side = el('div', 'op-side');
+    box.appendChild(svg); box.appendChild(side); side.appendChild(eq); side.appendChild(ctl); side.appendChild(status);
     return { eq, svg, ctl, status };
   }
   function button(ctl, label, on) { const b = el('button', 'btn ghost', label); b.type = 'button'; b.onclick = e => { e.stopPropagation(); b.blur(); on(b); }; ctl.appendChild(b); return b; }
@@ -45,8 +46,9 @@
   }
   // one scale for both axes (so angles are true): fits [0, xmax] × [0, ymax] into the plot
   function axes(xmax, ymax) {
+    ymax = Math.max(ymax, xmax * ph / pw); xmax = ymax * pw / ph;   // same units per pixel on both axes, plot filled
     const s = Math.min(pw / xmax, ph / ymax), X = v => L + v * s, Y = v => T + ph - v * s;
-    return { s, X, Y, xmax: pw / s, ymax: ph / s, ix: p => (p - L) / s, iy: p => (T + ph - p) / s };
+    return { s, X, Y, xmax: xmax, ymax: ph / s, ix: p => (p - L) / s, iy: p => (T + ph - p) / s };
   }
   function axisLines(A, xn, yn) {
     return '<line x1="' + L + '" y1="' + T + '" x2="' + L + '" y2="' + (T + ph) + '" stroke="#222"/><line x1="' + L + '" y1="' + (T + ph) + '" x2="' + (L + pw) + '" y2="' + (T + ph) + '" stroke="#222"/>' +
@@ -76,7 +78,7 @@
   // ---------- (i) slide along the budget line: gradient, budget direction, projection ----------
   function slide(box) {
     const q = params(box), f = frame(box), id = 'op' + (++NID);
-    const xi = q.B / q.px, yi = q.B / q.py, A = axes(xi * 1.12, yi * 1.12), opt = best(q, q.B);
+    const xi = q.B / q.px, yi = q.B / q.py, A = axes(xi * 1.1, yi * 1.08), opt = best(q, q.B);
     const PTS = String(box.dataset.pts || '5,15').split(',').map(Number);   // x of A and of C
     const T0 = Math.min(0.9, Math.max(0.05, PTS[0] / xi)); let t = T0, anim = null;   // starts at A                         // t = share of the way from the y-axis end to the x-axis end
     const at = t => ({ x: t * xi, y: (1 - t) * yi });
@@ -97,18 +99,21 @@
       const sx = X(p.x), sy = Y(p.y), gl = Math.hypot(g[0], g[1]);
       h += arrow(sx, sy, 72 * g[0] / gl, -72 * g[1] / gl, GREEN, 3);                       // ∇u, fixed length
       h += arrow(sx, sy, 72 * d[0] / dn, -72 * d[1] / dn, GREY, 2.5);                       // budget direction
-      h += arrow(sx, sy, 90 * s / pmax * d[0] / dn, -90 * s / pmax * d[1] / dn, PURPLE, 5); // projection along the line
+      const ox = 16 * q.px / Math.hypot(q.px, q.py), oy = -16 * q.py / Math.hypot(q.px, q.py);   // 16 units off the line
+      h += arrow(sx + ox, sy + oy, 84 * s / pmax * d[0] / dn, -84 * s / pmax * d[1] / dn, PURPLE, 3.5); // projection along the line
       h += '<circle cx="' + sx + '" cy="' + sy + '" r="8" fill="#222" stroke="#fff" stroke-width="2"/>';
+      const here = [['A', PTS[0] / xi], ['C', PTS[1] / xi], ['E', opt.x / xi]].find(([, tt]) => Math.abs(tt - t) <= 0.04);
+      if (here) h += '<text x="' + (sx - 12) + '" y="' + (sy + 6) + '" text-anchor="end" font-size="20" fill="#222" ' + halo + '>' + here[0] + '</text>';
       h += '<text x="' + (sx + 72 * g[0] / gl + 6) + '" y="' + (sy - 72 * g[1] / gl - 6) + '" font-size="21" fill="' + GREEN + '" ' + halo + '>∇' + it('u') + '</text>';
-      h += '<text x="' + (sx + 72 * d[0] / dn + 8) + '" y="' + (sy - 72 * d[1] / dn + 6) + '" font-size="21" fill="' + GREY + '" ' + halo + '>' + it('d') + '</text>';
-      [['A', PTS[0] / xi], ['C', PTS[1] / xi], ['E', opt.x / xi]].forEach(([n, tt]) => { const pp = at(tt); if (tt > 0 && tt < 1) h += '<text x="' + (X(pp.x) - 12) + '" y="' + (Y(pp.y) - 10) + '" text-anchor="end" font-size="20" fill="#555" ' + halo + '>' + n + '</text>'; });
+      h += '<text x="' + (sx + 72 * d[0] / dn + 10) + '" y="' + (sy - 72 * d[1] / dn + 20) + '" font-size="21" fill="' + GREY + '" ' + halo + '>' + it('d') + '</text>';
+      [['A', PTS[0] / xi], ['C', PTS[1] / xi], ['E', opt.x / xi]].forEach(([n, tt]) => { const pp = at(tt); if (tt > 0 && tt < 1 && Math.abs(tt - t) > 0.04) h += '<circle cx="' + X(pp.x) + '" cy="' + Y(pp.y) + '" r="3.5" fill="#555"/><text x="' + (X(pp.x) - 10) + '" y="' + (Y(pp.y) + 6) + '" text-anchor="end" font-size="20" fill="#555" ' + halo + '>' + n + '</text>'; });
       f.svg.innerHTML = h;
       const mrs = g[0] / g[1];
       f.eq.innerHTML = '<div class="op-disp">' + m('∇<i>u</i> = (' + MUX + ', ' + MUY + ') = (' + r2(g[0]) + ', ' + r2(g[1]) + ')') + '</div>' +
         '<div class="op-sub">' + m('MRS = ' + fr(MUX, MUY) + ' = ' + r2(mrs)) + ' &nbsp; vs &nbsp; ' + m(fr(PX, PY) + ' = ' + r2(q.px / q.py)) + '</div>';
       const near = Math.abs(s) < pmax * 0.02;
       f.status.innerHTML = '<div>at ' + m('(' + r2(p.x) + ', ' + r2(p.y) + ')') + ': <b style="color:' + PURPLE + '">' + m('∇<i>u</i> · <i>d</i> = ' + sg(s)) + '</b> &nbsp; <span class="dim">' + m('<i>d</i> = (' + PY + ', −' + PX + ') = (' + q.py + ', −' + q.px + ')') + '</span></div>' +
-        '<div class="dim">' + (near ? 'zero: no step along the line makes you better off. This is the best bundle, where ∇u is perpendicular to the line.'
+        '<div class="dim">' + (near ? 'zero: no step along the line makes you better off. This is the best feasible bundle: ∇u is perpendicular to the line.'
           : s > 0 ? 'positive: moving along the line towards more x makes you better off' : 'negative: moving along the line towards more y makes you better off') + '</div>';
     }
     // drag the bundle: the nearest point on the budget line
@@ -120,7 +125,7 @@
     f.svg.addEventListener('pointerup', () => { drag = false; });
     f.svg.addEventListener('click', ev => ev.stopPropagation());
     const tOpt = opt.x / xi;
-    button(f.ctl, 'go to the best bundle', () => {
+    button(f.ctl, 'go to the best feasible bundle', () => {
       cancelAnimationFrame(anim); const t0 = t, s0 = performance.now();
       const step = now => { const k = Math.min(1, (now - s0) / 1200), e = 1 - Math.pow(1 - k, 3); t = t0 + (tOpt - t0) * e; draw(); if (k < 1) anim = requestAnimationFrame(step); };
       anim = requestAnimationFrame(step);
@@ -134,7 +139,7 @@
   // ---------- (ii) λ: the value of one more euro, as Δu*/ΔB over smaller and smaller steps ----------
   function lambda(box) {
     const q = params(box), f = frame(box), id = 'op' + (++NID);
-    const xi = (q.B + 1) / q.px, yi = (q.B + 1) / q.py, A = axes(xi * 1.12, yi * 1.12);
+    const xi = (q.B + 1) / q.px, yi = (q.B + 1) / q.py, A = axes(xi * 1.1, yi * 1.08);
     const o0 = best(q, q.B), u0 = U(q.a, q.b, o0.x, o0.y), lam = q.a * u0 / o0.x / q.px;
     const ustar = B => { const o = best(q, B); return U(q.a, q.b, o.x, o.y); };
     let dB = 0;                                        // 0 = start (budget B only)
@@ -151,10 +156,10 @@
       if (dB) h += '<circle cx="' + X(ok.x) + '" cy="' + Y(ok.y) + '" r="8" fill="' + GREEN + '" stroke="#fff" stroke-width="2"/>';
       h += '<text x="' + (X(o0.x) - 12) + '" y="' + (Y(o0.y) - 10) + '" text-anchor="end" font-size="20" fill="#222" ' + halo + '>' + it('u') + '* = ' + r2(u0) + '</text>';
       f.svg.innerHTML = h;
-      f.eq.innerHTML = '<div class="op-disp">' + m(fr('Δ<i>u</i>*', 'Δ<i>B</i>')) + '</div><div class="op-sub">extra utility per extra euro, at the best bundle (' + m('<i>B</i> = ' + q.B) + ')</div>';
+      f.eq.innerHTML = '<div class="op-disp">' + m(fr('Δ<i>u</i>*', 'Δ<i>B</i>')) + '</div><div class="op-sub">extra utility per extra euro, at the best feasible bundle (' + m('<i>B</i> = ' + q.B) + ')</div>';
       let st = dB ? '<div>budget shifts outwards: ' + m('<i>B</i> = ' + q.B + ' → ' + fmt(Bk)) + ', ' + m('<i>u</i>* = ' + r2(u0) + ' → ' + fmt(uk)) + '</div>' : '<div class="dim">pick a step: the budget line shifts outwards by ΔB</div>';
       if (tried.length) st += '<div>' + tried.map(([d, v]) => m('Δ<i>B</i> = ' + d + ': ' + fr('Δ<i>u</i>*', 'Δ<i>B</i>') + ' = ' + String(+v.toFixed(5)))).join(' &nbsp;·&nbsp; ') + '</div>';
-      if (tried.some(([d]) => d === 0.01)) st += '<div><b>the steps settle at λ = ' + r2(lam) + '</b> <span class="dim">(= ' + m(fr(MUX, PX)) + ' at the best bundle)</span></div>';
+      if (tried.some(([d]) => d === 0.01)) st += '<div><b>the steps settle at λ = ' + r2(lam) + '</b> <span class="dim">(= ' + m(fr(MUX, PX)) + ' at the best feasible bundle)</span></div>';
       f.status.innerHTML = st;
     }
     [1, 0.1, 0.01].forEach(d => button(f.ctl, 'ΔB = ' + d, () => { dB = d; const v = (ustar(q.B + d) - u0) / d; if (!tried.some(([x]) => x === d)) tried.push([d, v]); tried.sort((a, b) => b[0] - a[0]); draw(); }));
@@ -197,7 +202,7 @@
       else h += '<circle cx="' + X(bx) + '" cy="' + Y(by) + '" r="10" fill="' + GREEN + '" stroke="#fff" stroke-width="2"/>';
       f.svg.innerHTML = h;
       f.eq.innerHTML = '<div class="op-disp">' + (kind === 'subs' ? m('<i>u</i> = ' + (ax === 1 ? '' : ax) + '<i>x</i> + ' + (ay === 1 ? '' : ay) + '<i>y</i>') : m('<i>u</i> = min{<i>x</i>, <i>y</i>}')) + '</div>' +
-        '<div class="op-sub">budget ' + m(r2(px) + '&#8202;<i>x</i> + ' + (py === 1 ? '' : py) + '<i>y</i> = ' + B) + '</div>';
+        '<div class="op-sub">budget ' + m((px === 1 ? '' : r2(px) + '&#8202;') + '<i>x</i> + ' + (py === 1 ? '' : py) + '<i>y</i> = ' + B) + '</div>';
       f.status.innerHTML = '<div>' + say + '</div>';
     }
     const inp = slider(f.ctl, 'price of x', 1, 3, 0.1, px, (v, o) => { px = Math.round(v * 10) / 10; o.innerHTML = '€' + r2(px); draw(); });
@@ -209,9 +214,11 @@
   }
 
   const CSS = '.op-slide,.op-lambda,.op-corner{font-size:.6em;text-align:left;margin-top:.3em}' +
-    '.op-svg{width:100%;max-width:640px;max-height:330px;height:auto;display:block;margin:0 auto;touch-action:none;user-select:none}' +
+    '.op-slide,.op-lambda,.op-corner{display:grid;grid-template-columns:auto minmax(0,1fr);gap:1.2em;align-items:start}' +
+    '.op-svg{height:440px;width:auto;max-width:100%;display:block;touch-action:none;user-select:none}' +
+    'html.mobile .op-slide,html.mobile .op-lambda,html.mobile .op-corner{display:block}html.mobile .op-svg{height:auto;width:100%}' +
     '.op-svg text{font-family:"STIX Two Text","Cambria Math",Georgia,serif}.op-slide .op-svg{cursor:grab}' +
-    '.op-eq{line-height:1.5;margin-bottom:.2em}.op-disp{text-align:center;font-size:1.25em}.op-sub{text-align:center}' +
+    '.op-eq{line-height:1.5;margin-bottom:.3em}.op-disp{font-size:1.25em}.op-side{font-size:1.15em}' +
     '.op-m{font-family:"STIX Two Text","Cambria Math",Georgia,serif;font-size:1.12em;white-space:nowrap}.op-m i{font-style:italic}.op-m sub{font-size:.65em;vertical-align:-.25em}' +
     '.op-fr{display:inline-flex;flex-direction:column;vertical-align:middle;text-align:center;margin:0 .12em;line-height:1.05;font-size:.9em}.op-fr>span:first-child{border-bottom:1px solid currentColor;padding:0 .15em}' +
     '.op-ctl{display:flex;flex-wrap:wrap;gap:.5em;align-items:center;margin:.3em 0}.op-ctl label{display:grid;grid-template-columns:auto 1fr 3em;gap:.6em;align-items:center;min-width:22em}' +
