@@ -52,7 +52,7 @@
   }
   function axisLines(A, xn, yn) {
     return '<line x1="' + L + '" y1="' + T + '" x2="' + L + '" y2="' + (T + ph) + '" stroke="#222"/><line x1="' + L + '" y1="' + (T + ph) + '" x2="' + (L + pw) + '" y2="' + (T + ph) + '" stroke="#222"/>' +
-      '<text x="' + (L + 8) + '" y="' + (T + 14) + '" font-size="20" fill="#555" ' + halo + '>' + yn + ' ' + it('y') + '</text>' +
+      '<text x="' + (L - 8) + '" y="' + (T + 14) + '" text-anchor="end" font-size="20" fill="#555" ' + halo + '>' + (yn ? yn + ' ' : '') + it('y') + '</text>' +   // left of the axis: never under a line
       '<text x="' + (L + pw) + '" y="' + (T + ph - 8) + '" text-anchor="end" font-size="20" fill="#555" ' + halo + '>' + xn + ' ' + it('x') + '</text>';
   }
   const clip = id => '<defs><clipPath id="' + id + '"><rect x="' + L + '" y="' + T + '" width="' + pw + '" height="' + ph + '"/></clipPath>' +

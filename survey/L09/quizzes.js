@@ -19,5 +19,5 @@
           o: [m('1'), m('0.05'), m('20'), m('0')] }
       ] }
   };
-  window.L09_NEXT = {};   // q1: the slide id after the quiz slide (Filiz)
+  window.L09_NEXT = { q1: 'L09-N1' };   // the slide after the quiz slide (Filiz)
 })();
