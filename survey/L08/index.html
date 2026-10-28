@@ -32,7 +32,7 @@
 <body>
 <main id="app">
   <h1>&gt; before we start<span class="cursor"></span></h1>
-  <p class="s">anonymous · about 2 minutes · microeconomics · lecture 8</p>
+  <p class="s">anonymous · about 4 minutes · microeconomics · lecture 8</p>
   <div id="f"></div>
   <button class="go" id="go" type="button">[ submit ]</button>
   <div class="msg" id="msg"></div>
@@ -44,11 +44,16 @@
 // today's, 1 = never heard of it … 5 = I could explain it; (2) is it unfair that our group deviates from the German group
 // (different problem sets, different exam questions): to you? to them? 1 = not at all … 5 = very, each with an optional
 // comment. ONE record per student (poll "L08-survey"), read by the deck's results slide (Filiz). Field keys (Filiz's
-// slide): ic, mrs, budget, best, subs, comp, util; unfair_you, unfair_them; c_you, c_them (optional text).
+// slide): ic, mrs, budget, best, subs, comp, util; unfair_you, unfair_them; c_you, c_them (optional text); topics below.
 const POLL = 'L08-survey';
 const LIK = ['1','2','3','4','5'];
 const CONCEPTS = [['ic','indifference curves'],['mrs','the marginal rate of substitution (MRS)'],['budget','the budget line'],
   ['best','the best feasible bundle'],['subs','perfect substitutes'],['comp','perfect complements'],['util','utility functions']];
+// the rest of the semester (Can, 28.10, ~18:00): for each topic "heard of it?" (yes/no) and "interested?" (1–5), then
+// one item "prefer these to firms in perfect competition?" (yes/no/no opinion). Keys: heard_<id> = yes|no,
+// int_<id> = 1–5, prefer = yes|no|none. Topic ids below.
+const TOPICS = [['games','basic game theory'],['search','search theory'],['curse','the winner\'s curse'],['altruism','altruism'],
+  ['risk','choice under uncertainty'],['prospect','prospect theory']];
 const ans = {}, txt = {}, f = document.getElementById('f');
 
 function likert(id, label, lo, hi) {
@@ -65,6 +70,13 @@ function comment(id) {
   const t = document.createElement('textarea'); t.maxLength = 400; t.rows = 2; t.oninput = () => { txt[id] = t.value; };
   d.appendChild(t); return d;
 }
+function choice(id, label, opts) {
+  const d = document.createElement('div'); d.className = 'q'; d.id = 'q-' + id;
+  d.innerHTML = '<div class="t">' + label + '</div>';
+  const box = document.createElement('div'); box.className = 'opts';
+  opts.forEach(([c, l]) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'opt'; b.textContent = l; b.onclick = () => { ans[id] = c; box.querySelectorAll('.opt').forEach(x => x.classList.toggle('on', x === b)); }; box.appendChild(b); });
+  d.appendChild(box); return d;
+}
 function head(t, s) { f.insertAdjacentHTML('beforeend', '<h2>' + t + '</h2>' + (s ? '<p class="s">' + s + '</p>' : '')); }
 
 head('the concepts', 'how clear is each one to you?');
@@ -74,10 +86,16 @@ f.appendChild(likert('unfair_you', 'Our group has its own problem sets and exam 
 f.appendChild(comment('c_you'));
 f.appendChild(likert('unfair_them', 'Our group has its own problem sets and exam questions. Is that unfair to the other group?', 'not at all', 'very'));
 f.appendChild(comment('c_them'));
+head('the rest of the semester', 'These are all very important topics, and we can study each of them at a basic level. Because we do game theory, we will also do oligopolies: so we still do firms, and define a firm\'s cost functions just like the consumer\'s. But we will do more on how people decide: preferences, time, risk and altruism.');
+TOPICS.forEach(([id, l]) => {
+  f.appendChild(choice('heard_' + id, l + ': have you heard of it?', [['yes', 'yes'], ['no', 'no']]));
+  f.appendChild(likert('int_' + id, l + ': how interested are you?', 'not at all', 'very'));
+});
+f.appendChild(choice('prefer', 'Would you prefer these topics to firms in perfect competition?', [['yes', 'yes'], ['no', 'no'], ['none', 'no opinion']]));
 
 async function submit() {
   const msg = document.getElementById('msg');
-  const need = CONCEPTS.map(x => x[0]).concat(['unfair_you', 'unfair_them']);
+  const need = CONCEPTS.map(x => x[0]).concat(['unfair_you', 'unfair_them'], TOPICS.flatMap(([id]) => ['heard_' + id, 'int_' + id]), ['prefer']);
   const missing = need.filter(id => !ans[id]);
   document.querySelectorAll('.q').forEach(d => d.classList.remove('missing'));
   missing.forEach(id => { const d = document.getElementById('q-' + id); if (d) d.classList.add('missing'); });
