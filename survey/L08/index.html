@@ -69,10 +69,10 @@ function head(t, s) { f.insertAdjacentHTML('beforeend', '<h2>' + t + '</h2>' + (
 
 head('the concepts', 'how clear is each one to you?');
 CONCEPTS.forEach(([id, l]) => f.appendChild(likert(id, l, 'never heard of it', 'I could explain it')));
-head('our group and the German group', 'our group now has its own problem sets and will have different exam questions from the German group');
-f.appendChild(likert('unfair_you', 'is it unfair to YOU that our group does things differently?', 'not at all', 'very'));
+head('our group and the other group', '');
+f.appendChild(likert('unfair_you', 'Our group has its own problem sets and exam questions. Is that unfair to you?', 'not at all', 'very'));
 f.appendChild(comment('c_you'));
-f.appendChild(likert('unfair_them', 'is it unfair to THEM (the German group)?', 'not at all', 'very'));
+f.appendChild(likert('unfair_them', 'Our group has its own problem sets and exam questions. Is that unfair to the other group?', 'not at all', 'very'));
 f.appendChild(comment('c_them'));
 
 async function submit() {
