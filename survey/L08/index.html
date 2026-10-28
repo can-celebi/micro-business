@@ -86,7 +86,7 @@ f.appendChild(likert('unfair_you', 'Our group has its own problem sets and exam 
 f.appendChild(comment('c_you'));
 f.appendChild(likert('unfair_them', 'Our group has its own problem sets and exam questions. Is that unfair to the other group?', 'not at all', 'very'));
 f.appendChild(comment('c_them'));
-head('the rest of the semester', 'These are all very important topics, and we can study each of them at a basic level. We will still study firms: how a firm turns inputs into output and how it picks the cheapest mix of inputs, which gives its costs – the same logic as the consumer\'s best bundle. Then we look at how a few firms compete with each other (oligopoly); what we leave out is the market-level picture with many competing firms (perfect competition and long-run industry supply). Instead, we will do more on how people decide: preferences, time, risk and altruism.');
+head('the rest of the semester', 'These are all very important topics, and we can study each of them at a basic level. We will still study firms: how a firm turns inputs into output and how it picks the cheapest mix of inputs, which gives its costs – the same logic as the consumer\'s best bundle. Then, with game theory, we look at how a few firms compete with each other (oligopoly); what we leave out is the market-level picture with many competing firms (perfect competition and long-run industry supply). But we will do more on how people decide: preferences, time, risk and altruism.');
 TOPICS.forEach(([id, l]) => {
   f.appendChild(choice('heard_' + id, l + ': have you heard of it?', [['yes', 'yes'], ['no', 'no']]));
   f.appendChild(likert('int_' + id, l + ': how interested are you?', 'not at all', 'very'));
