@@ -1,4 +1,4 @@
-// L08 quiz contents (Sinan, 28.10 v3 + Murat's bike stem 17:4x, checked by Murat): questions and options only. The keys are NOT in this file
+// L08 quiz contents (Sinan, 28.10 v3 + Murat's bike stem + Quiz 1 axis wording at Can's request, checked by Murat): questions and options only. The keys are NOT in this file
 // (Kamuran R50: assume some students cheat); the results slide gets them separately. Options keep the order below for
 // every student (answers are stored as one letter per question: a = first option …), so the key positions vary.
 (function () {
@@ -8,10 +8,10 @@
     q1: { title: 'quiz 1 · the MRS',
       setup: [['x', 'smoothies'], ['y', 'cookies'], ['MRS', 'how many cookies you would give up for one more smoothie and feel exactly as good']],
       qs: [
-        { t: 'You would give up 3 cookies for one more smoothie and feel exactly as good. Your MRS is …', o: ['1', '2', '3', '4'] },
+        { t: 'Smoothies are on the x-axis, cookies on the y-axis. Your MRS is how many cookies you would give up for one more smoothie and feel exactly as good. You would give up 3 cookies for one more smoothie. Your MRS is …', o: ['1', '2', '3', '6'] },
         { t: 'Along one indifference curve, you get more and more smoothies. The number of cookies you would give up for one more smoothie usually …', o: ['falls', 'rises', 'stays the same'] },
         { t: 'Your MRS is 4 cookies per smoothie; your friend\'s is 1. Who values one more smoothie more, measured in cookies?', o: ['your friend', 'you', 'the same'] },
-        { t: 'At bundle P the indifference curve is steep; at bundle Q it is flat. Where is the MRS higher?', o: ['at Q', 'the same', 'at P'] }
+        { t: 'Cookies are on the y-axis, smoothies on the x-axis. Your MRS is how many cookies you would give up for one more smoothie, which is how steep your indifference curve is. On one bowed indifference curve, bundle P (upper left, few smoothies) sits where the curve is steep, and bundle Q (lower right, many smoothies) where it is flat. Where is the MRS higher?', o: ['at Q', 'the same', 'at P'] }
       ] },
     q2: { title: 'quiz 2 · guess the utility function',
       setup: [['x, y', 'amounts of two goods'], ['u', 'a utility that ranks bundles the way the person does']],
