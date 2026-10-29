@@ -869,6 +869,10 @@
     const ma = button(f.ctl, 'move A', () => { moveA = !moveA; ma.classList.toggle('on', moveA); });
     draggable(f, A, (x, y) => { if (!moveA) return; Apt = [Math.max(1, Math.min(A.xmax * 0.9, Math.round(x * 2) / 2)), Math.max(1, Math.min(A.ymax * 0.9, Math.round(y * 2) / 2))]; draw(); });
     button(f.ctl, 'reset', () => { copies = []; budget = false; moveA = false; ma.classList.remove('on'); Apt = [+box.dataset.ax || 10, +box.dataset.ay || 10]; bb.classList.remove('on'); F.ps.forEach(([k, , , , d], i) => ins[i].set(d)); draw(); });
+    } else {
+      // minimal view: only [show budget] (Can: "maybe we keep the show budget button"): the orange 3x + y = 60 and the best point
+      f.ctl.appendChild(el('div', 'vp-break'));
+      const bb = button(f.ctl, 'show budget', () => { budget = !budget; bb.classList.toggle('on', budget); draw(); });
     }
     draw();
   }
