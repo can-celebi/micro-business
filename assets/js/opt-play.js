@@ -772,6 +772,9 @@
   function nb(v, keep1) { const s = r2(v); return !keep1 && s === '1' ? '' : s; }
   function param(box) {
     const key = PFORMS[box.dataset.form] ? box.dataset.form : 'cd', F = PFORMS[key], f = frame(box), PX0 = 3, PY0 = 1, B0 = 60;
+    // minimal by default (Can 29.10: "keep the graph animation and the a and b sliders, no buttons"): curves, sliders, the live
+    // formula, A with its label, the text tags. data-full="1" brings back the copies, budget, move A, step triangles, table, magnifier.
+    const FULL = box.dataset.full === '1';
     const A = axes(B0 / PX0 * 1.4, B0 / PY0 * 1.08);
     if (box.dataset.beta && key === 'ql') F.ps = F.ps.map(r => r[0] === 'β' ? [r[0], r[1], r[2], r[3], +box.dataset.beta] : r);   // e.g. data-beta="2" for u = x + y²
     const v = {}; F.ps.forEach(([k, , , , d]) => { v[k] = d; });
@@ -804,12 +807,12 @@
       if (F.kink) h += label(A.X(A.xmax * 0.6) + 6, A.Y(Math.min(A.ymax * 0.9, A.xmax * 0.6 * F.kink(v))) - 8, it('y') + ' = ' + nb(F.kink(v)) + it('x'), GREY, null, 17);
       // from A: +1 x → the exact −Δy, and the tangent (slope −MRS), for the current curve and every kept copy
       const sets = [[v, IC, '']].concat(copies.map(c => [c, '#6F8FB3', ' stroke-dasharray="7 5"']));
-      sets.forEach(([w, col, dash]) => {
+      if (FULL) sets.forEach(([w, col, dash]) => {
         const S = swapAt(key, w, Apt[0], Apt[1]);
         if (S.mrs != null && isFinite(S.mrs)) { const L0 = 3.2; h += '<line x1="' + A.X(Apt[0] - L0) + '" y1="' + A.Y(Apt[1] + S.mrs * L0) + '" x2="' + A.X(Apt[0] + L0) + '" y2="' + A.Y(Apt[1] - S.mrs * L0) + '" stroke="' + GREY + '" stroke-width="1.5" stroke-dasharray="4 4"/>'; }
         if (S.y2 != null) h += '<path d="M' + A.X(Apt[0]) + ',' + A.Y(Apt[1]) + ' L' + A.X(Apt[0] + 1) + ',' + A.Y(Apt[1]) + ' L' + A.X(Apt[0] + 1) + ',' + A.Y(S.y2) + '" fill="none" stroke="' + col + '" stroke-width="2.6"' + dash + '/>';
       });
-      {
+      if (FULL) {
         const ZR = 72, ZC = [L + pw - ZR - 8, T + ZR + 8], ZK = 5 * A.s, zx = q => ZC[0] + (q - Apt[0]) * ZK, zy = q => ZC[1] - (q - Apt[1]) * ZK;
         const ring = ZR / 5, zid = f.id + 'z';
         h += '<circle cx="' + A.X(Apt[0]) + '" cy="' + A.Y(Apt[1]) + '" r="' + ring + '" fill="none" stroke="#9AA3AE" stroke-width="1.2"/>' +
@@ -841,10 +844,11 @@
       f.eq.innerHTML = (F.tag ? '<div class="vp-tag' + (v['β'] > 1.001 ? ' out' : '') + '">' + F.tag(v) + '</div>' : '') + (F.note ? '<div class="vp-tag">' + F.note(v) + '</div>' : '') + '<div class="vp-sub">' + F.name + (copies.length ? ' · dashed: ' + copies.map(parTxt).join(' | ') : '') + '</div>';
       const row = (w, tag) => { const S = swapAt(key, w, Apt[0], Apt[1]), dy = S.y2 == null ? null : Apt[1] - S.y2;
         return '<tr><td>' + tag + '</td><td>' + parTxt(w) + '</td><td>' + (S.note ? S.note : dy == null ? 'not possible: not enough y' : 'one more ' + m('<i>x</i>') + ' costs ' + m('Δ<i>y</i> = ' + r2(dy))) + '</td><td>' + m('MRS = ' + S.txt) + '</td></tr>'; };
-      f.status.innerHTML = '<table class="vp-swap"><tr><th></th><th>numbers</th><th>from A, keeping u the same</th><th>at A</th></tr>' + row(v, 'now') + copies.map((c, i) => row(c, 'copy ' + (i + 1))).join('') + '</table>' +
+      f.status.innerHTML = !FULL ? '' : '<table class="vp-swap"><tr><th></th><th>numbers</th><th>from A, keeping u the same</th><th>at A</th></tr>' + row(v, 'now') + copies.map((c, i) => row(c, 'copy ' + (i + 1))).join('') + '</table>' +
         '<div class="dim">' + m('Δ<i>y</i>') + ' is exact (u(x + 1, y − Δy) = u(A)); the MRS is the slope of the tangent at A, for small steps</div>' + bestTxt;
     }
     const ins = F.ps.map(([k, lo, hi, st, d]) => slider(f.ctl, k, lo, hi, st, d, (val, o, first) => { v[k] = val; o.innerHTML = r2(val); if (!first) { draw(); fEq.classList.remove('glow'); void fEq.offsetWidth; fEq.classList.add('glow'); } }));
+    if (FULL) {
     f.ctl.appendChild(el('div', 'vp-break'));
     button(f.ctl, 'keep a copy', () => { if (copies.length >= 3) copies.shift(); copies.push(Object.assign({}, v)); draw(); });
     button(f.ctl, 'clear copies', () => { copies = []; draw(); });
@@ -852,6 +856,7 @@
     const ma = button(f.ctl, 'move A', () => { moveA = !moveA; ma.classList.toggle('on', moveA); });
     draggable(f, A, (x, y) => { if (!moveA) return; Apt = [Math.max(1, Math.min(A.xmax * 0.9, Math.round(x * 2) / 2)), Math.max(1, Math.min(A.ymax * 0.9, Math.round(y * 2) / 2))]; draw(); });
     button(f.ctl, 'reset', () => { copies = []; budget = false; moveA = false; ma.classList.remove('on'); Apt = [+box.dataset.ax || 10, +box.dataset.ay || 10]; bb.classList.remove('on'); F.ps.forEach(([k, , , , d], i) => ins[i].set(d)); draw(); });
+    }
     draw();
   }
 
