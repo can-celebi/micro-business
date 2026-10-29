@@ -178,7 +178,7 @@
 
   // ---------- chat ----------
   const cSec = mk('div', 'sp-sec chat-sec');
-  cSec.appendChild(mk('h3', null, MP.teacher ? '&gt; class chat <span class="dim sp-note">updates every 20 s</span>' : '&gt; ask the lecturer <span class="dim sp-note">questions welcome</span>'));
+  cSec.appendChild(mk('h3', null, MP.teacher ? '<span class="cprompt">&gt; </span>class chat <span class="dim sp-note">updates every 20 s</span>' : '<span class="cprompt">&gt; </span>ask the lecturer <span class="dim sp-note">questions welcome</span>'));
   if (!MP.teacher) cSec.appendChild(mk('div', 'teacher-only', '📺 your messages go to the lecturer\'s screen · answers in class'));
   const msgs = mk('div', 'chat-msgs');
   const ta = mk('textarea'); ta.rows = 2; ta.maxLength = 400; ta.placeholder = 'what don\'t you understand?'; stop(ta);

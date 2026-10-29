@@ -17,7 +17,7 @@
   const NS = 'http://www.w3.org/2000/svg';
   const W = 500, H = 340, L = 50, BOT = 40, T = 16, R = 20, pw = W - L - R, ph = H - T - BOT;
   // colours by role (Can 29.10): indifference curves blue, budget orange, ∇u dark blue, p dark orange
-  const BLUE = '#D9480F', ORANGE = '#0062C4', PURPLE = '#7A3DB8', GREEN = '#0B3D91', GREY = '#888', PCOL = '#A63E00';
+  const BUDGET = '#D9480F', IC = '#0062C4', ALONG = '#2F7D4F', GRAD = '#0B3D91', GREY = '#888', P_ARROW = '#A63E00';
   const MATH = '"STIX Two Text", "Cambria Math", Georgia, serif';
   const halo = 'paint-order="stroke" stroke="#fff" stroke-width="5" stroke-linejoin="round"';
   const r2 = v => String(Math.round(v * 100) / 100), r3 = v => String(Math.round(v * 1000) / 1000);
@@ -94,18 +94,18 @@
     function draw() {
       const p = at(t), u = U(q.a, q.b, p.x, p.y), g = grad(p.x, p.y), s = proj(p.x, p.y), X = A.X, Y = A.Y;
       let h = clip(id) + '<g clip-path="url(#' + id + ')">';
-      h += '<line x1="' + X(0) + '" y1="' + Y(yi) + '" x2="' + X(xi) + '" y2="' + Y(0) + '" stroke="' + BLUE + '" stroke-width="3.5"/>';
-      h += ic(A, q.a, q.b, u, ORANGE, 3);
+      h += '<line x1="' + X(0) + '" y1="' + Y(yi) + '" x2="' + X(xi) + '" y2="' + Y(0) + '" stroke="' + BUDGET + '" stroke-width="3.5"/>';
+      h += ic(A, q.a, q.b, u, IC, 3);
       h += '</g>' + axisLines(A, q.xn, q.yn);
       const sx = X(p.x), sy = Y(p.y), gl = Math.hypot(g[0], g[1]);
-      h += arrow(sx, sy, 72 * g[0] / gl, -72 * g[1] / gl, GREEN, 3);                       // ∇u, fixed length
+      h += arrow(sx, sy, 72 * g[0] / gl, -72 * g[1] / gl, GRAD, 3);                       // ∇u, fixed length
       h += arrow(sx, sy, 72 * d[0] / dn, -72 * d[1] / dn, GREY, 2.5);                       // budget direction
       const ox = 16 * q.px / Math.hypot(q.px, q.py), oy = -16 * q.py / Math.hypot(q.px, q.py);   // 16 units off the line
-      h += arrow(sx + ox, sy + oy, 84 * s / pmax * d[0] / dn, -84 * s / pmax * d[1] / dn, PURPLE, 3.5); // projection along the line
+      h += arrow(sx + ox, sy + oy, 84 * s / pmax * d[0] / dn, -84 * s / pmax * d[1] / dn, ALONG, 3.5); // projection along the line
       h += '<circle cx="' + sx + '" cy="' + sy + '" r="8" fill="#222" stroke="#fff" stroke-width="2"/>';
       const here = [['A', PTS[0] / xi], ['C', PTS[1] / xi], ['E', opt.x / xi]].find(([, tt]) => Math.abs(tt - t) <= 0.04);
       if (here) h += '<text x="' + (sx - 12) + '" y="' + (sy + 6) + '" text-anchor="end" font-size="20" fill="#222" ' + halo + '>' + here[0] + '</text>';
-      h += '<text x="' + (sx + 72 * g[0] / gl + 6) + '" y="' + (sy - 72 * g[1] / gl - 6) + '" font-size="21" fill="' + GREEN + '" ' + halo + '>∇' + it('u') + '</text>';
+      h += '<text x="' + (sx + 72 * g[0] / gl + 6) + '" y="' + (sy - 72 * g[1] / gl - 6) + '" font-size="21" fill="' + GRAD + '" ' + halo + '>∇' + it('u') + '</text>';
       h += '<text x="' + (sx + 72 * d[0] / dn + 10) + '" y="' + (sy - 72 * d[1] / dn + 20) + '" font-size="21" fill="' + GREY + '" ' + halo + '>' + it('d') + '</text>';
       [['A', PTS[0] / xi], ['C', PTS[1] / xi], ['E', opt.x / xi]].forEach(([n, tt]) => { const pp = at(tt); if (tt > 0 && tt < 1 && Math.abs(tt - t) > 0.04) h += '<circle cx="' + X(pp.x) + '" cy="' + Y(pp.y) + '" r="3.5" fill="#555"/><text x="' + (X(pp.x) - 10) + '" y="' + (Y(pp.y) + 6) + '" text-anchor="end" font-size="20" fill="#555" ' + halo + '>' + n + '</text>'; });
       f.svg.innerHTML = h;
@@ -113,7 +113,7 @@
       f.eq.innerHTML = '<div class="op-disp">' + m('∇<i>u</i> = (' + MUX + ', ' + MUY + ') = (' + r2(g[0]) + ', ' + r2(g[1]) + ')') + '</div>' +
         '<div class="op-sub">' + m('MRS = ' + fr(MUX, MUY) + ' = ' + r2(mrs)) + ' &nbsp; vs &nbsp; ' + m(fr(PX, PY) + ' = ' + r2(q.px / q.py)) + '</div>';
       const near = Math.abs(s) < pmax * 0.02;
-      f.status.innerHTML = '<div>at ' + m('(' + r2(p.x) + ', ' + r2(p.y) + ')') + ': <b style="color:' + PURPLE + '">' + m('∇<i>u</i> · <i>d</i> = ' + sg(s)) + '</b> &nbsp; <span class="dim">' + m('<i>d</i> = (' + PY + ', −' + PX + ') = (' + q.py + ', −' + q.px + ')') + '</span></div>' +
+      f.status.innerHTML = '<div>at ' + m('(' + r2(p.x) + ', ' + r2(p.y) + ')') + ': <b style="color:' + ALONG + '">' + m('∇<i>u</i> · <i>d</i> = ' + sg(s)) + '</b> &nbsp; <span class="dim">' + m('<i>d</i> = (' + PY + ', −' + PX + ') = (' + q.py + ', −' + q.px + ')') + '</span></div>' +
         '<div class="dim">' + (near ? 'zero: no step along the line makes you better off. This is the best feasible bundle: ∇u is perpendicular to the line.'
           : s > 0 ? 'positive: moving along the line towards more x makes you better off' : 'negative: moving along the line towards more y makes you better off') + '</div>';
     }
@@ -149,12 +149,12 @@
     function draw() {
       const Bk = q.B + dB, ok = best(q, Bk), uk = ustar(Bk), X = A.X, Y = A.Y;
       let h = clip(id) + '<g clip-path="url(#' + id + ')">';
-      h += '<line x1="' + X(0) + '" y1="' + Y(q.B / q.py) + '" x2="' + X(q.B / q.px) + '" y2="' + Y(0) + '" stroke="' + BLUE + '" stroke-width="' + (dB ? 2 : 3.5) + '" opacity="' + (dB ? 0.4 : 1) + '"/>';
-      h += ic(A, q.a, q.b, u0, ORANGE, dB ? 2 : 3, dB ? ' opacity="0.4"' : '');
-      if (dB) { h += '<line x1="' + X(0) + '" y1="' + Y(Bk / q.py) + '" x2="' + X(Bk / q.px) + '" y2="' + Y(0) + '" stroke="' + BLUE + '" stroke-width="3.5"/>'; h += ic(A, q.a, q.b, uk, ORANGE, 3); }
+      h += '<line x1="' + X(0) + '" y1="' + Y(q.B / q.py) + '" x2="' + X(q.B / q.px) + '" y2="' + Y(0) + '" stroke="' + BUDGET + '" stroke-width="' + (dB ? 2 : 3.5) + '" opacity="' + (dB ? 0.4 : 1) + '"/>';
+      h += ic(A, q.a, q.b, u0, IC, dB ? 2 : 3, dB ? ' opacity="0.4"' : '');
+      if (dB) { h += '<line x1="' + X(0) + '" y1="' + Y(Bk / q.py) + '" x2="' + X(Bk / q.px) + '" y2="' + Y(0) + '" stroke="' + BUDGET + '" stroke-width="3.5"/>'; h += ic(A, q.a, q.b, uk, IC, 3); }
       h += '</g>' + axisLines(A, q.xn, q.yn);
       h += '<circle cx="' + X(o0.x) + '" cy="' + Y(o0.y) + '" r="7" fill="#222"/>';
-      if (dB) h += '<circle cx="' + X(ok.x) + '" cy="' + Y(ok.y) + '" r="8" fill="' + GREEN + '" stroke="#fff" stroke-width="2"/>';
+      if (dB) h += '<circle cx="' + X(ok.x) + '" cy="' + Y(ok.y) + '" r="8" fill="' + GRAD + '" stroke="#fff" stroke-width="2"/>';
       h += '<text x="' + (X(o0.x) - 12) + '" y="' + (Y(o0.y) - 10) + '" text-anchor="end" font-size="20" fill="#222" ' + halo + '>' + it('u') + '* = ' + r2(u0) + '</text>';
       f.svg.innerHTML = h;
       f.eq.innerHTML = '<div class="op-disp">' + m(fr('Δ<i>u</i>*', 'Δ<i>B</i>')) + '</div><div class="op-sub">extra utility per extra euro, at the best feasible bundle (' + m('<i>B</i> = ' + q.B) + ')</div>';
@@ -179,13 +179,13 @@
       const py = PY0, xi = B / px, yi = B / py, X = A.X, Y = A.Y;
       let h = clip(id) + '<g clip-path="url(#' + id + ')">';
       h += '<polygon points="' + X(0) + ',' + Y(0) + ' ' + X(0) + ',' + Y(yi) + ' ' + X(xi) + ',' + Y(0) + '" fill="#FDE3CF" opacity="0.7"/>';
-      h += '<line x1="' + X(0) + '" y1="' + Y(yi) + '" x2="' + X(xi) + '" y2="' + Y(0) + '" stroke="' + BLUE + '" stroke-width="3.5"/>';
+      h += '<line x1="' + X(0) + '" y1="' + Y(yi) + '" x2="' + X(xi) + '" y2="' + Y(0) + '" stroke="' + BUDGET + '" stroke-width="3.5"/>';
       let bx = null, by = null, line = false, say;
       if (kind === 'subs') {
         // u = a·x + b·y: straight indifference lines (slope −a/b); the best one touches the budget at a corner
         const ub = Math.max(ax * xi, ay * yi);      // utility at the best corner
-        [0.45, 0.72].forEach(c => { const v = ub * c; h += '<line x1="' + X(0) + '" y1="' + Y(v / ay) + '" x2="' + X(v / ax) + '" y2="' + Y(0) + '" stroke="' + ORANGE + '" stroke-width="2" opacity="0.4"/>'; });
-        h += '<line x1="' + X(0) + '" y1="' + Y(ub / ay) + '" x2="' + X(ub / ax) + '" y2="' + Y(0) + '" stroke="' + ORANGE + '" stroke-width="3"/>';
+        [0.45, 0.72].forEach(c => { const v = ub * c; h += '<line x1="' + X(0) + '" y1="' + Y(v / ay) + '" x2="' + X(v / ax) + '" y2="' + Y(0) + '" stroke="' + IC + '" stroke-width="2" opacity="0.4"/>'; });
+        h += '<line x1="' + X(0) + '" y1="' + Y(ub / ay) + '" x2="' + X(ub / ax) + '" y2="' + Y(0) + '" stroke="' + IC + '" stroke-width="3"/>';
         const mrs = ax / ay, pr = px / py;
         if (Math.abs(pr - mrs) < 1e-9) { line = true; say = m('MRS = ' + r2(mrs) + ' = ' + fr(PX, PY)) + ': every bundle on the budget line is best'; }
         else if (pr < mrs) { bx = xi; by = 0; say = m('MRS = ' + r2(mrs) + ' > ' + r2(pr) + ' = ' + fr(PX, PY)) + ': only x, at ' + m('(' + r2(xi) + ', 0)'); }
@@ -193,14 +193,14 @@
       } else {
         // u = min{x, y}: L-shaped curves, kink on y = x; the best bundle is the kink on the budget line
         const k = B / (px + py);
-        [0.5, 0.75].forEach(c => { const v = k * c; h += '<polyline points="' + X(v) + ',' + Y(A.ymax) + ' ' + X(v) + ',' + Y(v) + ' ' + X(A.xmax) + ',' + Y(v) + '" fill="none" stroke="' + ORANGE + '" stroke-width="2" opacity="0.4"/>'; });
-        h += '<polyline points="' + X(k) + ',' + Y(A.ymax) + ' ' + X(k) + ',' + Y(k) + ' ' + X(A.xmax) + ',' + Y(k) + '" fill="none" stroke="' + ORANGE + '" stroke-width="3"/>';
+        [0.5, 0.75].forEach(c => { const v = k * c; h += '<polyline points="' + X(v) + ',' + Y(A.ymax) + ' ' + X(v) + ',' + Y(v) + ' ' + X(A.xmax) + ',' + Y(v) + '" fill="none" stroke="' + IC + '" stroke-width="2" opacity="0.4"/>'; });
+        h += '<polyline points="' + X(k) + ',' + Y(A.ymax) + ' ' + X(k) + ',' + Y(k) + ' ' + X(A.xmax) + ',' + Y(k) + '" fill="none" stroke="' + IC + '" stroke-width="3"/>';
         h += '<line x1="' + X(0) + '" y1="' + Y(0) + '" x2="' + X(Math.min(A.xmax, A.ymax)) + '" y2="' + Y(Math.min(A.xmax, A.ymax)) + '" stroke="' + GREY + '" stroke-width="1.5" stroke-dasharray="5 5"/>';
         bx = k; by = k; say = 'the kink on ' + m('<i>y</i> = <i>x</i>') + ': ' + m('<i>x</i> = <i>y</i> = ' + fr('<i>B</i>', PX + ' + ' + PY) + ' = ' + r2(k)) + ' (the price only moves the kink)';
       }
       h += '</g>' + axisLines(A, xn, yn);
-      if (line) h += '<line x1="' + X(0) + '" y1="' + Y(yi) + '" x2="' + X(xi) + '" y2="' + Y(0) + '" stroke="' + GREEN + '" stroke-width="7" opacity="0.55"/>';
-      else h += '<circle cx="' + X(bx) + '" cy="' + Y(by) + '" r="10" fill="' + GREEN + '" stroke="#fff" stroke-width="2"/>';
+      if (line) h += '<line x1="' + X(0) + '" y1="' + Y(yi) + '" x2="' + X(xi) + '" y2="' + Y(0) + '" stroke="' + GRAD + '" stroke-width="7" opacity="0.55"/>';
+      else h += '<circle cx="' + X(bx) + '" cy="' + Y(by) + '" r="10" fill="' + GRAD + '" stroke="#fff" stroke-width="2"/>';
       f.svg.innerHTML = h;
       f.eq.innerHTML = '<div class="op-disp">' + (kind === 'subs' ? m('<i>u</i> = ' + (ax === 1 ? '' : ax) + '<i>x</i> + ' + (ay === 1 ? '' : ay) + '<i>y</i>') : m('<i>u</i> = min{<i>x</i>, <i>y</i>}')) + '</div>' +
         '<div class="op-sub">budget ' + m((px === 1 ? '' : r2(px) + '&#8202;') + '<i>x</i> + ' + (py === 1 ? '' : py) + '<i>y</i> = ' + B) + '</div>';
@@ -255,7 +255,7 @@
   const NS = 'http://www.w3.org/2000/svg';
   const W = 500, H = 340, L = 50, BOT = 40, T = 16, R = 20, pw = W - L - R, ph = H - T - BOT;
   // colours by role (Can 29.10): indifference curves blue, budget orange, ∇u dark blue, p dark orange
-  const BLUE = '#D9480F', ORANGE = '#0062C4', PURPLE = '#7A3DB8', GREEN = '#0B3D91', GREY = '#888', PCOL = '#A63E00';
+  const BUDGET = '#D9480F', IC = '#0062C4', ALONG = '#2F7D4F', GRAD = '#0B3D91', GREY = '#888', P_ARROW = '#A63E00';
   const MATH = '"STIX Two Text", "Cambria Math", Georgia, serif';
   const halo = 'paint-order="stroke" stroke="#fff" stroke-width="5" stroke-linejoin="round"';
   const r2 = v => String(Math.round(v * 100) / 100).replace('-', '−');
@@ -366,9 +366,9 @@
       const pts = []; for (let i = 0; i <= 200; i++) { const tt = i / 200, [xx, yy] = at(tt); pts.push(PX_(coord(tt)).toFixed(1) + ',' + PY_(F.U(xx, yy)).toFixed(1)); }
       const [xn, yn] = at(tNow), un = F.U(xn, yn), cb = coord(b.t), cn = coord(tNow);
       let g = '<line x1="' + ML + '" y1="' + MT + '" x2="' + ML + '" y2="' + (MT + hh) + '" stroke="#222"/><line x1="' + ML + '" y1="' + (MT + hh) + '" x2="' + (ML + w) + '" y2="' + (MT + hh) + '" stroke="#222"/>';
-      g += '<polyline points="' + pts.join(' ') + '" fill="none" stroke="' + PURPLE + '" stroke-width="2.5"/>';
-      g += '<line x1="' + PX_(cb) + '" y1="' + PY_(b.u) + '" x2="' + PX_(cb) + '" y2="' + (MT + hh) + '" stroke="' + GREEN + '" stroke-width="1.6" stroke-dasharray="4 4"/>';
-      g += label(PX_(cb), MT + hh + 24, r2(cb), GREEN, 'middle', 17) + label(ML - 6, PY_(b.u) + 6, r2(b.u), GREEN, 'end', 17);
+      g += '<polyline points="' + pts.join(' ') + '" fill="none" stroke="' + ALONG + '" stroke-width="2.5"/>';
+      g += '<line x1="' + PX_(cb) + '" y1="' + PY_(b.u) + '" x2="' + PX_(cb) + '" y2="' + (MT + hh) + '" stroke="' + GRAD + '" stroke-width="1.6" stroke-dasharray="4 4"/>';
+      g += label(PX_(cb), MT + hh + 24, r2(cb), GRAD, 'middle', 17) + label(ML - 6, PY_(b.u) + 6, r2(b.u), GRAD, 'end', 17);
       g += dot(PX_(cn), PY_(un), 6) + label(ML - 8, MT + 12, it('u'), '#555', 'end', 18);
       svgEl.innerHTML = g;
     }
@@ -377,26 +377,26 @@
       let h = defs(f.id) + clipOpen(f.id);
       // (2) the budget set, shaded, and the names on the graph
       h += '<polygon points="' + A.X(0) + ',' + A.Y(0) + ' ' + A.X(0) + ',' + A.Y(yi) + ' ' + A.X(xi) + ',' + A.Y(0) + '" fill="#FDE3CF" opacity="0.75"/>';
-      h += '<line x1="' + A.X(0) + '" y1="' + A.Y(yi) + '" x2="' + A.X(xi) + '" y2="' + A.Y(0) + '" stroke="' + BLUE + '" stroke-width="3.5"/>';
-      [0.35, 0.7, 1.4].forEach(c => { h += poly(A, F.curve(b.u * c), ORANGE, 1.8, ' opacity="0.35"'); });   // a few curves of the map
-      if (shown) h += poly(A, F.curve(b.u), GREEN, 3);
-      h += poly(A, F.curve(u), ORANGE, 3);
+      h += '<line x1="' + A.X(0) + '" y1="' + A.Y(yi) + '" x2="' + A.X(xi) + '" y2="' + A.Y(0) + '" stroke="' + BUDGET + '" stroke-width="3.5"/>';
+      [0.35, 0.7, 1.4].forEach(c => { h += poly(A, F.curve(b.u * c), IC, 1.8, ' opacity="0.35"'); });   // a few curves of the map
+      if (shown) h += poly(A, F.curve(b.u), GRAD, 3);
+      h += poly(A, F.curve(u), IC, 3);
       h += '</g>' + axisLines();
       const ang = Math.atan2(A.Y(0) - A.Y(yi), A.X(xi) - A.X(0)) * 180 / Math.PI, n = Math.hypot(q.px, q.py), nx = q.px / n, ny = q.py / n;
       const mxp = (A.X(0) + A.X(xi)) / 2, myp = (A.Y(yi) + A.Y(0)) / 2;
       const rot = (cx, cy, txt, col) => '<text x="' + cx.toFixed(1) + '" y="' + cy.toFixed(1) + '" transform="rotate(' + ang.toFixed(1) + ' ' + cx.toFixed(1) + ' ' + cy.toFixed(1) + ')" text-anchor="middle" font-size="18" fill="' + col + '" ' + halo + '>' + txt + '</text>';
-      h += rot(mxp - 22 * nx, myp + 22 * ny + 6, 'budget set', '#B04A12') + rot(mxp + 16 * nx, myp - 16 * ny, 'budget line', BLUE);
+      h += rot(mxp - 22 * nx, myp + 22 * ny + 6, 'budget set', '#B04A12') + rot(mxp + 16 * nx, myp - 16 * ny, 'budget line', BUDGET);
       const dense = c => c.flatMap((pt, i) => i ? Array.from({ length: 20 }, (_, j) => [c[i - 1][0] + (pt[0] - c[i - 1][0]) * (j + 1) / 20, c[i - 1][1] + (pt[1] - c[i - 1][1]) * (j + 1) / 20]) : [pt]);
       const cand = dense(F.curve(b.u * 1.4).map(([a, c]) => [a, Math.min(c, A.ymax * 2)])).filter(([cx, cy]) => cx < A.xmax * 0.92 && cy < A.ymax * 0.9 && cy > A.ymax * 0.12);
-      if (cand.length) { const [cx, cy] = cand.reduce((a, c) => c[0] > a[0] ? c : a); h += label(A.X(cx) - 6, A.Y(cy) - 10, 'indifference curves', ORANGE, 'end', 18); }
-      if (shown) h += dot(A.X(bx), A.Y(by), 7, GREEN);
+      if (cand.length) { const [cx, cy] = cand.reduce((a, c) => c[0] > a[0] ? c : a); h += label(A.X(cx) - 6, A.Y(cy) - 10, 'indifference curves', IC, 'end', 18); }
+      if (shown) h += dot(A.X(bx), A.Y(by), 7, GRAD);
       h += dot(A.X(x), A.Y(y), 9);
       h += label(A.X(x) + 14, A.Y(y) - 12, it('u') + ' = ' + r2(u), '#222');
       f.svg.innerHTML = h;
       mini(mx, 0, F, b, t); mini(my, 1, F, b, t);
       f.eq.innerHTML = '<div class="vp-disp">' + m(F.eq) + '</div><div class="vp-sub">' + F.name + ': ' + F.note + '</div><div class="vp-sub">budget ' + m(q.px + '<i>x</i> + <i>y</i> = ' + q.B) + '</div>';
       f.status.innerHTML = '<div>at ' + vec(x, y) + ': ' + m('<i>u</i> = ' + r2(u)) + '</div>' +
-        (shown ? '<div><b style="color:' + GREEN + '">best feasible bundle ' + vec(bx, by) + ', ' + m('<i>u</i> = ' + r2(b.u)) + '</b>: ' + F.how + '</div>' : '<div class="dim">drag the dot along the line: where is ' + m('<i>u</i>') + ' highest?</div>');
+        (shown ? '<div><b style="color:' + GRAD + '">best feasible bundle ' + vec(bx, by) + ', ' + m('<i>u</i> = ' + r2(b.u)) + '</b>: ' + F.how + '</div>' : '<div class="dim">drag the dot along the line: where is ' + m('<i>u</i>') + ' highest?</div>');
     }
     draggable(f, A, (x, y) => { stop(); t = Math.max(0, Math.min(1, (x * xi + (yi - y) * yi) / (xi * xi + yi * yi))); draw(); });
     const bs = {};
@@ -422,15 +422,15 @@
       const [x, y] = at(t), u = F.U(x, y);
       if (Math.abs(t - b.t) < 0.004) seen = true;
       let h = defs(f.id) + clipOpen(f.id);
-      h += '<line x1="' + A.X(0) + '" y1="' + A.Y(yi) + '" x2="' + A.X(xi) + '" y2="' + A.Y(0) + '" stroke="' + BLUE + '" stroke-width="3.5"/>';
-      h += poly(A, F.curve(u), ORANGE, 3);
+      h += '<line x1="' + A.X(0) + '" y1="' + A.Y(yi) + '" x2="' + A.X(xi) + '" y2="' + A.Y(0) + '" stroke="' + BUDGET + '" stroke-width="3.5"/>';
+      h += poly(A, F.curve(u), IC, 3);
       h += '</g>' + axisLines() + dot(A.X(x), A.Y(y), 9);
       f.svg.innerHTML = h;
       // the hill: u along the line, against x
       const pts = []; for (let k = 0; k <= 120; k++) { const tt = k / 120, [xx, yy] = at(tt); pts.push(hX(xx).toFixed(1) + ',' + hY(F.U(xx, yy)).toFixed(1)); }
       let g = '<line x1="' + HL + '" y1="' + HT + '" x2="' + HL + '" y2="' + (HT + hh) + '" stroke="#222"/><line x1="' + HL + '" y1="' + (HT + hh) + '" x2="' + (HL + hw) + '" y2="' + (HT + hh) + '" stroke="#222"/>';
-      g += '<polyline points="' + pts.join(' ') + '" fill="none" stroke="' + ORANGE + '" stroke-width="2.5" opacity="0.55"/>';
-      if (seen) g += '<line x1="' + HL + '" y1="' + hY(b.u) + '" x2="' + (HL + hw) + '" y2="' + hY(b.u) + '" stroke="' + GREEN + '" stroke-dasharray="5 5"/>' + label(HL - 6, hY(b.u) + 6, r2(b.u), GREEN, 'end', 18);
+      g += '<polyline points="' + pts.join(' ') + '" fill="none" stroke="' + IC + '" stroke-width="2.5" opacity="0.55"/>';
+      if (seen) g += '<line x1="' + HL + '" y1="' + hY(b.u) + '" x2="' + (HL + hw) + '" y2="' + hY(b.u) + '" stroke="' + GRAD + '" stroke-dasharray="5 5"/>' + label(HL - 6, hY(b.u) + 6, r2(b.u), GRAD, 'end', 18);
       g += '<line x1="' + hX(x) + '" y1="' + hY(u) + '" x2="' + hX(x) + '" y2="' + (HT + hh) + '" stroke="' + GREY + '" stroke-dasharray="4 4"/>' + dot(hX(x), hY(u), 7);
       g += label(HL - 8, HT + 14, it('u'), '#555', 'end', 19) + label(HL + hw, HT + hh + 26, it('x') + ' along the budget line', '#555', 'end', 18);
       hill.innerHTML = g;
@@ -453,14 +453,14 @@
     function draw() {
       const xi = q.B / px, yi = q.B / py, x = t * xi, y = (1 - t) * yi, sx = A.X(x), sy = A.Y(y), d = [py, -px];
       let h = defs(f.id) + clipOpen(f.id);
-      [0.5, 1.5].forEach(c => { h += '<line x1="' + A.X(0) + '" y1="' + A.Y(yi * c) + '" x2="' + A.X(xi * c) + '" y2="' + A.Y(0) + '" stroke="' + BLUE + '" stroke-width="1.6" opacity="0.35"/>'; });
-      h += '<line x1="' + A.X(0) + '" y1="' + A.Y(yi) + '" x2="' + A.X(xi) + '" y2="' + A.Y(0) + '" stroke="' + BLUE + '" stroke-width="3.5"/>';
+      [0.5, 1.5].forEach(c => { h += '<line x1="' + A.X(0) + '" y1="' + A.Y(yi * c) + '" x2="' + A.X(xi * c) + '" y2="' + A.Y(0) + '" stroke="' + BUDGET + '" stroke-width="1.6" opacity="0.35"/>'; });
+      h += '<line x1="' + A.X(0) + '" y1="' + A.Y(yi) + '" x2="' + A.X(xi) + '" y2="' + A.Y(0) + '" stroke="' + BUDGET + '" stroke-width="3.5"/>';
       h += '</g>' + axisLines();
-      h += label(A.X(xi * 0.5) - 10, A.Y(yi * 0.5) + 26, '€' + q.B / 2, BLUE, 'end', 18) + label(A.X(xi * 1.5 * 0.82) + 10, A.Y(yi * 1.5 * 0.18) - 8, '€' + q.B * 1.5, BLUE, null, 18);
+      h += label(A.X(xi * 0.5) - 10, A.Y(yi * 0.5) + 26, '€' + q.B / 2, BUDGET, 'end', 18) + label(A.X(xi * 1.5 * 0.82) + 10, A.Y(yi * 1.5 * 0.18) - 8, '€' + q.B * 1.5, BUDGET, null, 18);
       const dl = 3.2 / Math.hypot(d[0], d[1]);
       h += arrow(f.id, sx, sy, d[0] * dl, d[1] * dl, K, GREY, 2.5) + label(sx + d[0] * dl * K + 10, sy - d[1] * dl * K + 22, it('d'), GREY, null, 21);
       h += rightAngle(sx, sy, d, [px, py]);
-      h += arrow(f.id, sx, sy, px, py, K, PCOL, 4) + label(sx + px * K + 8, sy - py * K - 8, it('p'), PCOL, null, 22);
+      h += arrow(f.id, sx, sy, px, py, K, P_ARROW, 4) + label(sx + px * K + 8, sy - py * K - 8, it('p'), P_ARROW, null, 22);
       h += dot(sx, sy, 8);
       f.svg.innerHTML = h;
       f.eq.innerHTML = '<div class="vp-disp">' + m('<i>p</i> = (' + PX + ', ' + PY + ') = ' + vec(px, py)) + '</div><div class="vp-sub">budget ' + m(r2(px) + '<i>x</i> + ' + r2(py) + '<i>y</i> = ' + q.B) + '</div>';
@@ -490,14 +490,14 @@
     function draw() {
       const [x, y] = P, g = [y, x], u = x * y, sx = A.X(x), sy = A.Y(y), gl = Math.hypot(g[0], g[1]), k = Math.min(K, 120 / gl);
       let h = defs(f.id) + clipOpen(f.id) + shade;
-      LEVELS.forEach(v => { h += poly(A, FORMS.cd.curve(v), ORANGE, 1.6, ' opacity="0.45"'); });
-      h += '<line x1="' + A.X(0) + '" y1="' + A.Y(yi) + '" x2="' + A.X(xi) + '" y2="' + A.Y(0) + '" stroke="' + BLUE + '" stroke-width="2" opacity="0.5"/>';
-      h += poly(A, FORMS.cd.curve(u), ORANGE, 3);
-      if (trail.length > 1) h += poly(A, trail, GREEN, 2.5, ' stroke-dasharray="6 4"');
+      LEVELS.forEach(v => { h += poly(A, FORMS.cd.curve(v), IC, 1.6, ' opacity="0.45"'); });
+      h += '<line x1="' + A.X(0) + '" y1="' + A.Y(yi) + '" x2="' + A.X(xi) + '" y2="' + A.Y(0) + '" stroke="' + BUDGET + '" stroke-width="2" opacity="0.5"/>';
+      h += poly(A, FORMS.cd.curve(u), IC, 3);
+      if (trail.length > 1) h += poly(A, trail, GRAD, 2.5, ' stroke-dasharray="6 4"');
       h += '</g>' + axisLines();
-      LEVELS.forEach(v => { const lx = A.xmax * 0.93, ly = v / lx; if (ly < A.ymax * 0.95) h += label(A.X(lx), A.Y(ly) - 6, it('u') + ' = ' + v, ORANGE, 'end', 18); });
+      LEVELS.forEach(v => { const lx = A.xmax * 0.93, ly = v / lx; if (ly < A.ymax * 0.95) h += label(A.X(lx), A.Y(ly) - 6, it('u') + ' = ' + v, IC, 'end', 18); });
       h += rightAngle(sx, sy, [x, -y], g, '#222');
-      h += arrow(f.id, sx, sy, g[0], g[1], k, GREEN, 4) + label(sx + g[0] * k + 8, sy - g[1] * k - 8, '∇' + it('u'), GREEN, null, 22);
+      h += arrow(f.id, sx, sy, g[0], g[1], k, GRAD, 4) + label(sx + g[0] * k + 8, sy - g[1] * k - 8, '∇' + it('u'), GRAD, null, 22);
       h += dot(sx, sy, 8);
       f.svg.innerHTML = h;
       f.eq.innerHTML = '<div class="vp-disp">' + m(GU + ' = (' + MUX + ', ' + MUY + ') = (<i>y</i>, <i>x</i>)') + '</div><div class="vp-sub">' + m('<i>u</i> = <i>x</i> · <i>y</i>') + ': the darker, the higher the hill</div>';
@@ -526,21 +526,21 @@
       const x = t * xi, y = (1 - t) * yi, g = [y, x], sx = A.X(x), sy = A.Y(y);
       const a = (g[0] * d[0] + g[1] * d[1]) / dd, c = (g[0] * p[0] + g[1] * p[1]) / pp, al = [a * d[0], a * d[1]], ac = [c * p[0], c * p[1]];
       let h = defs(f.id) + clipOpen(f.id);
-      h += '<line x1="' + A.X(0) + '" y1="' + A.Y(yi) + '" x2="' + A.X(xi) + '" y2="' + A.Y(0) + '" stroke="' + BLUE + '" stroke-width="3.5"/>';
-      h += poly(A, FORMS.cd.curve(x * y), ORANGE, 2.5, ' opacity="0.7"');
+      h += '<line x1="' + A.X(0) + '" y1="' + A.Y(yi) + '" x2="' + A.X(xi) + '" y2="' + A.Y(0) + '" stroke="' + BUDGET + '" stroke-width="3.5"/>';
+      h += poly(A, FORMS.cd.curve(x * y), IC, 2.5, ' opacity="0.7"');
       h += '</g>' + axisLines();
       // the box: ∇u is the diagonal, the two pieces are its sides
       const ex = sx + al[0] * K, ey = sy - al[1] * K, cx = sx + ac[0] * K, cy = sy - ac[1] * K;
       if (Math.abs(a) > 0.05) h += '<path d="M' + ex + ',' + ey + ' L' + (sx + g[0] * K) + ',' + (sy - g[1] * K) + ' L' + cx + ',' + cy + '" fill="none" stroke="' + GREY + '" stroke-width="1.4" stroke-dasharray="5 4"/>' + rightAngle(sx, sy, d, p, '#222');
-      h += arrow(f.id, sx, sy, ac[0], ac[1], K, PCOL, 3.5) + arrow(f.id, sx, sy, al[0], al[1], K, PURPLE, 4.5) + arrow(f.id, sx, sy, g[0], g[1], K, GREEN, 3);
-      h += label(sx + g[0] * K + 8, sy - g[1] * K - 8, '∇' + it('u'), GREEN, null, 22);
-      if (Math.abs(a) > 0.05) h += label(ex + (a > 0 ? 12 : -12), ey + (a > 0 ? 8 : -2), 'gain', PURPLE, a > 0 ? null : 'end', 20);
+      h += arrow(f.id, sx, sy, ac[0], ac[1], K, P_ARROW, 3.5) + arrow(f.id, sx, sy, al[0], al[1], K, ALONG, 4.5) + arrow(f.id, sx, sy, g[0], g[1], K, GRAD, 3);
+      h += label(sx + g[0] * K + 8, sy - g[1] * K - 8, '∇' + it('u'), GRAD, null, 22);
+      if (Math.abs(a) > 0.05) h += label(ex + (a > 0 ? 12 : -12), ey + (a > 0 ? 8 : -2), 'gain', ALONG, a > 0 ? null : 'end', 20);
       h += dot(sx, sy, 8);
       f.svg.innerHTML = h;
-      f.eq.innerHTML = '<div class="vp-disp">' + m(GU + ' = ' + vec(g[0], g[1])) + '</div><div class="vp-sub">' + m('= <b style="color:' + PURPLE + '">' + vec(al[0], al[1]) + '</b> + <b style="color:' + PCOL + '">' + vec(ac[0], ac[1]) + '</b>') + '</div>';
-      f.status.innerHTML = '<div><b style="color:' + PURPLE + '">along the line</b> ' + m(vec(al[0], al[1])) + ': walk this way and you gain</div>' +
-        '<div><b style="color:' + PCOL + '">along ' + m('<i>p</i>') + '</b> ' + m(vec(ac[0], ac[1]) + ' = ' + r2(c) + ' · ' + vec(p[0], p[1])) + ': you can’t use it, it costs money</div>' +
-        '<div class="dim">' + (Math.abs(a) < 0.05 ? 'nothing left to gain along the line: ' + m(GU) + ' points the same way as ' + m('<i>p</i>') + '. This is the best feasible bundle.' : 'at ' + vec(x, y) + ' the purple piece is not 0: walking ' + (a > 0 ? 'towards more x' : 'towards more y') + ' makes you better off') + '</div>';
+      f.eq.innerHTML = '<div class="vp-disp">' + m(GU + ' = ' + vec(g[0], g[1])) + '</div><div class="vp-sub">' + m('= <b style="color:' + ALONG + '">' + vec(al[0], al[1]) + '</b> + <b style="color:' + P_ARROW + '">' + vec(ac[0], ac[1]) + '</b>') + '</div>';
+      f.status.innerHTML = '<div><b style="color:' + ALONG + '">along the line</b> ' + m(vec(al[0], al[1])) + ': walk this way and you gain</div>' +
+        '<div><b style="color:' + P_ARROW + '">along ' + m('<i>p</i>') + '</b> ' + m(vec(ac[0], ac[1]) + ' = ' + r2(c) + ' · ' + vec(p[0], p[1])) + ': you can’t use it, it costs money</div>' +
+        '<div class="dim">' + (Math.abs(a) < 0.05 ? 'nothing left to gain along the line: ' + m(GU) + ' points the same way as ' + m('<i>p</i>') + '. This is the best feasible bundle.' : 'at ' + vec(x, y) + ' the green piece is not 0: walking ' + (a > 0 ? 'towards more x' : 'towards more y') + ' makes you better off') + '</div>';
     }
     draggable(f, A, (x, y) => { stop(); t = Math.max(0.03, Math.min(0.97, (x * xi + (yi - y) * yi) / (xi * xi + yi * yi))); draw(); });
     button(f.ctl, 'walk to the best feasible bundle', () => { stop(); stop = tween(() => t, v => { t = v; draw(); }, tE, 2200); });
@@ -559,17 +559,17 @@
       const x = pts[at], y = q.B - q.px * x, g = [y, x], sx = A.X(x), sy = A.Y(y), lp = [lam * q.px, lam * q.py];
       const hit = Math.hypot(g[0] - lp[0], g[1] - lp[1]) < 0.3;
       let h = defs(f.id) + clipOpen(f.id);
-      h += '<line x1="' + A.X(0) + '" y1="' + A.Y(yi) + '" x2="' + A.X(xi) + '" y2="' + A.Y(0) + '" stroke="' + BLUE + '" stroke-width="3.5" opacity="0.6"/>';
-      h += poly(A, FORMS.cd.curve(x * y), ORANGE, 2.5, ' opacity="0.7"');
+      h += '<line x1="' + A.X(0) + '" y1="' + A.Y(yi) + '" x2="' + A.X(xi) + '" y2="' + A.Y(0) + '" stroke="' + BUDGET + '" stroke-width="3.5" opacity="0.6"/>';
+      h += poly(A, FORMS.cd.curve(x * y), IC, 2.5, ' opacity="0.7"');
       h += '</g>' + axisLines();
-      h += arrow(f.id, sx, sy, g[0], g[1], K, GREEN, hit ? 9 : 4, null) + label(sx + g[0] * K + 10, sy - g[1] * K - 10, '∇' + it('u'), GREEN, null, 22);
-      h += arrow(f.id, sx, sy, lp[0], lp[1], K, PCOL, 3.5, hit ? null : '7 4') + label(sx + lp[0] * K + 8, sy - lp[1] * K + 26, 'λ' + it('p'), PCOL, null, 22);
+      h += arrow(f.id, sx, sy, g[0], g[1], K, GRAD, hit ? 9 : 4, null) + label(sx + g[0] * K + 10, sy - g[1] * K - 10, '∇' + it('u'), GRAD, null, 22);
+      h += arrow(f.id, sx, sy, lp[0], lp[1], K, P_ARROW, 3.5, hit ? null : '7 4') + label(sx + lp[0] * K + 8, sy - lp[1] * K + 26, 'λ' + it('p'), P_ARROW, null, 22);
       h += dot(sx, sy, 8) + label(sx - 14, sy + 6, at, '#222', 'end', 20);
       f.svg.innerHTML = h;
       f.eq.innerHTML = '<div class="vp-disp">' + m(GU + ' = λ · <i>p</i>') + '</div><div class="vp-sub">same direction, different length: λ says how many times longer ' + m(GU) + ' is than ' + m('<i>p</i>') + '</div>';
       const parallel = Math.abs(g[0] * q.py - g[1] * q.px) < 1e-6;
       f.status.innerHTML = '<div>at ' + at + ' ' + vec(x, y) + ': ' + m(GU + ' = ' + vec(g[0], g[1])) + ', &nbsp; ' + m('λ<i>p</i> = ' + r2(lam) + ' · ' + vec(q.px, q.py) + ' = ' + vec(lp[0], lp[1])) + '</div>' +
-        '<div class="dim">' + (hit ? '<b style="color:' + GREEN + '">λ = ' + r2(lam) + ': the stretched price arrow covers ' + m(GU) + ' exactly.</b> One more euro is worth ' + r2(lam) + ' more utility.'
+        '<div class="dim">' + (hit ? '<b style="color:' + GRAD + '">λ = ' + r2(lam) + ': the stretched price arrow covers ' + m(GU) + ' exactly.</b> One more euro is worth ' + r2(lam) + ' more utility.'
           : parallel ? 'stretch ' + m('<i>p</i>') + ' until it covers ' + m(GU)
           : 'at ' + at + ' no stretch works: ' + m(GU) + ' and ' + m('<i>p</i>') + ' point different ways, so ' + at + ' is not the best feasible bundle') + '</div>';
     }
@@ -593,21 +593,21 @@
     function draw() {
       const c = Math.cos(th * Math.PI / 180), s = Math.sin(th * Math.PI / 180), rise = g[0] * c + g[1] * s, sx = A.X(P[0]), sy = A.Y(P[1]);
       let h = defs(f.id) + clipOpen(f.id);
-      if (hill) { [150, 300, 400].forEach(v => { h += poly(A, FORMS.cd.curve(v), ORANGE, 1.6, ' opacity="0.4"'); }); h += poly(A, FORMS.cd.curve(P[0] * P[1]), ORANGE, 3); }
-      else { [40, 80].forEach(v => { h += '<line x1="' + A.X(0) + '" y1="' + A.Y(v / q.py) + '" x2="' + A.X(v / q.px) + '" y2="' + A.Y(0) + '" stroke="' + BLUE + '" stroke-width="1.6" opacity="0.4"/>'; }); h += '<line x1="' + A.X(0) + '" y1="' + A.Y(yi) + '" x2="' + A.X(xi) + '" y2="' + A.Y(0) + '" stroke="' + BLUE + '" stroke-width="3"/>'; }
+      if (hill) { [150, 300, 400].forEach(v => { h += poly(A, FORMS.cd.curve(v), IC, 1.6, ' opacity="0.4"'); }); h += poly(A, FORMS.cd.curve(P[0] * P[1]), IC, 3); }
+      else { [40, 80].forEach(v => { h += '<line x1="' + A.X(0) + '" y1="' + A.Y(v / q.py) + '" x2="' + A.X(v / q.px) + '" y2="' + A.Y(0) + '" stroke="' + BUDGET + '" stroke-width="1.6" opacity="0.4"/>'; }); h += '<line x1="' + A.X(0) + '" y1="' + A.Y(yi) + '" x2="' + A.X(xi) + '" y2="' + A.Y(0) + '" stroke="' + BUDGET + '" stroke-width="3"/>'; }
       h += '</g>' + axisLines();
       // ghost marks: along the height line (rise 0) and straight across (largest)
       const gh = (t, col) => { const cc = Math.cos(t * Math.PI / 180), ss = Math.sin(t * Math.PI / 180); return '<line x1="' + sx + '" y1="' + sy + '" x2="' + (sx + LEN * cc) + '" y2="' + (sy - LEN * ss) + '" stroke="' + col + '" stroke-width="2" stroke-dasharray="4 4" opacity="0.7"/>'; };
-      h += gh(thLine, GREY) + gh(thMax, hill ? GREEN : PCOL);
-      h += label(sx + (LEN + 8) * Math.cos(thMax * Math.PI / 180), sy - (LEN + 8) * Math.sin(thMax * Math.PI / 180) - 4, 'largest', hill ? GREEN : PCOL, null, 18);
+      h += gh(thLine, GREY) + gh(thMax, hill ? GRAD : P_ARROW);
+      h += label(sx + (LEN + 8) * Math.cos(thMax * Math.PI / 180), sy - (LEN + 8) * Math.sin(thMax * Math.PI / 180) - 4, 'largest', hill ? GRAD : P_ARROW, null, 18);
       h += label(sx + (LEN + 6) * Math.cos(thLine * Math.PI / 180) + 6, sy - (LEN + 6) * Math.sin(thLine * Math.PI / 180) + 6, '0', GREY, null, 18);
-      h += '<line x1="' + sx + '" y1="' + sy + '" x2="' + (sx + LEN * c) + '" y2="' + (sy - LEN * s) + '" stroke="' + PURPLE + '" stroke-width="4" marker-end="url(#' + f.id + 'a)"/>';
+      h += '<line x1="' + sx + '" y1="' + sy + '" x2="' + (sx + LEN * c) + '" y2="' + (sy - LEN * s) + '" stroke="' + ALONG + '" stroke-width="4" marker-end="url(#' + f.id + 'a)"/>';
       h += dot(sx, sy, 8) + label(sx - 12, sy + 6, 'A', '#222', 'end');
       // the bar: how much this step climbs
       const bw = 150, bx = W - R - bw - 6, by = T + 10, frac = rise / gl;
       h += '<rect x="' + bx + '" y="' + by + '" width="' + bw + '" height="16" fill="#eee"/><line x1="' + (bx + bw / 2) + '" y1="' + (by - 3) + '" x2="' + (bx + bw / 2) + '" y2="' + (by + 19) + '" stroke="#222"/>';
-      h += '<rect x="' + (frac >= 0 ? bx + bw / 2 : bx + bw / 2 + frac * bw / 2) + '" y="' + by + '" width="' + Math.abs(frac) * bw / 2 + '" height="16" fill="' + PURPLE + '"/>';
-      h += label(bx + bw / 2, by + 40, 'rise ' + r2(rise), PURPLE, 'middle', 19);
+      h += '<rect x="' + (frac >= 0 ? bx + bw / 2 : bx + bw / 2 + frac * bw / 2) + '" y="' + by + '" width="' + Math.abs(frac) * bw / 2 + '" height="16" fill="' + ALONG + '"/>';
+      h += label(bx + bw / 2, by + 40, 'rise ' + r2(rise), ALONG, 'middle', 19);
       f.svg.innerHTML = h;
       f.eq.innerHTML = '<div class="vp-disp">' + m((hill ? 'rise = ' + r2(g[0]) + '·<i>dx</i> + ' + r2(g[1]) + '·<i>dy</i>' : 'rise = 3·<i>dx</i> + 1·<i>dy</i>')) + '</div><div class="vp-sub">' + (hill ? 'on the utility hill at A, for small steps' : 'on the spending roof (flat, so exact)') + '</div>';
       f.status.innerHTML = '<div>step ' + m('(<i>dx</i>, <i>dy</i>) = ' + vec(c, s)) + ' (length 1): rise ' + m(r2(rise)) + '</div>' +
@@ -631,12 +631,12 @@
       const ang = Math.abs(Math.atan2(g[1], g[0]) - Math.atan2(p[1], p[0])) * 180 / Math.PI;
       const un = (v, L0) => { const l = Math.hypot(v[0], v[1]); return [v[0] / l * L0, v[1] / l * L0]; }, gu = un(g, 1), pu = un(p, 1);
       let h = defs(f.id) + clipOpen(f.id);
-      h += '<line x1="' + A.X(0) + '" y1="' + A.Y(yi) + '" x2="' + A.X(xi) + '" y2="' + A.Y(0) + '" stroke="' + BLUE + '" stroke-width="3.5"/>';
-      h += poly(A, FORMS.cd.curve(x * y), ORANGE, 3);
+      h += '<line x1="' + A.X(0) + '" y1="' + A.Y(yi) + '" x2="' + A.X(xi) + '" y2="' + A.Y(0) + '" stroke="' + BUDGET + '" stroke-width="3.5"/>';
+      h += poly(A, FORMS.cd.curve(x * y), IC, 3);
       h += '</g>' + axisLines();
-      h += rightAngle(sx, sy, [1, -y / x], g, ORANGE) + rightAngle(sx, sy, [q.py, -q.px], p, BLUE);
-      h += arrow(f.id, sx, sy, pu[0], pu[1], 70, PCOL, 4) + label(sx + pu[0] * 70 + 8, sy - pu[1] * 70 + 22, it('p'), PCOL, null, 22);
-      h += arrow(f.id, sx, sy, gu[0], gu[1], 100, GREEN, 4) + label(sx + gu[0] * 100 + 8, sy - gu[1] * 100 - 8, '∇' + it('u'), GREEN, null, 22);
+      h += rightAngle(sx, sy, [1, -y / x], g, IC) + rightAngle(sx, sy, [q.py, -q.px], p, BUDGET);
+      h += arrow(f.id, sx, sy, pu[0], pu[1], 70, P_ARROW, 4) + label(sx + pu[0] * 70 + 8, sy - pu[1] * 70 + 22, it('p'), P_ARROW, null, 22);
+      h += arrow(f.id, sx, sy, gu[0], gu[1], 100, GRAD, 4) + label(sx + gu[0] * 100 + 8, sy - gu[1] * 100 - 8, '∇' + it('u'), GRAD, null, 22);
       h += dot(sx, sy, 8);
       f.svg.innerHTML = h;
       f.eq.innerHTML = '<div class="vp-disp">angle between ' + m(GU) + ' and ' + m('<i>p</i>') + ': ' + m(ang < 0.05 ? '0°' : r2(Math.round(ang * 10) / 10) + '°') + '</div><div class="vp-sub">only the directions are drawn here</div>';
@@ -656,7 +656,7 @@
     svgEl.setAttribute('viewBox', '0 0 ' + Wp + ' ' + Hp);
     let g = '<line x1="' + HL + '" y1="' + HT + '" x2="' + HL + '" y2="' + (HT + ph2) + '" stroke="#222"/><line x1="' + HL + '" y1="' + (HT + ph2) + '" x2="' + (HL + pw2) + '" y2="' + (HT + ph2) + '" stroke="#222"/>';
     const pts = []; for (let k = 0; k <= 160; k++) { const x = x0 + (x1 - x0) * k / 160; pts.push(X(x).toFixed(1) + ',' + Y(fn(x)).toFixed(1)); }
-    g += '<polyline points="' + pts.join(' ') + '" fill="none" stroke="' + PURPLE + '" stroke-width="3"/>';
+    g += '<polyline points="' + pts.join(' ') + '" fill="none" stroke="' + ALONG + '" stroke-width="3"/>';
     g += label(HL - 8, HT + 14, it(opts.yl || 'u'), '#555', 'end', 20) + label(HL + pw2, HT + ph2 + 30, it(opts.xl || 'x'), '#555', 'end', 20);
     return { g, X, Y, HL, HT, pw2, ph2 };
   }
@@ -676,8 +676,8 @@
       const mx = q.B, bar = (v, col) => '<span class="vp-bar" style="width:' + (Math.abs(v) / mx * 12) + 'em;background:' + col + '"></span>';
       f.eq.innerHTML = '<div class="vp-disp">one step along the line: ' + m('<i>d</i> = (1, −3)') + '</div><div class="vp-sub">one more x, three fewer y</div>';
       f.status.innerHTML = '<div>at ' + vec(x, y) + ':</div>' +
-        '<div class="vp-row"><span>gain ' + m(MUX + ' = <i>y</i> = ' + r2(gain)) + '</span>' + bar(gain, GREEN) + '</div>' +
-        '<div class="vp-row"><span>loss ' + m('3 · ' + MUY + ' = 3<i>x</i> = ' + r2(loss)) + '</span>' + bar(loss, ORANGE) + '</div>' +
+        '<div class="vp-row"><span>gain ' + m(MUX + ' = <i>y</i> = ' + r2(gain)) + '</span>' + bar(gain, GRAD) + '</div>' +
+        '<div class="vp-row"><span>loss ' + m('3 · ' + MUY + ' = 3<i>x</i> = ' + r2(loss)) + '</span>' + bar(loss, IC) + '</div>' +
         '<div><b>net ' + m(r2(gain) + ' − ' + r2(loss) + ' = ' + r2(net)) + '</b>: ' + (Math.abs(net) < 1e-9 ? 'the top of the fence' : net > 0 ? 'keep going (more x)' : 'go back (more y)') + '</div>';
     }
     const inp = slider(f.ctl, 'x', 0.5, xi - 0.5, 0.5, x, (v, o, first) => { x = v; o.innerHTML = r2(v); if (!first) { stop(); draw(); } });
@@ -693,10 +693,10 @@
     function draw() {
       const tmax = s ? s * 1.6 : 1.6, P = profile(f.svg, [0, tmax], t => F(t), { umin: u0 - (F(tmax) - u0) * 0.15, umax: F(tmax) + (F(tmax) - u0) * 0.1, xl: 't', yl: 'u' });
       let h = defs(f.id) + P.g;
-      h += '<line x1="' + P.X(0) + '" y1="' + P.Y(u0) + '" x2="' + P.X(tmax) + '" y2="' + P.Y(u0 + rate * tmax) + '" stroke="' + GREEN + '" stroke-width="2" stroke-dasharray="6 5"/>';
-      h += label(P.X(tmax) - 4, P.Y(u0 + rate * tmax) - 10, 'slope ' + rate, GREEN, 'end', 18);
+      h += '<line x1="' + P.X(0) + '" y1="' + P.Y(u0) + '" x2="' + P.X(tmax) + '" y2="' + P.Y(u0 + rate * tmax) + '" stroke="' + GRAD + '" stroke-width="2" stroke-dasharray="6 5"/>';
+      h += label(P.X(tmax) - 4, P.Y(u0 + rate * tmax) - 10, 'slope ' + rate, GRAD, 'end', 18);
       h += dot(P.X(0), P.Y(u0), 7) + label(P.X(0) + 10, P.Y(u0) + 26, 'A', '#222');
-      if (s) { h += '<line x1="' + P.X(0) + '" y1="' + P.Y(u0) + '" x2="' + P.X(s) + '" y2="' + P.Y(F(s)) + '" stroke="' + PURPLE + '" stroke-width="3"/>' + dot(P.X(s), P.Y(F(s)), 7, PURPLE); }
+      if (s) { h += '<line x1="' + P.X(0) + '" y1="' + P.Y(u0) + '" x2="' + P.X(s) + '" y2="' + P.Y(F(s)) + '" stroke="' + ALONG + '" stroke-width="3"/>' + dot(P.X(s), P.Y(F(s)), 7, ALONG); }
       f.svg.innerHTML = h;
       f.eq.innerHTML = '<div class="vp-disp">' + m('<i>u</i>(<i>t</i>) = 225 + 30<i>t</i> − 3<i>t</i>²') + '</div><div class="vp-sub">the fence height, walking ' + m('<i>t</i>') + ' steps of ' + m('<i>d</i> = (1, −3)') + ' from A</div>';
       f.status.innerHTML = tried.length ? tried.map(([t, v]) => '<div>step ' + m('<i>t</i> = ' + t) + ': gain per unit of step ' + m(String(+v.toFixed(5))) + '</div>').join('') + (tried.some(([t]) => t === 0.01) ? '<div><b>it settles at 30 = gain minus loss</b></div>' : '') : '<div class="dim">pick a step size</div>';
@@ -743,7 +743,7 @@
 (function () {
   const NS = 'http://www.w3.org/2000/svg', W = 560, H = 430;
   // colours by role (Can 29.10): indifference curves blue, budget orange, ∇u dark blue, p dark orange
-  const BLUE = '#D9480F', ORANGE = '#0062C4', PURPLE = '#7A3DB8', GREEN = '#0B3D91', GREY = '#888', PCOL = '#A63E00';
+  const BUDGET = '#D9480F', IC = '#0062C4', ALONG = '#2F7D4F', GRAD = '#0B3D91', GREY = '#888', P_ARROW = '#A63E00';
   const MATH = '"STIX Two Text", "Cambria Math", Georgia, serif';
   const halo = 'paint-order="stroke" stroke="#fff" stroke-width="5" stroke-linejoin="round"';
   const r2 = v => String(Math.round(v * 100) / 100);
@@ -812,35 +812,35 @@
       h += label(XM, 0, 0, it('x'), '#555', 8, 6) + label(0, YM, 0, it('y'), '#555', -10, -6, 'end');
       const parts = [];
       if (mode === 'hill' || mode === 'fence' || mode === 'top') {
-        LEVELS.forEach(u => { h += line3(hillCurve(u, 0), ORANGE, u === 300 ? 2.6 : 1.4, u === 300 ? '' : ' opacity="0.6"'); });   // the hiking map on the floor
+        LEVELS.forEach(u => { h += line3(hillCurve(u, 0), IC, u === 300 ? 2.6 : 1.4, u === 300 ? '' : ' opacity="0.6"'); });   // the hiking map on the floor
         if (elev < 88) surface((x, y) => zu(x * y), hillFill, (x, y) => x * y >= UCAP).forEach(p => parts.push(p));
       }
       if (mode === 'roof') {
-        [40, 60, 80].forEach(s => { const yi = Math.min(YM, s), xi = s / 3; h += line3([[(s - Math.min(YM, s)) / 3, Math.min(YM, s), 0], [xi, 0, 0]], BLUE, s === 60 ? 3 : 1.6, s === 60 ? '' : ' opacity="0.6"'); });
+        [40, 60, 80].forEach(s => { const yi = Math.min(YM, s), xi = s / 3; h += line3([[(s - Math.min(YM, s)) / 3, Math.min(YM, s), 0], [xi, 0, 0]], BUDGET, s === 60 ? 3 : 1.6, s === 60 ? '' : ' opacity="0.6"'); });
         if (elev < 88) surface((x, y) => zs(3 * x + y), roofFill).forEach(p => parts.push(p));
       }
-      if (mode === 'fence' || mode === 'top') h += line3([[0, 60, 0], [20, 0, 0]], BLUE, 3.5);
+      if (mode === 'fence' || mode === 'top') h += line3([[0, 60, 0], [20, 0, 0]], BUDGET, 3.5);
       parts.sort((a, b) => a[0] - b[0]);
       // the fence: vertical strips on 3x + y = 60, mixed into the painter's order
       if (mode === 'fence' && elev < 88) {
         const fs = [];
         for (let k = 0; k < 20; k++) {
           const x0 = k, x1 = k + 1, c = [[x0, 60 - 3 * x0, 0], [x1, 60 - 3 * x1, 0], [x1, 60 - 3 * x1, ZH * 0.5], [x0, 60 - 3 * x0, ZH * 0.5]].map(q => pr(...q));
-          fs.push([(c[0][2] + c[1][2]) / 2 + 0.01, '<polygon points="' + c.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ') + '" fill="' + BLUE + '" opacity="0.26"/>']);
+          fs.push([(c[0][2] + c[1][2]) / 2 + 0.01, '<polygon points="' + c.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ') + '" fill="' + BUDGET + '" opacity="0.26"/>']);
         }
         fs.forEach(f => parts.push(f)); parts.sort((a, b) => a[0] - b[0]);
       }
       h += parts.map(p => p[1]).join('');
-      if (elev < 88 && (mode === 'hill' || mode === 'fence')) LEVELS.forEach(u => { h += line3(hillCurve(u, zu(u)), ORANGE, u === 300 && mode === 'fence' ? 3 : 2); });   // height lines on the hill
-      if (elev < 88 && mode === 'roof') [40, 60, 80].forEach(s => { h += line3([[(s - Math.min(YM, s)) / 3, Math.min(YM, s), zs(s)], [s / 3, 0, zs(s)]], BLUE, s === 60 ? 3 : 2); });
+      if (elev < 88 && (mode === 'hill' || mode === 'fence')) LEVELS.forEach(u => { h += line3(hillCurve(u, zu(u)), IC, u === 300 && mode === 'fence' ? 3 : 2); });   // height lines on the hill
+      if (elev < 88 && mode === 'roof') [40, 60, 80].forEach(s => { h += line3([[(s - Math.min(YM, s)) / 3, Math.min(YM, s), zs(s)], [s / 3, 0, zs(s)]], BUDGET, s === 60 ? 3 : 2); });
       let say = '';
       if (mode === 'hill') {
         const [x, y] = P, u = x * y, g = [y, x], k = 0.25;
         h += line3([[x, y, 0], [x, y, zu(u)]], GREY, 1.5, ' stroke-dasharray="4 4"');
         const s = pr(x, y, zu(u)), f = pr(x, y, 0);
         h += '<circle cx="' + s[0] + '" cy="' + s[1] + '" r="7" fill="#222" stroke="#fff" stroke-width="2"/>';
-        h += arrow3(x, y, g[0] * k, g[1] * k, GREEN, 4) + label(x + g[0] * k, y + g[1] * k, 0, '∇' + it('u'), GREEN, 8, -6);
-        h += '<circle cx="' + f[0] + '" cy="' + f[1] + '" r="5" fill="' + GREEN + '"/>';
+        h += arrow3(x, y, g[0] * k, g[1] * k, GRAD, 4) + label(x + g[0] * k, y + g[1] * k, 0, '∇' + it('u'), GRAD, 8, -6);
+        h += '<circle cx="' + f[0] + '" cy="' + f[1] + '" r="5" fill="' + GRAD + '"/>';
         eq.innerHTML = '<div class="vp-disp">' + m('<i>u</i> = <i>x</i> · <i>y</i>') + '</div><div class="vp-sub">the utility hill: height = utility</div>';
         say = '<div>at ' + m('(' + r2(x) + ', ' + r2(y) + ')') + ': height ' + m('<i>u</i> = ' + r2(u)) + ', ' + m('∇<i>u</i> = (' + r2(g[0]) + ', ' + r2(g[1]) + ')') + '</div>' +
           '<div class="dim">blue lines = height lines = indifference curves · arrow = steepest way up</div>';
@@ -849,26 +849,26 @@
         const [x, y] = P, k = 2.2;
         const s = pr(x, y, zs(3 * x + y));
         h += line3([[x, y, 0], [x, y, zs(3 * x + y)]], GREY, 1.5, ' stroke-dasharray="4 4"') + '<circle cx="' + s[0] + '" cy="' + s[1] + '" r="7" fill="#222" stroke="#fff" stroke-width="2"/>';
-        h += rightAngle3(x, y, [1, -3], [3, 1]) + arrow3(x, y, 3 * k, 1 * k, PCOL, 4) + label(x + 3 * k, y + k, 0, it('p'), PCOL, 8, -4);
-        [40, 60, 80].forEach(v => { const yy = Math.min(v, YM - 2); h += label((v - yy) / 3, yy, 0, '€' + v, BLUE, -8, -6, 'end'); });
+        h += rightAngle3(x, y, [1, -3], [3, 1]) + arrow3(x, y, 3 * k, 1 * k, P_ARROW, 4) + label(x + 3 * k, y + k, 0, it('p'), P_ARROW, 8, -4);
+        [40, 60, 80].forEach(v => { const yy = Math.min(v, YM - 2); h += label((v - yy) / 3, yy, 0, '€' + v, BUDGET, -8, -6, 'end'); });
         eq.innerHTML = '<div class="vp-disp">' + m('<i>S</i> = 3<i>x</i> + <i>y</i>') + '</div><div class="vp-sub">the spending roof: height = money spent</div>';
         say = '<div>flat roof: the same steepest way up everywhere, ' + m('<i>p</i> = (3, 1)') + '</div>' +
           '<div class="dim">height lines = budget lines €40, €60, €80 · p square to them</div>';
       }
       if (mode === 'fence') {
         const cut = []; for (let i = 0; i <= 60; i++) { const x = 20 * i / 60, y = 60 - 3 * x; cut.push([x, y, zu(x * y)]); }
-        if (elev < 88) h += line3(cut, PURPLE, 4);
+        if (elev < 88) h += line3(cut, ALONG, 4);
         const e = pr(10, 30, elev < 88 ? zu(300) : 0), fy = 60 - 3 * FX, fp = pr(FX, fy, elev < 88 ? zu(FX * fy) : 0);
         h += '<circle cx="' + fp[0] + '" cy="' + fp[1] + '" r="7" fill="#222" stroke="#fff" stroke-width="2"/>';
-        h += '<circle cx="' + e[0] + '" cy="' + e[1] + '" r="8" fill="' + GREEN + '" stroke="#fff" stroke-width="2"/>' + label(10, 30, elev < 88 ? zu(300) : 0, 'E', '#222', 12, -8);
+        h += '<circle cx="' + e[0] + '" cy="' + e[1] + '" r="8" fill="' + GRAD + '" stroke="#fff" stroke-width="2"/>' + label(10, 30, elev < 88 ? zu(300) : 0, 'E', '#222', 12, -8);
         eq.innerHTML = '<div class="vp-disp">' + m('3<i>x</i> + <i>y</i> = 60') + '</div><div class="vp-sub">a fence on the budget line cuts the hill</div>';
         say = '<div>at ' + m('(' + r2(FX) + ', ' + r2(fy) + ')') + ': ' + m('<i>u</i> = ' + r2(FX * fy)) + '</div>' + (elev < 88 ? '<div>the fence path: highest at ' + m('E = (10, 30)') + ', ' + m('<i>u</i> = 300') + '</div><div class="dim">top view: the height line through E just touches the line</div>'
           : '<div class="dim">from above: ' + m('<i>u</i> = 300') + ' just touches the budget line at E</div>');
       }
       if (mode === 'top') {
         const k = 0.9;   // the same arrow scale for both (Murat)
-        h += arrow3(10, 30, 30 * k, 10 * k, GREEN, 4) + label(10 + 30 * k, 30 + 10 * k, 0, '∇' + it('u') + ' = (30, 10)', GREEN, 8, -8);
-        h += arrow3(10, 30, 3 * k, 1 * k, PCOL, 5) + label(10 + 3 * k, 30 + k, 0, it('p'), PCOL, 10, 24);
+        h += arrow3(10, 30, 30 * k, 10 * k, GRAD, 4) + label(10 + 30 * k, 30 + 10 * k, 0, '∇' + it('u') + ' = (30, 10)', GRAD, 8, -8);
+        h += arrow3(10, 30, 3 * k, 1 * k, P_ARROW, 5) + label(10 + 3 * k, 30 + k, 0, it('p'), P_ARROW, 10, 24);
         const e = pr(10, 30, 0); h += '<circle cx="' + e[0] + '" cy="' + e[1] + '" r="5" fill="#222" stroke="#fff" stroke-width="2"/>' + label(10, 30, 0, 'E', '#222', -12, 6, 'end');
         eq.innerHTML = '<div class="vp-disp">' + m('∇<i>u</i> = 10 · <i>p</i>') + '</div><div class="vp-sub">at E, seen from above, the same scale for both arrows</div>';
         say = '<div>' + m('∇<i>u</i> = (30, 10)') + ' and ' + m('<i>p</i> = (3, 1)') + ' point the same way: straight across the budget line.</div><div class="dim">∇u is 10 times as long as p: λ = 10. The hill climbs 10 times as fast as the roof.</div>';

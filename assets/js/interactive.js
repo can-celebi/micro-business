@@ -603,6 +603,9 @@
     d.appendChild(b);
   }
 
+  // the new look (academic.css) can be switched off in class with ?theme=classic (back to console-light.css only)
+  if (/[?&]theme=classic\b/.test(location.search)) document.querySelectorAll('link[href*="academic.css"]').forEach(l => { l.disabled = true; });
+
   window.MicroPoll = { whereMap: whereMap, teacher: TEACHER, submit: submit, results: results, submitText: submitText, textResults: textResults, allResults: allResults, allAnswers: allAnswers, tagRefs: tagRefs, blob: blob, classWindow: classWindow, teacherLogin: teacherLogin, teacherLogout: teacherLogout, safe: safe, hasToken: !!TOKEN, session: SESSION, cid: CID };
 
   function init() {
