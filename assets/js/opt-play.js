@@ -17,7 +17,7 @@
   const NS = 'http://www.w3.org/2000/svg';
   const W = 500, H = 340, L = 50, BOT = 40, T = 16, R = 20, pw = W - L - R, ph = H - T - BOT;
   // colours by role (Can 29.10): indifference curves blue, budget orange, ∇u dark blue, p dark orange
-  const BLUE = '#E8590C', ORANGE = '#1C7ED6', PURPLE = '#7A3DB8', GREEN = '#0B3D91', GREY = '#888', PCOL = '#A63E00';
+  const BLUE = '#D9480F', ORANGE = '#0062C4', PURPLE = '#7A3DB8', GREEN = '#0B3D91', GREY = '#888', PCOL = '#A63E00';
   const MATH = '"STIX Two Text", "Cambria Math", Georgia, serif';
   const halo = 'paint-order="stroke" stroke="#fff" stroke-width="5" stroke-linejoin="round"';
   const r2 = v => String(Math.round(v * 100) / 100), r3 = v => String(Math.round(v * 1000) / 1000);
@@ -255,7 +255,7 @@
   const NS = 'http://www.w3.org/2000/svg';
   const W = 500, H = 340, L = 50, BOT = 40, T = 16, R = 20, pw = W - L - R, ph = H - T - BOT;
   // colours by role (Can 29.10): indifference curves blue, budget orange, ∇u dark blue, p dark orange
-  const BLUE = '#E8590C', ORANGE = '#1C7ED6', PURPLE = '#7A3DB8', GREEN = '#0B3D91', GREY = '#888', PCOL = '#A63E00';
+  const BLUE = '#D9480F', ORANGE = '#0062C4', PURPLE = '#7A3DB8', GREEN = '#0B3D91', GREY = '#888', PCOL = '#A63E00';
   const MATH = '"STIX Two Text", "Cambria Math", Georgia, serif';
   const halo = 'paint-order="stroke" stroke="#fff" stroke-width="5" stroke-linejoin="round"';
   const r2 = v => String(Math.round(v * 100) / 100).replace('-', '−');
@@ -475,7 +475,7 @@
       f.svg.innerHTML = h;
       f.eq.innerHTML = '<div class="vp-disp">' + m(GU + ' = (' + MUX + ', ' + MUY + ') = (<i>y</i>, <i>x</i>)') + '</div><div class="vp-sub">' + m('<i>u</i> = <i>x</i> · <i>y</i>') + ': the darker, the higher the hill</div>';
       f.status.innerHTML = '<div>at ' + vec(x, y) + ': ' + m(GU + ' = ' + vec(g[0], g[1])) + ', ' + m('<i>u</i> = ' + r2(u)) + '</div>' +
-        '<div class="dim">the mountain-climb arrow points the steepest way up the hill, at a right angle to the indifference curve through the dot; the longer the arrow, the steeper the climb</div>';
+        '<div class="dim">steepest way up · square to the indifference curve</div>';
     }
     draggable(f, A, (x, y) => { stop(); trail = []; P = [Math.max(0.5, Math.min(A.xmax * 0.97, x)), Math.max(0.5, Math.min(A.ymax * 0.97, y))]; draw(); });
     button(f.ctl, 'climb', () => {
@@ -715,7 +715,7 @@
 (function () {
   const NS = 'http://www.w3.org/2000/svg', W = 560, H = 430;
   // colours by role (Can 29.10): indifference curves blue, budget orange, ∇u dark blue, p dark orange
-  const BLUE = '#E8590C', ORANGE = '#1C7ED6', PURPLE = '#7A3DB8', GREEN = '#0B3D91', GREY = '#888', PCOL = '#A63E00';
+  const BLUE = '#D9480F', ORANGE = '#0062C4', PURPLE = '#7A3DB8', GREEN = '#0B3D91', GREY = '#888', PCOL = '#A63E00';
   const MATH = '"STIX Two Text", "Cambria Math", Georgia, serif';
   const halo = 'paint-order="stroke" stroke="#fff" stroke-width="5" stroke-linejoin="round"';
   const r2 = v => String(Math.round(v * 100) / 100);
@@ -815,7 +815,7 @@
         h += '<circle cx="' + f[0] + '" cy="' + f[1] + '" r="5" fill="' + GREEN + '"/>';
         eq.innerHTML = '<div class="vp-disp">' + m('<i>u</i> = <i>x</i> · <i>y</i>') + '</div><div class="vp-sub">the utility hill: height = utility</div>';
         say = '<div>at ' + m('(' + r2(x) + ', ' + r2(y) + ')') + ': height ' + m('<i>u</i> = ' + r2(u)) + ', ' + m('∇<i>u</i> = (' + r2(g[0]) + ', ' + r2(g[1]) + ')') + '</div>' +
-          '<div class="dim">the orange lines are height lines: walk along one and you stay at the same height (an indifference curve). The mountain-climb arrow on the floor points straight across them, the steepest way up.</div>';
+          '<div class="dim">blue lines = height lines = indifference curves · arrow = steepest way up</div>';
       }
       if (mode === 'roof') {
         const [x, y] = P, k = 2.2;
@@ -824,8 +824,8 @@
         h += rightAngle3(x, y, [1, -3], [3, 1]) + arrow3(x, y, 3 * k, 1 * k, PCOL, 4) + label(x + 3 * k, y + k, 0, it('p'), PCOL, 8, -4);
         [40, 60, 80].forEach(v => { const yy = Math.min(v, YM - 2); h += label((v - yy) / 3, yy, 0, '€' + v, BLUE, -8, -6, 'end'); });
         eq.innerHTML = '<div class="vp-disp">' + m('<i>S</i> = 3<i>x</i> + <i>y</i>') + '</div><div class="vp-sub">the spending roof: height = money spent</div>';
-        say = '<div>the roof is flat, so its steepest way up is the same everywhere: the price arrow ' + m('<i>p</i> = (3, 1)') + '</div>' +
-          '<div class="dim">its height lines on the floor are the budget lines for €40, €60 and €80. The price arrow points straight across them, at a right angle to the budget line.</div>';
+        say = '<div>flat roof: the same steepest way up everywhere, ' + m('<i>p</i> = (3, 1)') + '</div>' +
+          '<div class="dim">height lines = budget lines €40, €60, €80 · p square to them</div>';
       }
       if (mode === 'fence') {
         const cut = []; for (let i = 0; i <= 60; i++) { const x = 20 * i / 60, y = 60 - 3 * x; cut.push([x, y, zu(x * y)]); }
@@ -834,8 +834,8 @@
         h += '<circle cx="' + fp[0] + '" cy="' + fp[1] + '" r="7" fill="#222" stroke="#fff" stroke-width="2"/>';
         h += '<circle cx="' + e[0] + '" cy="' + e[1] + '" r="8" fill="' + GREEN + '" stroke="#fff" stroke-width="2"/>' + label(10, 30, elev < 88 ? zu(300) : 0, 'E', '#222', 12, -8);
         eq.innerHTML = '<div class="vp-disp">' + m('3<i>x</i> + <i>y</i> = 60') + '</div><div class="vp-sub">a fence on the budget line cuts the hill</div>';
-        say = '<div>at ' + m('(' + r2(FX) + ', ' + r2(fy) + ')') + ': ' + m('<i>u</i> = ' + r2(FX * fy)) + '</div>' + (elev < 88 ? '<div>walking along the fence is walking along the budget line: the purple path goes up, then down. Its highest point is ' + m('E = (10, 30)') + ', ' + m('<i>u</i> = 300') + '.</div><div class="dim">press top view: from above, the height line through E just touches the fence line.</div>'
-          : '<div>from above: the height line ' + m('<i>u</i> = 300') + ' just touches the budget line at E. Any higher line misses it; any lower one crosses it twice.</div>');
+        say = '<div>at ' + m('(' + r2(FX) + ', ' + r2(fy) + ')') + ': ' + m('<i>u</i> = ' + r2(FX * fy)) + '</div>' + (elev < 88 ? '<div>the fence path: highest at ' + m('E = (10, 30)') + ', ' + m('<i>u</i> = 300') + '</div><div class="dim">top view: the height line through E just touches the line</div>'
+          : '<div class="dim">from above: ' + m('<i>u</i> = 300') + ' just touches the budget line at E</div>');
       }
       if (mode === 'top') {
         const k = 0.9;   // the same arrow scale for both (Murat)
