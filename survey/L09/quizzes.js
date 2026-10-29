@@ -20,6 +20,11 @@
         { t: 'At the best bundle, ' + m('λ = 0.05') + '. The budget rises by €1. Utility rises by about …',
           o: [m('1'), m('0.05'), m('20'), m('0')] }
       ] }
+,
+    // q2 (PA1–PA3) and q3 (E1–E3): Sinan's items go here (Can 29.10: the slide exercises as in-class quizzes); until then
+    // the pages exist (closed by the gate) so the deck's slots can be built
+    q2: { title: 'quiz 2 · the exercises PA1–PA3', setup: [['x, y', 'two goods']], qs: [] },
+    q3: { title: 'quiz 3 · the exercises E1–E3', setup: [['x, y', 'two goods']], qs: [] }
   };
-  window.L09_NEXT = { q1: 'L09-N1' };   // the slide after the quiz slide (Filiz)
+  window.L09_NEXT = { q1: 'L09-N1', q2: 'L09-PA1', q3: 'L09-E1b' };   // the slide after the quiz slide (Filiz)
 })();
