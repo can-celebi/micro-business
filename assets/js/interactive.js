@@ -603,6 +603,9 @@
     d.appendChild(b);
   }
 
+  // the new look (academic.css) can be switched off in class with ?theme=classic (back to console-light.css only)
+  if (/[?&]theme=classic\b/.test(location.search)) document.querySelectorAll('link[href*="academic.css"]').forEach(l => { l.disabled = true; });
+
   window.MicroPoll = { whereMap: whereMap, teacher: TEACHER, submit: submit, results: results, submitText: submitText, textResults: textResults, allResults: allResults, allAnswers: allAnswers, tagRefs: tagRefs, blob: blob, classWindow: classWindow, teacherLogin: teacherLogin, teacherLogout: teacherLogout, safe: safe, hasToken: !!TOKEN, session: SESSION, cid: CID };
 
   function init() {
@@ -613,6 +616,12 @@
     }
     document.querySelectorAll('.poll').forEach(initPoll);
     document.querySelectorAll('details.prompt').forEach(initPrompt);
+    // the lecturer's pen (ink.js, Can 29.10: "the drawing tool for the entire slides"): every deck, teacher mode only
+    const LOCALINK = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname) && /[?&]ink\b/.test(location.search);
+    const me = [...document.scripts].find(s => /assets\/js\/interactive\.js/.test(s.src));
+    if (document.querySelector('.reveal') && (TEACHER || LOCALINK) && me && !document.getElementById('ink-js')) {
+      const s = document.createElement('script'); s.id = 'ink-js'; s.src = me.src.replace(/interactive\.js(\?.*)?$/, 'ink.js?v=20261029b'); document.body.appendChild(s);
+    }
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();
