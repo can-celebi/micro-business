@@ -39,7 +39,7 @@
         const right = load(markKey(i));
         h += '<div class="q9-q"><div class="t"><b>' + (i + 1) + '.</b>' + q.t + '</div>';
         q.o.forEach((o, k) => {
-          const L = 'abcd'[k], c = vals ? vals.filter(v => v[i] === L).length : 0;
+          const L = 'abcde'[k], c = vals ? vals.filter(v => v[i] === L).length : 0;
           h += '<div class="q9-row' + (right === L ? ' right' : '') + (picking === i ? ' pick' : '') + '" data-q="' + i + '" data-l="' + L + '"><span class="lab">' + o + '</span><span class="track"><span class="fill" style="width:' + pc(c, m) + '%"></span></span><span class="num">' + (vals ? pc(c, m) + '% (' + c + ')' : '–') + '</span></div>';
         });
         if (P.teacher) h += '<button class="q9-btn q9-reveal" type="button" data-q="' + i + '">' + (picking === i ? 'tap the right option' : right ? 'change the answer' : 'reveal answer') + '</button>';
