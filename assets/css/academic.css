@@ -30,7 +30,7 @@
   --accent: #7B2D26;      /* oxblood, structure only (9.6 : 1) */
   --p-green: #E9F2EA; --p-yellow: #F7F0DC; --p-pink: #F6E4E1; --p-blue: #EAF0F7;
   --sans: "Inter", "Source Sans 3", "Segoe UI", system-ui, -apple-system, sans-serif;
-  --serif: "Newsreader", "STIX Two Text", Georgia, serif;
+  --serif: var(--sans);   /* Can (R81): Inter for all text, STIX only for maths */
   --math: "STIX Two Text", "Cambria Math", Georgia, serif;
   --mono: var(--sans);    /* every old monospace place gets the sans; real code below keeps a monospace */
 }
@@ -39,10 +39,10 @@
 .reveal { font-family: var(--sans); }
 code, pre, kbd, .raw pre, .mine-demo .md-hash code { font-family: "IBM Plex Mono", ui-monospace, monospace; }
 math, .m, .op-m, .vp-m, .l08-m { font-family: var(--math); }
-.reveal h1, .reveal h2, .reveal h3, .title-block .t, .big { font-family: var(--serif); }
-.reveal .sub, .title-block .s { font-family: var(--serif); }
-.def, .reveal .def, .reveal .slides section .lead-block .def { font-family: var(--serif) !important; }
-.l09-hero, .l09-cap { font-family: var(--serif) !important; }
+.reveal h1, .reveal h2, .reveal h3, .title-block .t, .big { font-family: var(--sans); }
+.reveal .sub, .title-block .s { font-family: var(--sans); }
+.def, .reveal .def, .reveal .slides section .lead-block .def { font-family: var(--sans) !important; }
+.l09-hero, .l09-cap { font-family: var(--sans) !important; }
 .btn, .menu-btn, .side-btn, .sb-fold, .sb-tab, .ink-btn, .ink-bar button, details.prompt summary, details.answer summary,
 .poll-input input, .poll-input textarea, .menu-panel, .side-panel, .pulse-panel, .ask-panel, .sidebar, .ink-bar,
 .pulse-panel .scale button, .sp-sec .scale button, .chat-sec textarea, .sp-field input, .code-panel input, .ask-panel textarea, .side-mode,
@@ -66,3 +66,5 @@ html, body, .reveal-viewport { background: var(--bg); }
 .bar-fill, .vbar.hit { background: var(--accent); }
 .reveal .progress { color: var(--accent); }
 .vp-ctl input[type=range], .op-ctl input[type=range] { accent-color: var(--accent); }
+/* titles small and compact (Can, R81: "the titels are ugly and take too much space") */
+.reveal h2 { font-size: 0.8em; }
