@@ -804,7 +804,7 @@
     }
     function curves(w, col, wid, extra, labels) {
       let h = '';
-      LV.forEach((u, i) => {
+      [[5, 5], [15, 15]].map(([px, py]) => F.U(w, px, py)).forEach((u, i) => {   // the faint curves through (5, 5) and (15, 15)
         const pts = F.curve(w, u);
         h += clipPath(pts, col, wid, extra);
         if (labels && FULL) { const ok = pts.filter(([x, y]) => x <= A.xmax * 0.95 && y <= A.ymax * 0.9 && y >= A.ymax * 0.06), end = key === 'ql' ? ok[Math.floor(ok.length * (0.12 + 0.22 * i))] : ok.pop(); if (end) h += label(A.X(end[0]) + 6, A.Y(end[1]) - 6, it('u') + ' = ' + r2(u), IC, null, 17); }
@@ -997,7 +997,7 @@
     // the utility of the current numbers; height lines through fixed bundles t·(10, 30), so for Cobb-Douglas the floor map
     // depends only on α/β (scale both and the hill changes, the floor curves stay)
     const UP = (x, y) => mode === 'ql3d' ? PV.a * x + Math.pow(y, PV.b) : Math.pow(x, PV.a) * Math.pow(y, PV.b);
-    const RAYS = [0.45, 0.7, 1, 1.35];
+    const RAYS = [0.5, 1, 1.5];   // height lines through (5, 5), (10, 10), (15, 15) for the current numbers (the middle one strong)
     function contourP(c, z) {
       const pts = [];
       if (mode === 'ql3d') { for (let i = 0; i <= 640; i++) { const y = YM * i / 640, x = (c - Math.pow(y, PV.b)) / PV.a; if (x >= 0 && x <= XM) pts.push([x, y, z]); } }
@@ -1089,7 +1089,7 @@
       if (isP) {
         capP = Math.max(UP(20, 45), UP(0, 60), UP(20, 0)) * 1.05;           // the hill reaches above the whole budget set
         const zP = u => Math.min(u, capP) / capP * ZH;
-        RAYS.forEach(t => { h += line3(contourP(UP(10 * t, 30 * t), 0), IC, t === 1 ? 2.6 : 1.4, t === 1 ? '' : ' opacity="0.65"'); });   // the floor map
+        RAYS.forEach(t => { h += line3(contourP(UP(10 * t, 10 * t), 0), IC, t === 1 ? 2.6 : 1.4, t === 1 ? '' : ' opacity="0.65"'); });   // the floor map
         if (showBud) h += line3([[0, 60, 0], [20, 0, 0]], BUDGET, 3.5);
         if (elev < 88) surface((x, y) => zP(UP(x, y)), hillFill, (x, y) => UP(x, y) >= capP).forEach(q => parts.push(q));
       }
@@ -1100,7 +1100,7 @@
       if (elev < 88 && mode === 'roof') [40, 60, 80].forEach(s => { h += line3([[(s - Math.min(YM, s)) / 3, Math.min(YM, s), zs(s)], [s / 3, 0, zs(s)]], BUDGET, s === 60 ? 3 : 2); });
       if (isP) {
         const zP = u => Math.min(u, capP) / capP * ZH;
-        if (elev < 88) RAYS.forEach(t => { const c = UP(10 * t, 30 * t); if (c < capP) h += line3(contourP(c, zP(c)), IC, 2); });   // height lines on the hill
+        if (elev < 88) RAYS.forEach(t => { const c = UP(10 * t, 10 * t); if (c < capP) h += line3(contourP(c, zP(c)), IC, 2); });   // height lines on the hill
         if (showBud) { const b = bestP(), ub = UP(b[0], b[1]), q0 = pr(b[0], b[1], 0), q1 = pr(b[0], b[1], elev < 88 ? zP(ub) : 0);
           if (elev < 88) h += line3([[b[0], b[1], 0], [b[0], b[1], zP(ub)]], GREY, 1.4, ' stroke-dasharray="4 4"');
           h += '<circle cx="' + q0[0] + '" cy="' + q0[1] + '" r="6" fill="' + GRAD + '" stroke="#fff" stroke-width="2"/>' + (elev < 88 ? '<circle cx="' + q1[0] + '" cy="' + q1[1] + '" r="6" fill="' + GRAD + '" stroke="#fff" stroke-width="2"/>' : ''); }
