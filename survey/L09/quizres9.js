@@ -49,7 +49,7 @@
       box.querySelector('.q9-refresh').onclick = async e => {
         e.stopPropagation(); e.currentTarget.blur(); box.querySelector('.q9-top span').textContent = 'loading…';
         try { const r = await P.results(poll); vals = r.responses.map(x => String(x.value)).filter(v => v.length === n); draw(); }
-        catch (err) { box.querySelector('.q9-top span').textContent = 'could not load: tap refresh again'; }
+        catch (err) { box.querySelector('.q9-top span').textContent = 'could not load: tap refresh again'; if (window.console) console.warn('quizres9', err); }
       };
       box.querySelectorAll('.q9-reveal').forEach(b => b.onclick = e => { e.stopPropagation(); b.blur(); const i = +b.dataset.q; picking = picking === i ? -1 : i; draw(); });
       box.querySelectorAll('.q9-row.pick').forEach(r => r.onclick = e => { e.stopPropagation(); store(markKey(+r.dataset.q), r.dataset.l); picking = -1; draw(); });
