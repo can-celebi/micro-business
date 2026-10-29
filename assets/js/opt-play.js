@@ -1071,12 +1071,24 @@
       }
       if (mode === 'trail') {
         const trail = []; for (let i = 0; i <= 80; i++) { const x = 20 * i / 80, y = 60 - 3 * x; trail.push([x, y, elev < 88 ? zu(x * y) : 0]); }
+        // drop lines: the same bundles on the floor (budget line) and lifted to their utility height (the trail)
+        if (elev < 88) for (let xx = 2; xx < 20; xx += 2) { const yy = 60 - 3 * xx; h += line3([[xx, yy, 0], [xx, yy, zu(xx * yy)]], BUDGET, 1.3, ' stroke-dasharray="3 4" opacity="0.8"'); }
         h += line3(trail, BUDGET, 5.5);                                                     // the budget line drawn ON the hill: the trail
+        if (elev < 88) {
+          h += label(17, 9, 0, 'budget line: €60 fixed', BUDGET, -6, 26, 'end');
+          h += label(16, 12, zu(192), 'trail', BUDGET, 16, 4, null);
+          h += label(24, 700 / 24, zu(700), 'height lines: u fixed', IC, -6, -10, 'end');
+          // at the top the trail is level: a short flat marker along the trail
+          h += line3([[8.8, 60 - 3 * 8.8, zu(300) + 0.15], [11.2, 60 - 3 * 11.2, zu(300) + 0.15]], GRAD, 3);
+          h += label(11.2, 60 - 3 * 11.2, zu(300), 'level here', GRAD, 14, 20, null);
+        }
         const fy = 60 - 3 * FX, e = pr(10, 30, elev < 88 ? zu(300) : 0), fp = pr(FX, fy, elev < 88 ? zu(FX * fy) : 0);
         h += '<circle cx="' + e[0] + '" cy="' + e[1] + '" r="8" fill="' + GRAD + '" stroke="#fff" stroke-width="2"/>' + label(10, 30, elev < 88 ? zu(300) : 0, 'E', '#222', 12, -10);
         h += '<circle cx="' + fp[0] + '" cy="' + fp[1] + '" r="8" fill="#222" stroke="#fff" stroke-width="2.5"/>';
-        eq.innerHTML = '<div class="vp-disp">the hiking trail</div><div class="vp-sub">budget line = the trail · highest point on the trail = best bundle</div>';
-        say = '<div>walker at ' + m('(' + r2(FX) + ', ' + r2(fy) + ')') + ': height ' + m('<i>u</i> = ' + r2(FX * fy)) + '</div>' +
+        eq.innerHTML = '<div class="vp-disp">the hiking trail</div><div class="vp-sub"><b style="color:' + BUDGET + '">orange on the floor</b>: the budget line, money fixed (€60)</div>' +
+          '<div class="vp-sub"><b style="color:' + BUDGET + '">orange on the hill</b>: the same bundles, lifted to their utility (dashed drops)</div>' +
+          '<div class="vp-sub"><b style="color:' + IC + '">blue</b>: height lines, utility fixed · at the top the trail is level and touches one</div>';
+        say = '<div>walker at ' + m('(' + r2(FX) + ', ' + r2(fy) + ')') + ': money €60 <b>(fixed)</b> · utility ' + m('<i>u</i> = ' + r2(FX * fy)) + ' <b>(changes)</b></div>' +
           (elev < 88 ? '<div class="dim">top of the trail: ' + m('E = (10, 30)') + ', ' + m('<i>u</i> = 300') + '</div>' : '<div class="dim">from above: the height line ' + m('<i>u</i> = 300') + ' just touches the trail at E</div>');
         profile2(x => x * (60 - 3 * x), 20, 330, FX, 'x', [[10, '10']]);
       }
