@@ -706,7 +706,87 @@
     draw();
   }
 
-  const CSS = '.vp-bar{display:inline-block;height:.8em;vertical-align:middle;margin-left:.6em;border-radius:2px}.vp-row{display:flex;align-items:center;gap:.2em}' +
+  // ---------- (k) op-param: one function, its parameters on sliders (Can 29.10: "sliders on parameters for each function …
+  //   another button to make a copy of that on the graph with dash … so that we can compare") ----------
+  //   <div class="op-param" data-form="subs|comp|cd|ql"></div>   subs u = ax + by; comp u = min{ax, by}; cd u = x^α y^β;
+  //   ql u = αx + y^β (β < 1). Three blue indifference curves at fixed u levels, the formula with the current numbers, the
+  //   MRS at a marked point; [keep a copy] (up to 3, dashed), [clear copies], [show budget] (3x + y = 60 and the best point).
+  const PFORMS = {
+    subs: { ps: [['a', 0.5, 5, 0.1, 2], ['b', 0.5, 5, 0.1, 1]], name: 'perfect substitutes',
+      eq: v => m('<i>u</i> = ' + nb(v.a) + '<i>x</i> + ' + nb(v.b) + '<i>y</i>'), U: (v, x, y) => v.a * x + v.b * y,
+      curve: (v, u) => [[0, u / v.b], [u / v.a, 0]], pt: (v, u) => [u / (2 * v.a), u / (2 * v.b)],
+      mrs: (v) => m('MRS = ' + fr('<i>a</i>', '<i>b</i>') + ' = ' + r2(v.a / v.b)) + ' (the same everywhere)',
+      best: (v, px, py, B) => { const r = v.a / v.b, q = px / py; return Math.abs(r - q) < 1e-9 ? null : r > q ? [B / px, 0] : [0, B / py]; } },
+    comp: { ps: [['a', 0.5, 5, 0.1, 1], ['b', 0.5, 5, 0.1, 1]], name: 'perfect complements (Leontief)',
+      eq: v => m('<i>u</i> = min{' + nb(v.a) + '<i>x</i>, ' + nb(v.b) + '<i>y</i>}'), U: (v, x, y) => Math.min(v.a * x, v.b * y),
+      curve: (v, u) => [[u / v.a, 999], [u / v.a, u / v.b], [999, u / v.b]], pt: (v, u) => [u / v.a, u / v.b],
+      mrs: () => 'at the kink the MRS is not defined (∞ above it, 0 to the right)',
+      kink: v => v.a / v.b,
+      best: (v, px, py, B) => { const k = v.a / v.b, x = B / (px + py * k); return [x, k * x]; } },
+    cd: { ps: [['α', 0.2, 2, 0.05, 1], ['β', 0.2, 2, 0.05, 1]], name: 'Cobb-Douglas',
+      eq: v => m('<i>u</i> = <i>x</i><sup>' + nb(v['α'], 1) + '</sup> <i>y</i><sup>' + nb(v['β'], 1) + '</sup>'), U: (v, x, y) => Math.pow(x, v['α']) * Math.pow(y, v['β']),
+      curve: (v, u) => { const p = []; for (let i = 1; i <= 240; i++) { const x = 0.4 * i; p.push([x, Math.pow(u / Math.pow(x, v['α']), 1 / v['β'])]); } return p; },
+      pt: (v, u) => [10, Math.pow(u / Math.pow(10, v['α']), 1 / v['β'])],
+      mrs: (v, x, y) => m('MRS = ' + fr('α', 'β') + ' · ' + fr('<i>y</i>', '<i>x</i>') + ' = ' + r2(v['α'] / v['β'] * y / x)),
+      best: (v, px, py, B) => { const s = v['α'] + v['β']; return [v['α'] / s * B / px, v['β'] / s * B / py]; } },
+    ql: { ps: [['α', 0.5, 5, 0.1, 2], ['β', 0.2, 0.9, 0.05, 0.5]], name: 'quasi-linear',
+      eq: v => m('<i>u</i> = ' + nb(v['α']) + '<i>x</i> + <i>y</i><sup>' + r2(v['β']) + '</sup>'), U: (v, x, y) => v['α'] * x + Math.pow(y, v['β']),
+      curve: (v, u) => { const p = []; for (let i = 0; i <= 240; i++) { const y = 0.3 * i, x = (u - Math.pow(y, v['β'])) / v['α']; if (x < 0) break; p.push([x, y]); } return p; },
+      pt: (v, u) => [(u - Math.pow(20, v['β'])) / v['α'], 20],
+      mrs: (v, x, y) => m('MRS = ' + fr('α', 'β <i>y</i><sup>β−1</sup>') + ' = ' + r2(v['α'] / (v['β'] * Math.pow(y, v['β'] - 1)))) + ' (depends on y only: the curves are sideways shifts)',
+      best: (v, px, py, B) => { const y = Math.pow(v['β'] * px / (v['α'] * py), 1 / (1 - v['β'])); return y * py >= B ? [0, B / py] : [(B - py * y) / px, y]; } }
+  };
+  function nb(v, keep1) { const s = r2(v); return !keep1 && s === '1' ? '' : s; }
+  function param(box) {
+    const key = PFORMS[box.dataset.form] ? box.dataset.form : 'cd', F = PFORMS[key], f = frame(box), PX0 = 3, PY0 = 1, B0 = 60;
+    const A = axes(B0 / PX0 * 1.4, B0 / PY0 * 1.08);
+    const v = {}; F.ps.forEach(([k, , , , d]) => { v[k] = d; });
+    const start = Object.assign({}, v), b0 = F.best(start, PX0, PY0, B0) || [B0 / PX0 / 2, B0 / PY0 / 2];
+    const u0 = F.U(start, b0[0], b0[1]), LV = [0.55, 1, 1.6].map(c => u0 * c);   // fixed u levels (from the starting numbers)
+    let copies = [], budget = false;
+    const fEq = el('div', 'vp-formula');
+    f.side.insertBefore(fEq, f.eq);
+    const parTxt = w => F.ps.map(([k]) => k + ' = ' + r2(w[k])).join(', ');
+    function curves(w, col, wid, extra, labels) {
+      let h = '';
+      LV.forEach((u, i) => {
+        const pts = F.curve(w, u).map(([x, y]) => [x, Math.min(y, A.ymax * 1.6)]);
+        h += poly(A, pts, col, wid, extra);
+        if (labels) { const end = pts.filter(([x, y]) => x <= A.xmax * 0.95 && y <= A.ymax * 0.9 && y >= A.ymax * 0.06).pop(); if (end) h += label(A.X(end[0]) + 6, A.Y(end[1]) - 6, it('u') + ' = ' + r2(u), IC, null, 17); }
+      });
+      return h;
+    }
+    function draw() {
+      let h = defs(f.id) + clipOpen(f.id);
+      copies.forEach(c => { h += curves(c, '#8FB3DA', 2, ' stroke-dasharray="7 5"', false); });
+      if (F.kink) h += '<line x1="' + A.X(0) + '" y1="' + A.Y(0) + '" x2="' + A.X(A.xmax) + '" y2="' + A.Y(A.xmax * F.kink(v)) + '" stroke="' + GREY + '" stroke-width="1.5" stroke-dasharray="5 5"/>';
+      if (budget) h += '<polygon points="' + A.X(0) + ',' + A.Y(0) + ' ' + A.X(0) + ',' + A.Y(B0 / PY0) + ' ' + A.X(B0 / PX0) + ',' + A.Y(0) + '" fill="#FDE3CF" opacity="0.6"/>' +
+        '<line x1="' + A.X(0) + '" y1="' + A.Y(B0 / PY0) + '" x2="' + A.X(B0 / PX0) + '" y2="' + A.Y(0) + '" stroke="' + BUDGET + '" stroke-width="3.5"/>';
+      h += curves(v, IC, 3, '', true);
+      h += '</g>' + axisLines();
+      copies.forEach(c => { const pts = F.curve(c, LV[1]).filter(([x, y]) => x <= A.xmax * 0.85 && y <= A.ymax * 0.85 && y >= A.ymax * 0.15); const e = pts[Math.floor(pts.length * 0.75)] || pts.pop(); if (e) h += label(A.X(e[0]) + 8, A.Y(e[1]) + 18, parTxt(c), '#6F8FB3', null, 17); });
+      if (F.kink) h += label(A.X(A.xmax * 0.6) + 6, A.Y(Math.min(A.ymax * 0.9, A.xmax * 0.6 * F.kink(v))) - 8, it('y') + ' = ' + nb(F.kink(v)) + it('x'), GREY, null, 17);
+      const P = F.pt(v, LV[1]);
+      if (P[0] >= 0 && P[0] <= A.xmax && P[1] <= A.ymax) h += dot(A.X(P[0]), A.Y(P[1]), 7);
+      let bestTxt = '';
+      if (budget) { const b = F.best(v, PX0, PY0, B0); if (b) { h += dot(A.X(b[0]), A.Y(b[1]), 8, GRAD); bestTxt = '<div>best feasible bundle on ' + m('3<i>x</i> + <i>y</i> = 60') + ': ' + vec(b[0], b[1]) + '</div>'; } else bestTxt = '<div>every bundle on ' + m('3<i>x</i> + <i>y</i> = 60') + ' is best (MRS = price ratio)</div>'; }
+      f.svg.innerHTML = h;
+      fEq.innerHTML = F.eq(v);
+      f.eq.innerHTML = '<div class="vp-sub">' + F.name + (copies.length ? ' · dashed: ' + copies.map(parTxt).join(' | ') : '') + '</div>';
+      f.status.innerHTML = '<div>at the dot ' + vec(P[0], P[1]) + ': ' + F.mrs(v, P[0], P[1]) + '</div>' + bestTxt;
+    }
+    const ins = F.ps.map(([k, lo, hi, st, d]) => slider(f.ctl, k, lo, hi, st, d, (val, o, first) => { v[k] = val; o.innerHTML = r2(val); if (!first) draw(); }));
+    f.ctl.appendChild(el('div', 'vp-break'));
+    button(f.ctl, 'keep a copy', () => { if (copies.length >= 3) copies.shift(); copies.push(Object.assign({}, v)); draw(); });
+    button(f.ctl, 'clear copies', () => { copies = []; draw(); });
+    const bb = button(f.ctl, 'show budget', () => { budget = !budget; bb.classList.toggle('on', budget); draw(); });
+    button(f.ctl, 'reset', () => { copies = []; budget = false; bb.classList.remove('on'); F.ps.forEach(([k, , , , d], i) => ins[i].set(d)); draw(); });
+    draw();
+  }
+
+  const CSS = '.vp-formula{font-family:"STIX Two Math","STIX Two Text","Cambria Math",serif;font-size:1.5em;color:#1F1F1F;background:#F6F7F9;border-radius:10px;padding:.25em .8em;margin:.1em 0 .5em;display:inline-block}.vp-formula i{font-style:italic}.vp-formula sup{font-size:.62em}' +
+    '.op-param .vp-ctl input[type=range]{height:2em}.op-param .vp-ctl input[type=range]::-webkit-slider-thumb{width:26px;height:26px}.op-param .vp-ctl input[type=range]::-moz-range-thumb{width:24px;height:24px}' +
+    '.vp-bar{display:inline-block;height:.8em;vertical-align:middle;margin-left:.6em;border-radius:2px}.vp-row{display:flex;align-items:center;gap:.2em}' +
     '.vp{font-size:.6em;text-align:left;margin-top:.3em;display:grid;grid-template-columns:auto minmax(0,1fr);gap:1.2em;align-items:start}' +
     '.vp-svg{height:440px;width:auto;max-width:100%;display:block;touch-action:none;user-select:none;cursor:grab}' +
     '.vp-svg text,.vp-hill text{font-family:"STIX Two Text","Cambria Math",Georgia,serif}' +
@@ -721,7 +801,7 @@
     '.vp-ctl input[type=range]{accent-color:#0062C4;width:100%}.vp-ctl .btn.on{background:var(--p-green,#E3F2E6)}.vp-v{font-weight:600;text-align:right}.vp-hint{font-size:.95em}' +
     '.vp-status{line-height:1.55}.vp-status>div{margin:.15em 0}';
   window.__vpCSS = CSS;   // the 3D views use the same look
-  const KINDS = { 'op-forms': forms, 'op-walk': walk, 'op-price': price, 'op-grad': grad, 'op-split': split, 'op-stretch': stretch, 'op-step': step, 'op-two': two, 'op-gainloss': gainloss, 'op-exact': exact };   // names from Filiz's slide order
+  const KINDS = { 'op-forms': forms, 'op-walk': walk, 'op-price': price, 'op-grad': grad, 'op-split': split, 'op-stretch': stretch, 'op-step': step, 'op-two': two, 'op-gainloss': gainloss, 'op-exact': exact, 'op-param': param };   // names from Filiz's slide order
   function init() {
     const sel = Object.keys(KINDS).map(k => '.' + k).join(','); if (!document.querySelector(sel)) return;
     if (!document.getElementById('vp-css')) { const st = document.createElement('style'); st.id = 'vp-css'; st.textContent = CSS; document.head.appendChild(st); }
