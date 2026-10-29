@@ -206,7 +206,7 @@
         '<div class="op-sub">budget ' + m((px === 1 ? '' : r2(px) + '&#8202;') + '<i>x</i> + ' + (py === 1 ? '' : py) + '<i>y</i> = ' + B) + '</div>';
       f.status.innerHTML = '<div>' + say + '</div>';
     }
-    const inp = slider(f.ctl, 'price of x', 1, 3, 0.1, px, (v, o) => { px = Math.round(v * 10) / 10; o.innerHTML = '€' + r2(px); draw(); });
+    const inp = slider(f.ctl, 'price of x', 1, +box.dataset.pxmax || 3, 0.1, px, (v, o) => { px = Math.round(v * 10) / 10; o.innerHTML = '€' + r2(px); draw(); });
     const bs = button(f.ctl, 'perfect substitutes', () => { kind = 'subs'; mark(); draw(); });
     const bc = button(f.ctl, 'perfect complements', () => { kind = 'comp'; mark(); draw(); });
     button(f.ctl, 'reset', () => { kind = 'subs'; px = PX0; inp.value = PX0; inp.dispatchEvent(new Event('input')); mark(); draw(); });
