@@ -613,6 +613,12 @@
     }
     document.querySelectorAll('.poll').forEach(initPoll);
     document.querySelectorAll('details.prompt').forEach(initPrompt);
+    // the lecturer's pen (ink.js, Can 29.10: "the drawing tool for the entire slides"): every deck, teacher mode only
+    const LOCALINK = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname) && /[?&]ink\b/.test(location.search);
+    const me = [...document.scripts].find(s => /assets\/js\/interactive\.js/.test(s.src));
+    if (document.querySelector('.reveal') && (TEACHER || LOCALINK) && me && !document.getElementById('ink-js')) {
+      const s = document.createElement('script'); s.id = 'ink-js'; s.src = me.src.replace(/interactive\.js(\?.*)?$/, 'ink.js?v=20261029a'); document.body.appendChild(s);
+    }
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();
