@@ -856,7 +856,7 @@
   }
 
   // ---------- (l) op-along: the MRS by staying on one indifference curve (Can 29.10) ----------
-  //   <div class="op-along" data-u="300"></div>   u = x·y = 300 (blue), a dot dragged along it (starts at E = (10, 30)); a step
+  //   <div class="op-along" data-u="300"></div>   u = x·y = 300 (blue), your point dragged along it (starts at (10, 30)); a step
   //   Δx = 1 / 0.5 / 0.1 / 0.01 draws the triangle (Δx →, Δy ↓) back onto the curve; read-out u still 300 and Δy/Δx, which
   //   settles at the slope −y/x of the tangent (grey dashed).
   function alongW(box) {
@@ -867,19 +867,24 @@
     function draw() {
       const y = U0 / x, x2 = x + dx, y2 = U0 / x2, dy = y2 - y, slope = -y / x;
       const X = v => CX + (v - x) * SC, Y = v => CY - (v - y) * SC;
-      let h = defs(f.id) + clipOpen(f.id);
-      // grid ticks every unit (faint), the curve, the tangent
+      let h = defs(f.id) + '<defs><marker id="' + f.id + 't" viewBox="0 0 10 10" refX="10" refY="5" markerUnits="userSpaceOnUse" markerWidth="13" markerHeight="13" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="' + ALONG + '"/></marker></defs>' + clipOpen(f.id);
+      // a faint grid, one line per unit (the same unit on both axes), then the curve and the tangent through your point
+      for (let k = Math.ceil(x - 12); k <= x + 12; k++) h += '<line x1="' + X(k) + '" y1="' + T + '" x2="' + X(k) + '" y2="' + (T + ph) + '" stroke="#EEF1F4"/>';
+      for (let k = Math.ceil(y - 8); k <= y + 8; k++) h += '<line x1="' + L + '" y1="' + Y(k) + '" x2="' + (L + pw) + '" y2="' + Y(k) + '" stroke="#EEF1F4"/>';
       const pts = []; for (let i = 0; i <= 300; i++) { const xx = x - 9 + 20 * i / 300; if (xx > 0.2) pts.push([X(xx).toFixed(1), Y(U0 / xx).toFixed(1)]); }
       h += '<polyline points="' + pts.map(q => q.join(',')).join(' ') + '" fill="none" stroke="' + IC + '" stroke-width="3"/>';
       h += '<line x1="' + X(x - 8) + '" y1="' + Y(y + slope * -8) + '" x2="' + X(x + 8) + '" y2="' + Y(y + slope * 8) + '" stroke="' + GREY + '" stroke-width="1.8" stroke-dasharray="7 5"/>';
       // the step triangle: Δx to the right, then Δy down onto the curve
-      h += '<path d="M' + X(x) + ',' + Y(y) + ' L' + X(x2) + ',' + Y(y) + ' L' + X(x2) + ',' + Y(y2) + '" fill="none" stroke="' + ALONG + '" stroke-width="3"/>';
+      // Δx: from your point, horizontally to x + Δx; Δy: from there straight down to the curve (arrow tips exactly on the targets)
+      const big = dx * SC >= 14;
+      h += '<line x1="' + X(x) + '" y1="' + Y(y) + '" x2="' + X(x2) + '" y2="' + Y(y) + '" stroke="' + ALONG + '" stroke-width="3"' + (big ? ' marker-end="url(#' + f.id + 't)"' : '') + '/>';
+      h += '<line x1="' + X(x2) + '" y1="' + Y(y) + '" x2="' + X(x2) + '" y2="' + Y(y2) + '" stroke="' + ALONG + '" stroke-width="3"' + (big ? ' marker-end="url(#' + f.id + 't)"' : '') + '/>';
       h += '</g>';
       h += label(X(x2) + 4, Y(y) - 8, 'Δ' + it('x') + ' = ' + dx, ALONG, null, 18) + label(X(x2) + 8, (Y(y) + Y(y2)) / 2 + 6, 'Δ' + it('y') + ' = ' + String(+dy.toFixed(4)).replace('-', '−'), ALONG, null, 18);
-      h += label(X(x + 6.5) , Y(y + slope * 6.5) - 10, 'slope = −' + it('y') + '/' + it('x') + ' = ' + r2(slope).replace('-', '−'), '#555', 'end', 18);
-      h += label(X(x - 2.2), Y(U0 / (x - 2.2)) - 4, it('u') + ' = ' + U0, IC, 'end', 18);
-      h += dot(X(x), Y(y), 8) + dot(X(x2), Y(y2), 6, ALONG);
-      h += label(X(x) - 12, Y(y) + 6, '(' + r2(x) + ', ' + r2(y) + ')', '#222', 'end', 18);
+      h += label(X(x + 2.6) + 12, Y(y + slope * 2.6) + 4, 'tangent: slope = −' + it('y') + '/' + it('x') + ' = ' + r2(slope).replace('-', '−'), '#555', null, 18);
+      h += label(X(x - 1.3) - 24, Y(U0 / (x - 1.3)) + 4, it('u') + ' = ' + U0, IC, 'end', 18);
+      h += dot(X(x), Y(y), 8);
+      h += label(X(x) - 12, Y(y) + 6, 'your point (' + r2(x) + ', ' + r2(y) + ')', '#222', 'end', 18);
       f.svg.innerHTML = h;
       f.eq.innerHTML = '<div class="vp-formula">' + m(fr('Δ<i>y</i>', 'Δ<i>x</i>') + ' = ' + String(+(dy / dx).toFixed(4)).replace('-', '−')) + '</div>';
       f.status.innerHTML = '<div>' + m('<i>u</i> = ' + r2(x2 * y2)) + ' still: the step stays on the curve</div><div class="dim">smaller steps → ' + m(fr('Δ<i>y</i>', 'Δ<i>x</i>')) + ' settles at ' + m('−<i>y</i>/<i>x</i> = ' + r2(slope).replace('-', '−')) + ' = −MRS</div>';
@@ -890,8 +895,8 @@
     f.svg.addEventListener('pointermove', ev => { if (drag == null) return; const r = f.svg.getBoundingClientRect(), k = W / r.width; x = Math.max(3, Math.min(40, x + (ev.clientX - drag) * k / SC)); drag = ev.clientX; draw(); });
     f.svg.addEventListener('pointerup', () => { drag = null; });
     f.svg.addEventListener('click', ev => ev.stopPropagation());
-    button(f.ctl, 'back to E', () => { x = +box.dataset.x || 10; draw(); });
-    f.ctl.appendChild(el('span', 'dim vp-hint', 'drag left or right: the dot moves along the curve'));
+    button(f.ctl, 'back to (10, 30)', () => { x = +box.dataset.x || 10; draw(); });
+    f.ctl.appendChild(el('span', 'dim vp-hint', 'drag left or right: your point moves along the curve'));
     draw();
   }
 
