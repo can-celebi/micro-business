@@ -34,3 +34,6 @@
 html.print-pdf .reveal .formula { animation: none !important; }
 html.print-pdf .reveal .formula::after { display: none; }
 html.mobile .reveal .formula { font-size: 1.1em; max-width: 100%; padding: 0.3em 0.7em; }
+/* never dimmed: earlier fragments fade in the deck ("earlier items fade"), a key formula stays full ink (Can: no grey) */
+.reveal .formula.fragment.visible, .reveal .formula.fragment.visible.past, .reveal .formula.fragment.semi-fade-out.visible, .reveal .formula.fragment.fade-dim.visible { opacity: 1 !important; }
+.reveal .formula, .reveal .formula math { color: #1F1F1F; }
