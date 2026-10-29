@@ -20,7 +20,7 @@
       { id: 'lagr', t: 'Have you seen the Lagrange method (the Lagrangian, λ) before?', kind: 'choice', o: [['no', 'no'], ['name', 'heard the name only'], ['math', 'yes, in a maths course'], ['econ', 'yes, in an economics course']] },
       { head: 'right now' }, ...selfItems(),
       { head: 'one question' },
-      { id: 'check', t: m('<i>u</i> = <i>x</i> · <i>y</i>') + '. Prices: ' + m('<i>p</i><sub>x</sub> = 2') + ', ' + m('<i>p</i><sub>y</sub> = 1') + '. Budget: €40. Which is the best feasible bundle? (all four cost exactly €40)', kind: 'choice', letters: true,
+      { id: 'check', t: m('<i>u</i> = <i>x</i> · <i>y</i>') + '. ' + m('<i>p</i><sub>x</sub> = 2') + ', ' + m('<i>p</i><sub>y</sub> = 1') + ', ' + m('<i>B</i> = 40') + ', so the budget line is ' + m('2<i>x</i> + <i>y</i> = 40') + '. Which is the best feasible bundle? (all four cost exactly €40)', kind: 'choice', letters: true,
         o: ['(20, 0)', '(10, 20)', '(5, 30)', '(15, 10)'] }
     ] },
     s2: { title: 'halfway', sub: 'anonymous · 4 taps · microeconomics · lecture 9', items: [
@@ -31,7 +31,7 @@
     s3: { title: 'before you go', sub: 'anonymous · about 2 minutes · microeconomics · lecture 9', items: [
       { head: 'right now' }, ...selfItems(),
       { head: 'one question' },
-      { id: 'check', t: m('<i>u</i> = <i>x</i> · <i>y</i>') + '. Prices: ' + m('<i>p</i><sub>x</sub> = 1') + ', ' + m('<i>p</i><sub>y</sub> = 4') + '. Budget: €40. Which is the best feasible bundle? (all four cost exactly €40)', kind: 'choice', letters: true,
+      { id: 'check', t: m('<i>u</i> = <i>x</i> · <i>y</i>') + '. ' + m('<i>p</i><sub>x</sub> = 1') + ', ' + m('<i>p</i><sub>y</sub> = 4') + ', ' + m('<i>B</i> = 40') + ', so the budget line is ' + m('<i>x</i> + 4<i>y</i> = 40') + '. Which is the best feasible bundle? (all four cost exactly €40)', kind: 'choice', letters: true,
         o: ['(40, 0)', '(8, 8)', '(20, 5)', '(10, 7.5)'] },
       { head: 'today' },
       Object.assign({ t: 'Did you move a slider yourself today?' }, SLIDER),
