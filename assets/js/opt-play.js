@@ -355,18 +355,45 @@
     const keys = String(box.dataset.forms || 'subs,comp,cd,ql').split(',').filter(k => FORMS[k]);
     let key = keys[0], t = 0.15, shown = false, stop = () => {};
     const at = t => [t * xi, (1 - t) * yi];
+    const minis = el('div', 'vp-minis'), mx = document.createElementNS(NS, 'svg'), my = document.createElementNS(NS, 'svg');
+    [[mx, 'x'], [my, 'y']].forEach(([v, n]) => { v.setAttribute('viewBox', '0 0 260 180'); v.setAttribute('class', 'vp-mini'); const c = el('div', 'vp-minic'); c.appendChild(v); c.appendChild(el('div', 'vp-sub', m('<i>u</i>') + ' along the budget line, against ' + m('<i>' + n + '</i>'))); minis.appendChild(c); });
+    f.side.insertBefore(minis, f.ctl);
+    // u along the budget line, drawn against x (k = 0) or against y (k = 1)
+    function mini(svgEl, k, F, b, tNow) {
+      const ML = 48, MB = 34, MT = 12, MR = 10, w = 260 - ML - MR, hh = 180 - MT - MB, top = Math.max(b.u, 1e-9) * 1.18;
+      const coord = tt => k ? (1 - tt) * yi : tt * xi, span = k ? yi : xi;
+      const PX_ = v => ML + v / span * w, PY_ = u => MT + hh - u / top * hh;
+      const pts = []; for (let i = 0; i <= 200; i++) { const tt = i / 200, [xx, yy] = at(tt); pts.push(PX_(coord(tt)).toFixed(1) + ',' + PY_(F.U(xx, yy)).toFixed(1)); }
+      const [xn, yn] = at(tNow), un = F.U(xn, yn), cb = coord(b.t), cn = coord(tNow);
+      let g = '<line x1="' + ML + '" y1="' + MT + '" x2="' + ML + '" y2="' + (MT + hh) + '" stroke="#222"/><line x1="' + ML + '" y1="' + (MT + hh) + '" x2="' + (ML + w) + '" y2="' + (MT + hh) + '" stroke="#222"/>';
+      g += '<polyline points="' + pts.join(' ') + '" fill="none" stroke="' + PURPLE + '" stroke-width="2.5"/>';
+      g += '<line x1="' + PX_(cb) + '" y1="' + PY_(b.u) + '" x2="' + PX_(cb) + '" y2="' + (MT + hh) + '" stroke="' + GREEN + '" stroke-width="1.6" stroke-dasharray="4 4"/>';
+      g += label(PX_(cb), MT + hh + 24, r2(cb), GREEN, 'middle', 17) + label(ML - 6, PY_(b.u) + 6, r2(b.u), GREEN, 'end', 17);
+      g += dot(PX_(cn), PY_(un), 6) + label(ML - 8, MT + 12, it('u'), '#555', 'end', 18);
+      svgEl.innerHTML = g;
+    }
     function draw() {
       const F = FORMS[key], [x, y] = at(t), u = F.U(x, y), b = bestOnLine(F, xi, yi), [bx, by] = at(b.t);
       let h = defs(f.id) + clipOpen(f.id);
+      // (2) the budget set, shaded, and the names on the graph
+      h += '<polygon points="' + A.X(0) + ',' + A.Y(0) + ' ' + A.X(0) + ',' + A.Y(yi) + ' ' + A.X(xi) + ',' + A.Y(0) + '" fill="#FDE3CF" opacity="0.75"/>';
       h += '<line x1="' + A.X(0) + '" y1="' + A.Y(yi) + '" x2="' + A.X(xi) + '" y2="' + A.Y(0) + '" stroke="' + BLUE + '" stroke-width="3.5"/>';
       [0.35, 0.7, 1.4].forEach(c => { h += poly(A, F.curve(b.u * c), ORANGE, 1.8, ' opacity="0.35"'); });   // a few curves of the map
       if (shown) h += poly(A, F.curve(b.u), GREEN, 3);
       h += poly(A, F.curve(u), ORANGE, 3);
       h += '</g>' + axisLines();
+      const ang = Math.atan2(A.Y(0) - A.Y(yi), A.X(xi) - A.X(0)) * 180 / Math.PI, n = Math.hypot(q.px, q.py), nx = q.px / n, ny = q.py / n;
+      const mxp = (A.X(0) + A.X(xi)) / 2, myp = (A.Y(yi) + A.Y(0)) / 2;
+      const rot = (cx, cy, txt, col) => '<text x="' + cx.toFixed(1) + '" y="' + cy.toFixed(1) + '" transform="rotate(' + ang.toFixed(1) + ' ' + cx.toFixed(1) + ' ' + cy.toFixed(1) + ')" text-anchor="middle" font-size="18" fill="' + col + '" ' + halo + '>' + txt + '</text>';
+      h += rot(mxp - 22 * nx, myp + 22 * ny + 6, 'budget set', '#B04A12') + rot(mxp + 16 * nx, myp - 16 * ny, 'budget line', BLUE);
+      const dense = c => c.flatMap((pt, i) => i ? Array.from({ length: 20 }, (_, j) => [c[i - 1][0] + (pt[0] - c[i - 1][0]) * (j + 1) / 20, c[i - 1][1] + (pt[1] - c[i - 1][1]) * (j + 1) / 20]) : [pt]);
+      const cand = dense(F.curve(b.u * 1.4).map(([a, c]) => [a, Math.min(c, A.ymax * 2)])).filter(([cx, cy]) => cx < A.xmax * 0.92 && cy < A.ymax * 0.9 && cy > A.ymax * 0.12);
+      if (cand.length) { const [cx, cy] = cand.reduce((a, c) => c[0] > a[0] ? c : a); h += label(A.X(cx) - 6, A.Y(cy) - 10, 'indifference curves', ORANGE, 'end', 18); }
       if (shown) h += dot(A.X(bx), A.Y(by), 7, GREEN);
       h += dot(A.X(x), A.Y(y), 9);
       h += label(A.X(x) + 14, A.Y(y) - 12, it('u') + ' = ' + r2(u), '#222');
       f.svg.innerHTML = h;
+      mini(mx, 0, F, b, t); mini(my, 1, F, b, t);
       f.eq.innerHTML = '<div class="vp-disp">' + m(F.eq) + '</div><div class="vp-sub">' + F.name + ': ' + F.note + '</div><div class="vp-sub">budget ' + m(q.px + '<i>x</i> + <i>y</i> = ' + q.B) + '</div>';
       f.status.innerHTML = '<div>at ' + vec(x, y) + ': ' + m('<i>u</i> = ' + r2(u)) + '</div>' +
         (shown ? '<div><b style="color:' + GREEN + '">best feasible bundle ' + vec(bx, by) + ', ' + m('<i>u</i> = ' + r2(b.u)) + '</b>: ' + F.how + '</div>' : '<div class="dim">drag the dot along the line: where is ' + m('<i>u</i>') + ' highest?</div>');
@@ -684,6 +711,7 @@
     '.vp-svg{height:440px;width:auto;max-width:100%;display:block;touch-action:none;user-select:none;cursor:grab}' +
     '.vp-svg text,.vp-hill text{font-family:"STIX Two Text","Cambria Math",Georgia,serif}' +
     '.vp-hill{width:100%;max-width:380px;height:auto;display:block;margin:.3em 0}' +
+    '.vp-minis{display:flex;gap:.6em;margin:.3em 0}.vp-minic{width:50%;max-width:260px}.vp-mini{width:100%;height:auto;display:block}.vp-minic .vp-sub{font-size:.85em}.vp-mini text{font-family:"STIX Two Text","Cambria Math",Georgia,serif}' +
     'html.mobile .vp{display:block;font-size:.9em}html.mobile .vp-svg{height:auto;width:100%}' +
     '.vp-side{font-size:1.15em}.vp-eq{line-height:1.5;margin-bottom:.3em}.vp-disp{font-size:1.25em}' +
     '.vp-m{font-family:"STIX Two Text","Cambria Math",Georgia,serif;font-size:1.12em;white-space:nowrap}.vp-m i{font-style:italic}.vp-m sub{font-size:.65em;vertical-align:-.25em}' +

@@ -33,7 +33,8 @@
   .ink-bar button.on { border-color: #222; background: #FFF9D0; }
   .ink-bar .dot { display: inline-block; width: 12px; height: 12px; border-radius: 50%; vertical-align: -1px; }
   .ink-bar .sep { width: 1px; height: 18px; background: #ddd; margin: 0 2px; }
-  html.l06-dark .ink-btn, html.l06-dark .ink-bar { display: none !important; }`;
+  html.l06-dark .ink-btn, html.l06-dark .ink-bar { display: none !important; }
+  @media (max-width: 760px) { .ink-btn { left: 8px; bottom: 8px; } .ink-bar { left: 8px; right: 8px; bottom: 44px; flex-wrap: wrap; } }`;
   document.head.appendChild(css);
 
   const sheet = document.createElement('canvas'); sheet.className = 'ink-sheet';
@@ -48,7 +49,11 @@
   let on = false, colour = 'blue', width = 'thin', erasing = false, cur = null;
   let store = {}; try { store = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) { store = {}; }
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(store)); } catch (e) {} };
-  const slideKey = () => { const i = window.Reveal && Reveal.getIndices ? Reveal.getIndices() : { h: 0, v: 0 }; return i.h + '.' + (i.v || 0); };
+  const slideKey = () => {
+    const R = window.Reveal, cur = R && R.getCurrentSlide ? R.getCurrentSlide() : null;
+    if (cur && (cur.dataset.sid || cur.id)) return 'sid:' + (cur.dataset.sid || cur.id);   // the slide's own id: stays with the slide if slides are added
+    const i = R && R.getIndices ? R.getIndices() : { h: 0, v: 0 }; return i.h + '.' + (i.v || 0);
+  };
   const strokes = () => (store[slideKey()] = store[slideKey()] || []);
   // slide coordinates: the .slides box (reveal scales it), 0…1 on both axes
   const box = () => (document.querySelector('.reveal .slides') || document.body).getBoundingClientRect();
