@@ -1,0 +1,49 @@
+/* poll-clean.css: quieter poll buttons and minimal result bars (Can, 29.10: "change the formatting and size of these buttons
+   they are ugly too big and do not match with the rest and make the bar graphs better and minimalistic").
+   STYLE ONLY, scoped to .poll: no behaviour, ids, order, text or what gets sent changes. Load after console-light.css.
+   Decks opt in one by one (L09 first); old decks stay as they are. */
+@font-face { font-family: "Inter"; font-weight: 400; font-display: swap; src: url(../fonts/inter-latin-400-normal.woff2) format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 500; font-display: swap; src: url(../fonts/inter-latin-500-normal.woff2) format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 600; font-display: swap; src: url(../fonts/inter-latin-600-normal.woff2) format("woff2"); }
+
+/* answer buttons: compact, thin outline, small radius, white, dark text; a tidy grid */
+.poll .poll-input { display: flex; flex-wrap: wrap; gap: 0.35em 0.4em; align-items: center; }
+.poll .poll-input .btn {
+  font-family: "Inter", "Segoe UI", system-ui, sans-serif; font-size: 0.72em; font-weight: 400; line-height: 1.3;
+  padding: 0.32em 0.8em; border: 1px solid #C9CDD3; border-radius: 6px; background: #fff; color: #1F1F1F; box-shadow: none;
+}
+.poll .poll-input .btn::before, .poll .poll-input .btn::after { content: none; }
+.poll .poll-input .btn:hover { background: #F4F6F8; border-color: #9AA3AE; }
+.poll .poll-input .btn.chosen { background: #E7EEF5; border-color: #4E6E8E; color: #1F1F1F; font-weight: 500; }
+.poll .poll-input .btn.chosen::after { content: " ✓"; color: #4E6E8E; }
+.poll .poll-input .btn.noidea { color: #5B6670; border-style: dashed; }
+.poll .poll-input .btn.go { background: #fff; }
+.poll .poll-input input, .poll .poll-input textarea { font-family: "Inter", system-ui, sans-serif; font-size: 0.72em; border: 1px solid #C9CDD3; border-radius: 6px; padding: 0.3em 0.5em; }
+.poll .poll-input .unit, .poll .poll-status { font-family: "Inter", system-ui, sans-serif; }
+
+/* [results] [refresh]: small quiet text buttons */
+.poll .poll-controls { margin-top: 0.45em; }
+.poll .poll-controls .btn {
+  font-family: "Inter", system-ui, sans-serif; font-size: 0.42em; color: #5B6670; background: none; border: none; box-shadow: none;
+  padding: 0.1em 0.4em; text-decoration: underline; text-decoration-color: #C9CDD3; text-underline-offset: 3px;
+}
+.poll .poll-controls .btn::before, .poll .poll-controls .btn::after { content: none; }
+.poll .poll-controls .btn:hover { color: #1F1F1F; text-decoration-color: #1F1F1F; background: none; }
+
+/* result bars: one thin bar per option, label left, % and count right, no boxes or gridlines, calm grey-blue */
+.poll .poll-results { font-family: "Inter", system-ui, sans-serif; }
+.poll .bar-track { height: 0.42em; background: #EEF1F4; border: none; border-radius: 3px; overflow: hidden; }
+.poll .bar-fill { background: #7F98B2; }
+.poll .bar-fill.wh-in { background: #4E6E8E; } .poll .bar-fill.wh-on { background: #8FA7BF; } .poll .bar-fill.wh-un { background: #C3CFDB; }
+.poll .bar-fill.noidea { background: #C3C8CE; }
+.poll .bar-label { color: #1F1F1F; }
+.poll .bar-n { color: #5B6670; font-variant-numeric: tabular-nums; }
+.poll .bar-row.correct .bar-label { color: #1F1F1F; font-weight: 600; }
+.poll .bar-row.correct .bar-fill { background: #22384F; }
+.poll .vbars { border-bottom: 1px solid #C9CDD3; }
+.poll .vbar { background: #D5DDE5; } .poll .vbar.hit { background: #4E6E8E; opacity: 1; }
+.poll .wh-in { color: #4E6E8E; } .poll .wh-on { color: #7F98B2; } .poll .wh-un { color: #8A939C; }
+.poll .raw summary { font-family: "Inter", system-ui, sans-serif; }
+html.mobile .poll .poll-input .btn { font-size: 0.95em; padding: 0.45em 0.9em; }
+html.mobile .poll .poll-controls .btn { font-size: 0.75em; }
+.poll .poll-results .viz .answered { font-size: 1em; color: #1F1F1F; }
