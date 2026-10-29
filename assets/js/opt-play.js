@@ -538,9 +538,9 @@
       h += dot(sx, sy, 8);
       f.svg.innerHTML = h;
       f.eq.innerHTML = '<div class="vp-disp">' + m(GU + ' = ' + vec(g[0], g[1])) + '</div><div class="vp-sub">' + m('= <b style="color:' + ALONG + '">' + vec(al[0], al[1]) + '</b> + <b style="color:' + P_ARROW + '">' + vec(ac[0], ac[1]) + '</b>') + '</div>';
-      f.status.innerHTML = '<div><b style="color:' + ALONG + '">along the line</b> ' + m(vec(al[0], al[1])) + ': walk this way and you gain</div>' +
-        '<div><b style="color:' + P_ARROW + '">along ' + m('<i>p</i>') + '</b> ' + m(vec(ac[0], ac[1]) + ' = ' + r2(c) + ' · ' + vec(p[0], p[1])) + ': you can’t use it, it costs money</div>' +
-        '<div class="dim">' + (Math.abs(a) < 0.05 ? 'nothing left to gain along the line: ' + m(GU) + ' points the same way as ' + m('<i>p</i>') + '. This is the best feasible bundle.' : 'at ' + vec(x, y) + ' the green piece is not 0: walking ' + (a > 0 ? 'towards more x' : 'towards more y') + ' makes you better off') + '</div>';
+      f.status.innerHTML = '<div><b style="color:' + ALONG + '">along the line</b> ' + m(vec(al[0], al[1])) + ': you gain</div>' +
+        '<div><b style="color:' + P_ARROW + '">along ' + m('<i>p</i>') + '</b> ' + m(vec(ac[0], ac[1]) + ' = ' + r2(c) + ' · ' + vec(p[0], p[1])) + ': costs money</div>' +
+        '<div class="dim">' + (Math.abs(a) < 0.05 ? 'gain 0 · ' + m(GU) + ' parallel to ' + m('<i>p</i>') + ' · best feasible bundle' : 'gain ≠ 0 · walk ' + (a > 0 ? 'towards more x' : 'towards more y')) + '</div>';
     }
     draggable(f, A, (x, y) => { stop(); t = Math.max(0.03, Math.min(0.97, (x * xi + (yi - y) * yi) / (xi * xi + yi * yi))); draw(); });
     button(f.ctl, 'walk to the best feasible bundle', () => { stop(); stop = tween(() => t, v => { t = v; draw(); }, tE, 2200); });

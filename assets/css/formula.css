@@ -1,0 +1,39 @@
+/* formula.css: key formulas on their own line (Can, 29.10: "these type of equations look so ugly, reimagine the layout …
+   clear and spaced out from anything else and maybe … with animation like shining"). STYLE ONLY, scoped to .formula;
+   decks opt in (L09 first). Markup (Filiz):  <div class="formula fragment"><math display="block">…</math></div>
+   Parameters in a soft accent:  <mi class="par">a</mi>.  Works with or without .fragment (then it plays when the slide opens).
+   Maths uses a real MATH font (STIX Two Math, self-hosted subset with its MATH table), which spaces =, +, ( and function
+   names properly; STIX Two TEXT does not. */
+@font-face { font-family: "STIX Two Math"; font-display: swap; src: local("STIX Two Math"), local("STIXTwoMath-Regular"), url(../fonts/stix-two-math-subset.woff) format("woff"); }
+
+.reveal .formula {
+  position: relative; display: block; width: fit-content; max-width: 92%;
+  margin: 0.8em auto; padding: 0.35em 1.1em;
+  font-size: 1.2em; line-height: 1.3; text-align: center; color: #1F1F1F;
+  background: #F6F7F9; border-radius: 10px; overflow: hidden;
+}
+.reveal .formula math { font-family: "STIX Two Math", "Latin Modern Math", "Cambria Math", math; font-size: 1em; display: block; margin: 0 auto; }
+.reveal .formula mi.par, .reveal .formula mn.par, .reveal .formula .par { color: #7B2D26; }
+
+/* appear: fade in with a 6 px rise, then ONE soft light sweep (no loop) */
+@keyframes formula-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@keyframes formula-sweep { from { transform: translateX(-120%); } to { transform: translateX(220%); } }
+.reveal .formula::after {
+  content: ""; position: absolute; top: 0; bottom: 0; left: 0; width: 45%; pointer-events: none; transform: translateX(-120%);
+  background: linear-gradient(100deg, rgba(255, 255, 255, 0) 0%, rgba(255, 236, 170, .55) 45%, rgba(255, 255, 255, .8) 50%, rgba(255, 236, 170, .55) 55%, rgba(255, 255, 255, 0) 100%);
+}
+/* a formula that is a fragment plays when it becomes visible; one that is not plays when its slide opens */
+.reveal .slides section.present .formula:not(.fragment), .reveal .formula.fragment.visible { animation: formula-in 300ms ease-out both; }
+.reveal .slides section.present .formula:not(.fragment)::after, .reveal .formula.fragment.visible::after { animation: formula-sweep 900ms ease-in-out 320ms 1 both; }
+/* the fragment's own fade stays as reveal does it (no double fade) */
+.reveal .formula.fragment { transition: opacity 0s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal .formula, .reveal .formula::after { animation: none !important; }
+}
+html.print-pdf .reveal .formula { animation: none !important; }
+html.print-pdf .reveal .formula::after { display: none; }
+html.mobile .reveal .formula { font-size: 1.1em; max-width: 100%; padding: 0.3em 0.7em; }
+/* never dimmed: earlier fragments fade in the deck ("earlier items fade"), a key formula stays full ink (Can: no grey) */
+.reveal .formula.fragment.visible, .reveal .formula.fragment.visible.past, .reveal .formula.fragment.semi-fade-out.visible, .reveal .formula.fragment.fade-dim.visible { opacity: 1 !important; }
+.reveal .formula, .reveal .formula math { color: #1F1F1F; }
