@@ -1,0 +1,144 @@
+/* academic.css: the new look (Can, 29.10: "an overhaul of this 90s style and monospace font … something better minimalistic
+   and up to date … while also being academic and representing wisdom"; "i do not like how you make the concept in gray,
+   that is the important thing"). Loaded AFTER console-light.css; it only overrides. Classic look back: ?theme=classic.
+   Paper #FAF8F3, ink #1F1F1F; titles Newsreader (serif), text Inter (sans), maths STIX Two; one structural accent, oxblood
+   #7B2D26 (blue and orange stay reserved for indifference curves and budgets, Kamuran R76). No monospace for students.
+   Fonts are self-hosted in ../fonts (open licences, OFL-*.txt), so the hall PC needs no Google Fonts. */
+
+@font-face { font-family: "Newsreader"; font-weight: 400; font-style: normal; font-display: swap; src: url(../fonts/newsreader-latin-400-normal.woff2) format("woff2"); }
+@font-face { font-family: "Newsreader"; font-weight: 400; font-style: italic; font-display: swap; src: url(../fonts/newsreader-latin-400-italic.woff2) format("woff2"); }
+@font-face { font-family: "Newsreader"; font-weight: 500; font-style: normal; font-display: swap; src: url(../fonts/newsreader-latin-500-normal.woff2) format("woff2"); }
+@font-face { font-family: "Newsreader"; font-weight: 600; font-style: normal; font-display: swap; src: url(../fonts/newsreader-latin-600-normal.woff2) format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 400; font-display: swap; src: url(../fonts/inter-latin-400-normal.woff2) format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 500; font-display: swap; src: url(../fonts/inter-latin-500-normal.woff2) format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 600; font-display: swap; src: url(../fonts/inter-latin-600-normal.woff2) format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 400; font-display: swap; unicode-range: U+0370-03FF; src: url(../fonts/inter-greek-400-normal.woff2) format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 600; font-display: swap; unicode-range: U+0370-03FF; src: url(../fonts/inter-greek-600-normal.woff2) format("woff2"); }
+@font-face { font-family: "STIX Two Text"; font-weight: 400; font-style: normal; font-display: swap; src: url(../fonts/stix-two-text-latin-400-normal.woff2) format("woff2"); }
+@font-face { font-family: "STIX Two Text"; font-weight: 400; font-style: italic; font-display: swap; src: url(../fonts/stix-two-text-latin-400-italic.woff2) format("woff2"); }
+@font-face { font-family: "STIX Two Text"; font-weight: 600; font-style: normal; font-display: swap; src: url(../fonts/stix-two-text-latin-600-normal.woff2) format("woff2"); }
+@font-face { font-family: "STIX Two Text"; font-weight: 400; font-style: normal; font-display: swap; unicode-range: U+0370-03FF; src: url(../fonts/stix-two-text-greek-400-normal.woff2) format("woff2"); }
+@font-face { font-family: "STIX Two Text"; font-weight: 400; font-style: italic; font-display: swap; unicode-range: U+0370-03FF; src: url(../fonts/stix-two-text-greek-400-italic.woff2) format("woff2"); }
+
+:root {
+  --bg: #FAF8F3;          /* warm paper */
+  --ink: #1F1F1F;         /* near-black: 16.0 : 1 on the paper */
+  --dim: #55534E;         /* secondary text, still AA (7.4 : 1), never for concepts */
+  --faint: #8A877F;       /* hairlines and small marks only */
+  --line: #D9D4C7;        /* thin rules */
+  --accent: #7B2D26;      /* oxblood, structure only (9.6 : 1) */
+  --card: #FFFFFF;
+  --p-green: #E9F2EA; --p-yellow: #F7F0DC; --p-pink: #F6E4E1; --p-blue: #EAF0F7;
+  --sans: "Inter", "Source Sans 3", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --serif: "Newsreader", "STIX Two Text", Georgia, serif;
+  --math: "STIX Two Text", "Cambria Math", Georgia, serif;
+  --mono: var(--sans);    /* every old monospace place gets the sans; real code below */
+  --radius: 11px;
+  --shadow: 0 1px 2px rgba(31, 31, 31, .06), 0 4px 14px rgba(31, 31, 31, .06);
+}
+html, body, .reveal-viewport { background: var(--bg); }
+.reveal { font-family: var(--sans); font-size: 30px; color: var(--ink); letter-spacing: -0.003em; }
+.reveal p, .reveal li { line-height: 1.5; }
+code, pre, kbd, .raw pre, .mine-demo .md-hash code { font-family: "IBM Plex Mono", ui-monospace, monospace; }
+math, .m, .op-m, .vp-m, .l08-m { font-family: var(--math); }
+
+/* titles: serif, sentence case, left, no console prompt */
+.reveal h1, .reveal h2, .reveal h3 { font-family: var(--serif); color: var(--ink); text-transform: none; letter-spacing: -0.01em; }
+.reveal h2 { font-size: 1.35em; font-weight: 500; line-height: 1.15; margin: 0 0 0.35em 0; }
+.reveal h2::before { content: none; }
+.reveal h2::first-letter { text-transform: uppercase; }
+.kicker, .reveal .kicker { font-family: var(--sans); font-size: 0.5em; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); margin: 0 0 0.35em 0; }
+.reveal .sub { font-family: var(--serif); font-style: italic; color: var(--dim); font-size: 0.8em; margin: 0 0 1em 0; }
+.cursor::after { content: none; }
+.dim { color: var(--dim); }
+.big { font-family: var(--serif); font-weight: 500; }
+
+/* the concept is the hero: large, near-black, a card with a thin accent rule (never grey) */
+.def, .reveal .def {
+  font-family: var(--serif); font-size: 1.05em; line-height: 1.4; color: var(--ink); font-weight: 400;
+  max-width: 34em; margin: 0.7em 0 0.4em; padding: 0.55em 0.9em 0.6em 1em;
+  background: var(--card); border-left: 4px solid var(--accent); border-radius: 0 var(--radius) var(--radius) 0; box-shadow: var(--shadow);
+}
+.def b, .def strong { font-weight: 600; }
+.def .dim, .rows .v .dim, .box .v .dim, .big .dim, td .dim { color: var(--dim); font-size: 0.75em; }
+.l09-hero { font-family: var(--serif) !important; color: var(--ink) !important; }
+.l09-cap { font-family: var(--serif) !important; color: var(--ink) !important; }
+.why { color: var(--dim); }
+.l09-eqs .why { color: #3A3833; }
+
+/* title slide */
+.title-block .t { font-family: var(--serif); font-size: 1.9em; font-weight: 500; letter-spacing: -0.015em; }
+.title-block .s { font-family: var(--serif); font-style: italic; color: var(--dim); font-size: 0.8em; }
+.title-block::before { content: ""; display: block; width: 3.2em; height: 3px; background: var(--accent); margin-bottom: 0.7em; border-radius: 2px; }
+
+/* rows of examples: numbered, readable */
+.rows .k { color: var(--accent); font-weight: 600; font-size: 0.65em; letter-spacing: 0.04em; }
+.rows .v { color: var(--ink); }
+.concept-list .dim { color: var(--accent); }
+
+/* boxes and tables: thin rules, soft cards */
+.box { background: var(--card); border: 1px solid var(--line) !important; border-radius: var(--radius); box-shadow: var(--shadow); }
+.box .k { color: var(--dim); }
+table.console, table.mini { font-family: var(--sans); }
+table.console th { border-bottom: 1px solid var(--ink); color: var(--dim); }
+table.console th, table.console td { border-color: var(--line); }
+table.mini { background: var(--card); }
+table.mini th, table.mini td { border-color: var(--line); }
+
+/* buttons: rounded, no [ ] */
+.btn, .menu-btn, .side-btn, .sb-fold, .sb-tab, .ink-btn, .ink-bar button, details.prompt summary, details.answer summary {
+  font-family: var(--sans) !important; border: 1px solid var(--line) !important; border-radius: 999px !important;
+  background: var(--card); color: var(--ink); box-shadow: 0 1px 2px rgba(31, 31, 31, .06); padding: 0.3em 0.95em;
+}
+.btn::before, .btn::after, .menu-btn::before, .menu-btn::after, details.prompt summary::before, details.prompt summary::after,
+details.answer summary::before, details.answer summary::after { content: none !important; }
+.btn:hover, .menu-btn:hover { background: #F2EEE4; border-color: #BDB6A6 !important; }
+.btn.chosen { background: #E9F2EA; border-color: #1B7F3B !important; color: #15602D; }
+.btn.chosen::after { content: " ✓" !important; }
+.btn.ghost { color: var(--ink); }
+.btn.go, .side-btn { background: var(--p-yellow); }
+.btn.on, .op-ctl .btn.on, .vp-ctl .btn.on { background: #F1E6E4 !important; border-color: var(--accent) !important; color: var(--accent); }
+
+/* polls, answer cards, quiz cards */
+.poll { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 0.5em 0.8em; }
+.poll-input input, .poll-input textarea { font-family: var(--sans); border: 1px solid var(--line) !important; border-radius: 8px; }
+.poll-status, .poll-results .dim { color: var(--dim); }
+.bar-track { background: #EFEBE2; border: none; border-radius: 4px; overflow: hidden; }
+.bar-fill { background: var(--accent); }
+.vbars { border-bottom: 1px solid var(--ink); }
+.vbar.hit { background: var(--accent); }
+details.answer .answer-body, details.prompt[open] { background: var(--card); border: 1px solid var(--line) !important; border-radius: var(--radius); box-shadow: var(--shadow); }
+.l06-quiz iframe { border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); background: var(--card); }
+
+/* widgets (opt-play, pref-play, garp): sans words, STIX maths, rounded controls */
+.vp, .op-slide, .op-lambda, .op-corner, .pp-budget, .pp-map, .pp-zoom, .garp-mine, .garp-summary { font-family: var(--sans); }
+.vp-svg text, .op-svg text, .vp-hill text, .vp-mini text { font-family: var(--math); }
+.vp-ctl input[type=range], .op-ctl input[type=range] { accent-color: var(--accent); }
+.vp-status .dim, .op-status .dim { color: var(--dim); }
+
+/* side panels, menu, chat, pulse, pen toolbar */
+.menu-panel, .side-panel, .pulse-panel, .ask-panel, .sidebar, .ink-bar, .wheel-overlay { font-family: var(--sans) !important; border-radius: var(--radius); box-shadow: var(--shadow); border-color: var(--line) !important; background: var(--card); }
+.sidebar { border-radius: 0; }
+.menu-panel a.current { background: #F1E6E4; color: var(--accent); }
+.menu-panel a:hover { background: #F2EEE4; }
+.pulse-panel .scale button, .sp-sec .scale button, .chat-sec textarea, .sp-field input, .code-panel input, .ask-panel textarea, .side-mode { font-family: var(--sans) !important; border-radius: 8px; }
+.pulse-panel .scale button.on, .sp-sec .scale button.on { background: #F1E6E4; border-color: var(--accent); }
+.ink-btn.on, .ink-bar button.on { background: #F1E6E4 !important; border-color: var(--accent) !important; }
+.reveal .slide-number { font-family: var(--sans); color: var(--dim); background: transparent; }
+.reveal .progress { color: var(--accent); }
+
+/* phones */
+html.mobile .reveal { font-size: 19px; }
+html.mobile .reveal h2 { font-size: 1.3em; }
+html.mobile .def { font-size: 1.05em; max-width: none; }
+.cprompt { display: none; }
+.title-block .t::first-letter { text-transform: uppercase; }
+
+/* the concept card wins over deck-level overrides (decks set .lead-block .def small and boxless with !important) */
+.reveal .slides section .lead-block .def, .reveal .slides section .def {
+  font-family: var(--serif) !important; font-size: 34px !important; line-height: 1.4 !important; color: var(--ink) !important;
+  background: var(--card) !important; border: none !important; border-left: 4px solid var(--accent) !important;
+  border-radius: 0 var(--radius) var(--radius) 0 !important; box-shadow: var(--shadow) !important;
+  padding: 0.45em 0.9em 0.5em 0.95em !important; margin: 0.6em 0 0.5em !important; max-width: 30em !important;
+}
+html.mobile .reveal .slides section .lead-block .def, html.mobile .reveal .slides section .def { font-size: 21px !important; max-width: none !important; }
