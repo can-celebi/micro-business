@@ -204,13 +204,16 @@
       f.svg.innerHTML = h;
       f.eq.innerHTML = '<div class="op-disp">' + (kind === 'subs' ? m('<i>u</i> = ' + (ax === 1 ? '' : ax) + '<i>x</i> + ' + (ay === 1 ? '' : ay) + '<i>y</i>') : m('<i>u</i> = min{<i>x</i>, <i>y</i>}')) + '</div>' +
         '<div class="op-sub">budget ' + m((px === 1 ? '' : r2(px) + '&#8202;') + '<i>x</i> + ' + (py === 1 ? '' : py) + '<i>y</i> = ' + B) + '</div>';
-      f.status.innerHTML = '<div>' + say + '</div>';
+      f.status.innerHTML = box.dataset.full === '1' ? '<div>' + say + '</div>' : '';
     }
     const inp = slider(f.ctl, 'price of x', 1, +box.dataset.pxmax || 3, 0.1, px, (v, o) => { px = Math.round(v * 10) / 10; o.innerHTML = '€' + r2(px); draw(); });
-    const bs = button(f.ctl, 'perfect substitutes', () => { kind = 'subs'; mark(); draw(); });
-    const bc = button(f.ctl, 'perfect complements', () => { kind = 'comp'; mark(); draw(); });
-    button(f.ctl, 'reset', () => { kind = 'subs'; px = PX0; inp.value = PX0; inp.dispatchEvent(new Event('input')); mark(); draw(); });
-    const mark = () => { bs.classList.toggle('on', kind === 'subs'); bc.classList.toggle('on', kind === 'comp'); };
+    let mark = () => {};
+    if (box.dataset.full === '1') {
+      const bs = button(f.ctl, 'perfect substitutes', () => { kind = 'subs'; mark(); draw(); });
+      const bc = button(f.ctl, 'perfect complements', () => { kind = 'comp'; mark(); draw(); });
+      button(f.ctl, 'reset', () => { kind = 'subs'; px = PX0; inp.value = PX0; inp.dispatchEvent(new Event('input')); mark(); draw(); });
+      mark = () => { bs.classList.toggle('on', kind === 'subs'); bc.classList.toggle('on', kind === 'comp'); };
+    }
     mark(); draw();
   }
 
