@@ -756,6 +756,18 @@
         }
         const y = Math.pow(v['β'] * px / (v['α'] * py), 1 / (1 - v['β'])); return y * py >= B ? [0, B / py] : [(B - py * y) / px, y]; } }
   };
+  // one more x at A = (x, y): the y′ with u(x + 1, y′) = u(x, y) (null: not possible), and the MRS at A as text and number
+  function swapAt(key, w, x, y) {
+    if (key === 'subs') return { y2: y - w.a / w.b, mrs: w.a / w.b, txt: r2(w.a / w.b) };
+    if (key === 'cd') { const k = w['α'] / w['β']; return { y2: y * Math.pow(x / (x + 1), k), mrs: k * y / x, txt: r2(k * y / x) }; }
+    if (key === 'ql') { const yb = Math.pow(y, w['β']) - w['α'], mr = w['α'] / (w['β'] * Math.pow(y, w['β'] - 1)); return { y2: yb > 0 ? Math.pow(yb, 1 / w['β']) : null, mrs: mr, txt: r2(mr) }; }
+    // comp: u = min{ax, by}; at the kink (ax = by) or with x in surplus an extra x alone is worth 0; with x scarce the extra
+    // x raises u, so the surplus y down to the new kink can go
+    const ax = w.a * x, by = w.b * y;
+    if (Math.abs(ax - by) < 1e-9) return { y2: y, mrs: null, txt: 'not defined (kink)', note: 'no swap: an extra x alone is worth 0' };
+    if (ax > by) return { y2: y, mrs: 0, txt: '0', note: 'x is in surplus: an extra x alone is worth 0' };
+    return { y2: ax / w.b, mrs: Infinity, txt: '∞ (vertical part)', note: 'y is in surplus: you can give up y down to the kink' };
+  }
   function nb(v, keep1) { const s = r2(v); return !keep1 && s === '1' ? '' : s; }
   function param(box) {
     const key = PFORMS[box.dataset.form] ? box.dataset.form : 'cd', F = PFORMS[key], f = frame(box), PX0 = 3, PY0 = 1, B0 = 60;
@@ -764,7 +776,7 @@
     const v = {}; F.ps.forEach(([k, , , , d]) => { v[k] = d; });
     const start = Object.assign({}, v), b0 = F.best(start, PX0, PY0, B0) || [B0 / PX0 / 2, B0 / PY0 / 2];
     const u0 = F.U(start, b0[0], b0[1]), LV = [0.55, 1, 1.6].map(c => u0 * c);   // fixed u levels (from the starting numbers)
-    let copies = [], budget = false;
+    let copies = [], budget = false, moveA = false, Apt = [+box.dataset.ax || 10, +box.dataset.ay || 10];
     const fEq = el('div', 'vp-formula');
     f.side.insertBefore(fEq, f.eq);
     const parTxt = w => F.ps.map(([k]) => k + ' = ' + r2(w[k])).join(', ');
@@ -779,29 +791,43 @@
     }
     function draw() {
       let h = defs(f.id) + clipOpen(f.id);
-      copies.forEach(c => { h += curves(c, '#8FB3DA', 2, ' stroke-dasharray="7 5"', false); });
+      const uA = w => F.U(w, Apt[0], Apt[1]);
+      copies.forEach(c => { h += poly(A, F.curve(c, uA(c)).map(([x, y]) => [x, Math.min(y, A.ymax * 1.6)]), '#8FB3DA', 2.2, ' stroke-dasharray="7 5"'); });
       if (F.kink) h += '<line x1="' + A.X(0) + '" y1="' + A.Y(0) + '" x2="' + A.X(A.xmax) + '" y2="' + A.Y(A.xmax * F.kink(v)) + '" stroke="' + GREY + '" stroke-width="1.5" stroke-dasharray="5 5"/>';
       if (budget) h += '<polygon points="' + A.X(0) + ',' + A.Y(0) + ' ' + A.X(0) + ',' + A.Y(B0 / PY0) + ' ' + A.X(B0 / PX0) + ',' + A.Y(0) + '" fill="#FDE3CF" opacity="0.6"/>' +
         '<line x1="' + A.X(0) + '" y1="' + A.Y(B0 / PY0) + '" x2="' + A.X(B0 / PX0) + '" y2="' + A.Y(0) + '" stroke="' + BUDGET + '" stroke-width="3.5"/>';
-      h += curves(v, IC, 3, '', true);
+      h += curves(v, IC, 1.8, ' opacity="0.45"', true);                                   // the fixed u levels, faint
+      h += poly(A, F.curve(v, uA(v)).map(([x, y]) => [x, Math.min(y, A.ymax * 1.6)]), IC, 3.2);  // the curve through A
       h += '</g>' + axisLines();
       copies.forEach(c => { const pts = F.curve(c, LV[1]).filter(([x, y]) => x <= A.xmax * 0.85 && y <= A.ymax * 0.85 && y >= A.ymax * 0.15); const e = pts[Math.floor(pts.length * 0.75)] || pts.pop(); if (e) h += label(A.X(e[0]) + 8, A.Y(e[1]) + 18, parTxt(c), '#6F8FB3', null, 17); });
       if (F.kink) h += label(A.X(A.xmax * 0.6) + 6, A.Y(Math.min(A.ymax * 0.9, A.xmax * 0.6 * F.kink(v))) - 8, it('y') + ' = ' + nb(F.kink(v)) + it('x'), GREY, null, 17);
-      const P = F.pt(v, LV[1]);
-      if (P[0] >= 0 && P[0] <= A.xmax && P[1] <= A.ymax) h += dot(A.X(P[0]), A.Y(P[1]), 7);
+      // from A: +1 x → the exact −Δy, and the tangent (slope −MRS), for the current curve and every kept copy
+      const sets = [[v, IC, '']].concat(copies.map(c => [c, '#6F8FB3', ' stroke-dasharray="7 5"']));
+      sets.forEach(([w, col, dash]) => {
+        const S = swapAt(key, w, Apt[0], Apt[1]);
+        if (S.mrs != null && isFinite(S.mrs)) { const L0 = 3.2; h += '<line x1="' + A.X(Apt[0] - L0) + '" y1="' + A.Y(Apt[1] + S.mrs * L0) + '" x2="' + A.X(Apt[0] + L0) + '" y2="' + A.Y(Apt[1] - S.mrs * L0) + '" stroke="' + GREY + '" stroke-width="1.5" stroke-dasharray="4 4"/>'; }
+        if (S.y2 != null) h += '<path d="M' + A.X(Apt[0]) + ',' + A.Y(Apt[1]) + ' L' + A.X(Apt[0] + 1) + ',' + A.Y(Apt[1]) + ' L' + A.X(Apt[0] + 1) + ',' + A.Y(S.y2) + '" fill="none" stroke="' + col + '" stroke-width="2.6"' + dash + '/>';
+      });
+      h += dot(A.X(Apt[0]), A.Y(Apt[1]), 7) + label(A.X(Apt[0]) - 12, A.Y(Apt[1]) - 10, 'A ' + '(' + r2(Apt[0]) + ', ' + r2(Apt[1]) + ')', '#222', 'end', 17);
+      if (copies.length) h += label(A.X(Apt[0]) - 12, A.Y(Apt[1]) + 22, 'same bundle, different preferences', '#555', 'end', 17);
       let bestTxt = '';
       if (budget) { const b = F.best(v, PX0, PY0, B0); if (b) { h += dot(A.X(b[0]), A.Y(b[1]), 8, GRAD); bestTxt = '<div>best feasible bundle on ' + m('3<i>x</i> + <i>y</i> = 60') + ': ' + vec(b[0], b[1]) + '</div>'; } else bestTxt = '<div>every bundle on ' + m('3<i>x</i> + <i>y</i> = 60') + ' is best (MRS = price ratio)</div>'; }
       f.svg.innerHTML = h;
       fEq.innerHTML = F.eq(v);
       f.eq.innerHTML = '<div class="vp-sub">' + F.name + (F.tag ? ' · <b>' + F.tag(v) + '</b>' : '') + (copies.length ? ' · dashed: ' + copies.map(parTxt).join(' | ') : '') + '</div>';
-      f.status.innerHTML = '<div>at the dot ' + vec(P[0], P[1]) + ': ' + F.mrs(v, P[0], P[1]) + '</div>' + bestTxt;
+      const row = (w, tag) => { const S = swapAt(key, w, Apt[0], Apt[1]), dy = S.y2 == null ? null : Apt[1] - S.y2;
+        return '<tr><td>' + tag + '</td><td>' + parTxt(w) + '</td><td>' + (S.note ? S.note : dy == null ? 'not possible: not enough y' : 'one more ' + m('<i>x</i>') + ' costs ' + m('Δ<i>y</i> = ' + r2(dy))) + '</td><td>' + m('MRS = ' + S.txt) + '</td></tr>'; };
+      f.status.innerHTML = '<table class="vp-swap"><tr><th></th><th>numbers</th><th>from A, keeping u the same</th><th>at A</th></tr>' + row(v, 'now') + copies.map((c, i) => row(c, 'copy ' + (i + 1))).join('') + '</table>' +
+        '<div class="dim">' + m('Δ<i>y</i>') + ' is exact (u(x + 1, y − Δy) = u(A)); the MRS is the slope of the tangent at A, for small steps</div>' + bestTxt;
     }
     const ins = F.ps.map(([k, lo, hi, st, d]) => slider(f.ctl, k, lo, hi, st, d, (val, o, first) => { v[k] = val; o.innerHTML = r2(val); if (!first) { draw(); fEq.classList.remove('glow'); void fEq.offsetWidth; fEq.classList.add('glow'); } }));
     f.ctl.appendChild(el('div', 'vp-break'));
     button(f.ctl, 'keep a copy', () => { if (copies.length >= 3) copies.shift(); copies.push(Object.assign({}, v)); draw(); });
     button(f.ctl, 'clear copies', () => { copies = []; draw(); });
     const bb = button(f.ctl, 'show budget', () => { budget = !budget; bb.classList.toggle('on', budget); draw(); });
-    button(f.ctl, 'reset', () => { copies = []; budget = false; bb.classList.remove('on'); F.ps.forEach(([k, , , , d], i) => ins[i].set(d)); draw(); });
+    const ma = button(f.ctl, 'move A', () => { moveA = !moveA; ma.classList.toggle('on', moveA); });
+    draggable(f, A, (x, y) => { if (!moveA) return; Apt = [Math.max(1, Math.min(A.xmax * 0.9, Math.round(x * 2) / 2)), Math.max(1, Math.min(A.ymax * 0.9, Math.round(y * 2) / 2))]; draw(); });
+    button(f.ctl, 'reset', () => { copies = []; budget = false; moveA = false; ma.classList.remove('on'); Apt = [+box.dataset.ax || 10, +box.dataset.ay || 10]; bb.classList.remove('on'); F.ps.forEach(([k, , , , d], i) => ins[i].set(d)); draw(); });
     draw();
   }
 
@@ -845,9 +871,10 @@
     draw();
   }
 
-  const CSS = '.vp-formula.small{font-size:1.05em;padding:.15em .6em;margin:.25em 0 .1em}.vp-mtitle{font-size:.85em;margin-bottom:.1em}.vp-mcap .vp-sub{font-size:.85em}' +
+  const CSS = '.vp-swap{border-collapse:collapse;font-size:.85em;margin:.2em 0}.vp-swap td,.vp-swap th{padding:.15em .45em;border-bottom:1px solid #E3DFD5;text-align:left}.vp-swap th{color:#55534E;font-weight:600}' +
+    '.vp-formula.small{font-size:1.05em;padding:.15em .6em;margin:.25em 0 .1em}.vp-mtitle{font-size:.85em;margin-bottom:.1em}.vp-mcap .vp-sub{font-size:.85em}' +
     '@keyframes vpglow{0%{text-shadow:0 0 12px rgba(201,150,40,.55)}100%{text-shadow:none}}.vp-formula.glow{animation:vpglow 1.2s ease-out 1}@media (prefers-reduced-motion:reduce){.vp-formula.glow{animation:none}}' +
-    '.vp-formula{font-family:"STIX Two Math","STIX Two Text","Cambria Math",serif;font-size:1.5em;color:#1F1F1F;background:#F6F7F9;border-radius:10px;padding:.25em .8em;margin:.1em 0 .5em;display:inline-block}.vp-formula i{font-style:italic}.vp-formula sup{font-size:.62em}' +
+    '.vp-formula{font-family:"STIX Two Math","STIX Two Text","Cambria Math",serif;font-size:1.5em;color:#1F1F1F;background:#F6F7F9;border-radius:10px;padding:.25em .8em;margin:.1em 0 .5em;display:inline-block}.vp-formula i{font-style:italic}.vp .vp-formula sup,.vp .vp-m sup,.vp-formula sup{font-size:.62em;vertical-align:super;line-height:0}.vp .vp-m sub{vertical-align:-.25em;line-height:0}' +
     '.op-param .vp-ctl input[type=range]{height:2em}.op-param .vp-ctl input[type=range]::-webkit-slider-thumb{width:26px;height:26px}.op-param .vp-ctl input[type=range]::-moz-range-thumb{width:24px;height:24px}' +
     '.vp-bar{display:inline-block;height:.8em;vertical-align:middle;margin-left:.6em;border-radius:2px}.vp-row{display:flex;align-items:center;gap:.2em}' +
     '.vp{font-size:.6em;text-align:left;margin-top:.3em;display:grid;grid-template-columns:auto minmax(0,1fr);gap:1.2em;align-items:start}' +
