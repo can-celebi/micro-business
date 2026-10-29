@@ -771,13 +771,17 @@
   }
   function nb(v, keep1) { const s = r2(v); return !keep1 && s === '1' ? '' : s; }
   function param(box) {
-    const key = PFORMS[box.dataset.form] ? box.dataset.form : 'cd', F = PFORMS[key], f = frame(box), PX0 = 3, PY0 = 1, B0 = 60;
+    const key = PFORMS[box.dataset.form] ? box.dataset.form : 'cd', F = Object.assign({}, PFORMS[key]), f = frame(box), PX0 = 3, PY0 = 1, B0 = 60;
+    // Cobb-Douglas with ONE slider α, β = 1 − α (Celebi 29.10): u = x^α y^(1−α), the best point αB/p_x, (1−α)B/p_y slides along
+    // the budget line; data-cd="ab" keeps the two sliders
+    const CD1 = key === 'cd' && box.dataset.cd !== 'ab';
+    if (CD1) F.ps = [['α', 0.05, 0.95, 0.05, 0.5]];
     // minimal by default (Can 29.10: "keep the graph animation and the a and b sliders, no buttons"): curves, sliders, the live
     // formula, A with its label, the text tags. data-full="1" brings back the copies, budget, move A, step triangles, table, magnifier.
     const FULL = box.dataset.full === '1';
     const A = axes(B0 / PX0 * 1.4, B0 / PY0 * 1.08);
     if (box.dataset.beta && key === 'ql') F.ps = F.ps.map(r => r[0] === 'β' ? [r[0], r[1], r[2], r[3], +box.dataset.beta] : r);   // e.g. data-beta="2" for u = x + y²
-    const v = {}; F.ps.forEach(([k, , , , d]) => { v[k] = d; });
+    const v = {}; F.ps.forEach(([k, , , , d]) => { v[k] = d; }); if (CD1) v['β'] = 1 - v['α'];
     const start = Object.assign({}, v), b0 = F.best(start, PX0, PY0, B0) || [B0 / PX0 / 2, B0 / PY0 / 2];
     const u0 = F.U(start, b0[0], b0[1]), LV = [0.55, 1, 1.6].map(c => u0 * c);   // fixed u levels (from the starting numbers)
     let copies = [], budget = false, moveA = false, Apt = [+box.dataset.ax || 10, +box.dataset.ay || 10];
@@ -860,7 +864,7 @@
       f.status.innerHTML = !FULL ? '' : '<table class="vp-swap"><tr><th></th><th>numbers</th><th>from A, keeping u the same</th><th>at A</th></tr>' + row(v, 'now') + copies.map((c, i) => row(c, 'copy ' + (i + 1))).join('') + '</table>' +
         '<div class="dim">' + m('Δ<i>y</i>') + ' is exact (u(x + 1, y − Δy) = u(A)); the MRS is the slope of the tangent at A, for small steps</div>' + bestTxt;
     }
-    const ins = F.ps.map(([k, lo, hi, st, d]) => slider(f.ctl, k, lo, hi, st, d, (val, o, first) => { v[k] = val; o.innerHTML = r2(val); if (!first) { draw(); fEq.classList.remove('glow'); void fEq.offsetWidth; fEq.classList.add('glow'); } }));
+    const ins = F.ps.map(([k, lo, hi, st, d]) => slider(f.ctl, k, lo, hi, st, d, (val, o, first) => { v[k] = val; if (CD1) v['β'] = Math.round((1 - val) * 100) / 100; o.innerHTML = r2(val); if (!first) { draw(); fEq.classList.remove('glow'); void fEq.offsetWidth; fEq.classList.add('glow'); } }));
     if (FULL) {
     f.ctl.appendChild(el('div', 'vp-break'));
     button(f.ctl, 'keep a copy', () => { if (copies.length >= 3) copies.shift(); copies.push(Object.assign({}, v)); draw(); });
