@@ -739,14 +739,14 @@
     cd: { ps: [['α', 0.2, 2, 0.05, 1], ['β', 0.2, 2, 0.05, 1]], name: 'Cobb-Douglas',
       note: v => 'only α/β changes the shape (ordinal): α/β = ' + r2(v['α'] / v['β']),
       eq: v => m('<i>u</i> = <i>x</i><sup>' + nb(v['α'], 1) + '</sup> <i>y</i><sup>' + nb(v['β'], 1) + '</sup>'), U: (v, x, y) => Math.pow(x, v['α']) * Math.pow(y, v['β']),
-      curve: (v, u) => { const p = []; for (let i = 1; i <= 240; i++) { const x = 0.4 * i; p.push([x, Math.pow(u / Math.pow(x, v['α']), 1 / v['β'])]); } return p; },
+      curve: (v, u) => { const p = []; for (let i = 1; i <= 600; i++) { const x = 100 * Math.pow(i / 600, 2); p.push([x, Math.pow(u / Math.pow(x, v['α']), 1 / v['β'])]); } return p; },
       pt: (v, u) => [10, Math.pow(u / Math.pow(10, v['α']), 1 / v['β'])],
       mrs: (v, x, y) => m('MRS = ' + fr('α', 'β') + ' · ' + fr('<i>y</i>', '<i>x</i>') + ' = ' + r2(v['α'] / v['β'] * y / x)),
       best: (v, px, py, B) => { const s = v['α'] + v['β']; return [v['α'] / s * B / px, v['β'] / s * B / py]; } },
     ql: { ps: [['α', 0.5, 5, 0.1, 2], ['β', 0.2, 2.5, 0.05, 0.5]], name: 'quasi-linear',
       tag: v => v['β'] < 0.999 ? 'β < 1: bowed in: the next y is worth less → a tangency' : v['β'] > 1.001 ? 'β > 1: bowed out: the next y is worth MORE → corners' : 'β = 1: straight lines',
       eq: v => m('<i>u</i> = ' + nb(v['α']) + '<i>x</i> + <i>y</i><sup>' + r2(v['β']) + '</sup>'), U: (v, x, y) => v['α'] * x + Math.pow(y, v['β']),
-      curve: (v, u) => { const p = []; for (let i = 0; i <= 240; i++) { const y = 0.3 * i, x = (u - Math.pow(y, v['β'])) / v['α']; if (x < 0) break; p.push([x, y]); } return p; },
+      curve: (v, u) => { const p = []; for (let i = 0; i <= 900; i++) { const y = 0.1 * i, x = (u - Math.pow(y, v['β'])) / v['α']; if (x < 0) { const y0 = Math.pow(u, 1 / v['β']); p.push([0, y0]); break; } p.push([x, y]); } return p; },
       pt: (v, u) => { if (v['β'] < 1) return [(u - Math.pow(20, v['β'])) / v['α'], 20]; const y = Math.pow(Math.max(0, u - 10 * v['α']), 1 / v['β']); return [10, y]; },   // bowed out: the dot at x = 10
       mrs: (v, x, y) => m('MRS = ' + fr('α', 'β <i>y</i><sup>β−1</sup>') + ' = ' + r2(v['α'] / (v['β'] * Math.pow(y, v['β'] - 1)))) + ' (depends on y only: the curves are sideways shifts)',
       best: (v, px, py, B) => {
@@ -784,27 +784,40 @@
     const fEq = el('div', 'vp-formula');
     f.side.insertBefore(fEq, f.eq);
     const parTxt = w => F.ps.map(([k]) => k + ' = ' + r2(w[k])).join(', ');
+    function clipPath(pts, col, wid, extra) {
+      const X1 = A.xmax, Y1 = A.ymax; let d = '', open = false;
+      for (let i = 1; i < pts.length; i++) {
+        const a = pts[i - 1], b = pts[i], dx = b[0] - a[0], dy = b[1] - a[1]; let t0 = 0, t1 = 1, ok = true;
+        [[-dx, a[0]], [dx, X1 - a[0]], [-dy, a[1]], [dy, Y1 - a[1]]].forEach(([pp, q]) => {   // Liang–Barsky
+          if (!ok) return; if (Math.abs(pp) < 1e-12) { if (q < 0) ok = false; return; } const r = q / pp; if (pp < 0) { if (r > t1) ok = false; else if (r > t0) t0 = r; } else { if (r < t0) ok = false; else if (r < t1) t1 = r; } });
+        if (!ok || t1 < t0) { open = false; continue; }
+        const P0 = [a[0] + dx * t0, a[1] + dy * t0], P1 = [a[0] + dx * t1, a[1] + dy * t1];
+        if (!open || t0 > 0) d += 'M' + A.X(P0[0]).toFixed(2) + ',' + A.Y(P0[1]).toFixed(2);
+        d += 'L' + A.X(P1[0]).toFixed(2) + ',' + A.Y(P1[1]).toFixed(2); open = t1 >= 1;
+      }
+      return d ? '<path d="' + d + '" fill="none" stroke="' + col + '" stroke-width="' + wid + '" stroke-linejoin="round"' + (extra || '') + '/>' : '';
+    }
     function curves(w, col, wid, extra, labels) {
       let h = '';
       LV.forEach((u, i) => {
-        const pts = F.curve(w, u).map(([x, y]) => [x, Math.min(y, A.ymax * 1.6)]);
-        h += poly(A, pts, col, wid, extra);
-        if (labels) { const ok = pts.filter(([x, y]) => x <= A.xmax * 0.95 && y <= A.ymax * 0.9 && y >= A.ymax * 0.06), end = key === 'ql' ? ok[Math.floor(ok.length * (0.12 + 0.22 * i))] : ok.pop(); if (end) h += label(A.X(end[0]) + 6, A.Y(end[1]) - 6, it('u') + ' = ' + r2(u), IC, null, 17); }
+        const pts = F.curve(w, u);
+        h += clipPath(pts, col, wid, extra);
+        if (labels && FULL) { const ok = pts.filter(([x, y]) => x <= A.xmax * 0.95 && y <= A.ymax * 0.9 && y >= A.ymax * 0.06), end = key === 'ql' ? ok[Math.floor(ok.length * (0.12 + 0.22 * i))] : ok.pop(); if (end) h += label(A.X(end[0]) + 6, A.Y(end[1]) - 6, it('u') + ' = ' + r2(u), IC, null, 17); }
       });
       return h;
     }
     function draw() {
       let h = defs(f.id) + clipOpen(f.id);
       const uA = w => F.U(w, Apt[0], Apt[1]);
-      copies.forEach(c => { h += poly(A, F.curve(c, uA(c)).map(([x, y]) => [x, Math.min(y, A.ymax * 1.6)]), '#8FB3DA', 2.2, ' stroke-dasharray="7 5"'); });
+      copies.forEach(c => { h += clipPath(F.curve(c, uA(c)), '#8FB3DA', 2.2, ' stroke-dasharray="7 5"'); });
       if (F.kink) h += '<line x1="' + A.X(0) + '" y1="' + A.Y(0) + '" x2="' + A.X(A.xmax) + '" y2="' + A.Y(A.xmax * F.kink(v)) + '" stroke="' + GREY + '" stroke-width="1.5" stroke-dasharray="5 5"/>';
       if (budget) h += '<polygon points="' + A.X(0) + ',' + A.Y(0) + ' ' + A.X(0) + ',' + A.Y(B0 / PY0) + ' ' + A.X(B0 / PX0) + ',' + A.Y(0) + '" fill="#FDE3CF" opacity="0.6"/>' +
         '<line x1="' + A.X(0) + '" y1="' + A.Y(B0 / PY0) + '" x2="' + A.X(B0 / PX0) + '" y2="' + A.Y(0) + '" stroke="' + BUDGET + '" stroke-width="3.5"/>';
       h += curves(v, IC, 1.8, ' opacity="0.45"', true);                                   // the fixed u levels, faint
-      h += poly(A, F.curve(v, uA(v)).map(([x, y]) => [x, Math.min(y, A.ymax * 1.6)]), IC, 3.2);  // the curve through A
+      h += clipPath(F.curve(v, uA(v)), IC, 3.2);  // the curve through A
       h += '</g>' + axisLines();
       copies.forEach(c => { const pts = F.curve(c, LV[1]).filter(([x, y]) => x <= A.xmax * 0.85 && y <= A.ymax * 0.85 && y >= A.ymax * 0.15); const e = pts[Math.floor(pts.length * 0.75)] || pts.pop(); if (e) h += label(A.X(e[0]) + 8, A.Y(e[1]) + 18, parTxt(c), '#6F8FB3', null, 17); });
-      if (F.kink) h += label(A.X(A.xmax * 0.6) + 6, A.Y(Math.min(A.ymax * 0.9, A.xmax * 0.6 * F.kink(v))) - 8, it('y') + ' = ' + nb(F.kink(v)) + it('x'), GREY, null, 17);
+      if (F.kink && FULL) h += label(A.X(A.xmax * 0.6) + 6, A.Y(Math.min(A.ymax * 0.9, A.xmax * 0.6 * F.kink(v))) - 8, it('y') + ' = ' + nb(F.kink(v)) + it('x'), GREY, null, 17);
       // from A: +1 x → the exact −Δy, and the tangent (slope −MRS), for the current curve and every kept copy
       const sets = [[v, IC, '']].concat(copies.map(c => [c, '#6F8FB3', ' stroke-dasharray="7 5"']));
       if (FULL) sets.forEach(([w, col, dash]) => {
@@ -835,13 +848,13 @@
         if (S0.y2 != null && Apt[1] - S0.y2 > 0.05) h += label(zx(Apt[0] + 1) + 6, (zy(Apt[1]) + zy(Math.max(S0.y2, Apt[1] - 72 / ZK))) / 2 + 6, '−' + r2(Apt[1] - S0.y2), IC, null, 17);
         h += label(ZC[0] + ZR - 4, ZC[1] + ZR - 2, '×5', '#9AA3AE', 'end', 17);
       }
-      h += dot(A.X(Apt[0]), A.Y(Apt[1]), 7) + label(A.X(Apt[0]) - 12, A.Y(Apt[1]) - 10, 'A ' + '(' + r2(Apt[0]) + ', ' + r2(Apt[1]) + ')', '#222', 'end', 17);
+      h += dot(A.X(Apt[0]), A.Y(Apt[1]), 7) + (FULL ? label(A.X(Apt[0]) - 12, A.Y(Apt[1]) - 10, 'A ' + '(' + r2(Apt[0]) + ', ' + r2(Apt[1]) + ')', '#222', 'end', 17) : '');
       if (copies.length) h += label(A.X(Apt[0]) - 12, A.Y(Apt[1]) + 22, 'same bundle, different preferences', '#555', 'end', 17);
       let bestTxt = '';
       if (budget) { const b = F.best(v, PX0, PY0, B0); if (b) { h += dot(A.X(b[0]), A.Y(b[1]), 8, GRAD); bestTxt = '<div>best feasible bundle on ' + m('3<i>x</i> + <i>y</i> = 60') + ': ' + vec(b[0], b[1]) + '</div>'; } else bestTxt = '<div>every bundle on ' + m('3<i>x</i> + <i>y</i> = 60') + ' is best (MRS = price ratio)</div>'; }
       f.svg.innerHTML = h;
       fEq.innerHTML = F.eq(v);
-      f.eq.innerHTML = (F.tag ? '<div class="vp-tag' + (v['β'] > 1.001 ? ' out' : '') + '">' + F.tag(v) + '</div>' : '') + (F.note ? '<div class="vp-tag">' + F.note(v) + '</div>' : '') + '<div class="vp-sub">' + F.name + (copies.length ? ' · dashed: ' + copies.map(parTxt).join(' | ') : '') + '</div>';
+      f.eq.innerHTML = !FULL ? '' : (F.tag ? '<div class="vp-tag' + (v['β'] > 1.001 ? ' out' : '') + '">' + F.tag(v) + '</div>' : '') + (F.note ? '<div class="vp-tag">' + F.note(v) + '</div>' : '') + '<div class="vp-sub">' + F.name + (copies.length ? ' · dashed: ' + copies.map(parTxt).join(' | ') : '') + '</div>';
       const row = (w, tag) => { const S = swapAt(key, w, Apt[0], Apt[1]), dy = S.y2 == null ? null : Apt[1] - S.y2;
         return '<tr><td>' + tag + '</td><td>' + parTxt(w) + '</td><td>' + (S.note ? S.note : dy == null ? 'not possible: not enough y' : 'one more ' + m('<i>x</i>') + ' costs ' + m('Δ<i>y</i> = ' + r2(dy))) + '</td><td>' + m('MRS = ' + S.txt) + '</td></tr>'; };
       f.status.innerHTML = !FULL ? '' : '<table class="vp-swap"><tr><th></th><th>numbers</th><th>from A, keeping u the same</th><th>at A</th></tr>' + row(v, 'now') + copies.map((c, i) => row(c, 'copy ' + (i + 1))).join('') + '</table>' +
