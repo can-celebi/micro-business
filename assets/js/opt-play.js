@@ -356,7 +356,17 @@
     let key = keys[0], t = 0.15, shown = false, stop = () => {};
     const at = t => [t * xi, (1 - t) * yi];
     const minis = el('div', 'vp-minis'), mx = document.createElementNS(NS, 'svg'), my = document.createElementNS(NS, 'svg');
-    [[mx, 'x'], [my, 'y']].forEach(([v, n]) => { v.setAttribute('viewBox', '0 0 260 180'); v.setAttribute('class', 'vp-mini'); const c = el('div', 'vp-minic'); c.appendChild(v); c.appendChild(el('div', 'vp-sub', m('<i>u</i>') + ' along the budget line, against ' + m('<i>' + n + '</i>'))); minis.appendChild(c); });
+    const XN = box.dataset.xname || 'x', YN = box.dataset.yname || 'y', XC = '#2F7D4F', YC = '#7B2D26', capX = el('div', 'vp-mcap'), capY = el('div', 'vp-mcap');
+    [[mx, 'x', XN, XC, capX], [my, 'y', YN, YC, capY]].forEach(([v, n, nm, col, cap]) => { v.setAttribute('viewBox', '0 0 260 180'); v.setAttribute('class', 'vp-mini'); const c = el('div', 'vp-minic');
+      c.appendChild(el('div', 'vp-mtitle', 'walk the budget: ' + m('<i>u</i>') + ' as <b style="color:' + col + '">' + (nm === n ? m('<i>' + n + '</i>') : nm + ' (' + m('<i>' + n + '</i>') + ')') + '</b> changes')); c.appendChild(v); c.appendChild(cap); minis.appendChild(c); });
+    // the one-variable utility along the budget line, as a formula, for each form (px·x + py·y = B)
+    const yOfX = () => (q.B + ' − ' + (q.px === 1 ? '' : q.px) + '<i>x</i>'), xOfY = () => ((q.py === 1 ? '(' + q.B + ' − <i>y</i>)' : '(' + q.B + ' − ' + q.py + '<i>y</i>)') + '/' + q.px);
+    const ALONGF = {
+      cd: [() => '<i>u</i> = <i>x</i>(' + yOfX() + ')', () => '<i>u</i> = ' + xOfY() + ' · <i>y</i>'],
+      subs: [() => '<i>u</i> = <i>x</i> + (' + yOfX() + ')', () => '<i>u</i> = ' + xOfY() + ' + <i>y</i>'],
+      comp: [() => '<i>u</i> = min{<i>x</i>, ' + yOfX() + '}', () => '<i>u</i> = min{' + xOfY() + ', <i>y</i>}'],
+      ql: [() => '<i>u</i> = <i>x</i> + 2√(' + yOfX() + ')', () => '<i>u</i> = ' + xOfY() + ' + 2√<i>y</i>']
+    };
     f.side.insertBefore(minis, f.ctl);
     // u along the budget line, drawn against x (k = 0) or against y (k = 1)
     function mini(svgEl, k, F, b, tNow) {
@@ -369,7 +379,7 @@
       g += '<polyline points="' + pts.join(' ') + '" fill="none" stroke="' + ALONG + '" stroke-width="2.5"/>';
       g += '<line x1="' + PX_(cb) + '" y1="' + PY_(b.u) + '" x2="' + PX_(cb) + '" y2="' + (MT + hh) + '" stroke="' + GRAD + '" stroke-width="1.6" stroke-dasharray="4 4"/>';
       g += label(PX_(cb), MT + hh + 24, r2(cb), GRAD, 'middle', 17) + label(ML - 6, PY_(b.u) + 6, r2(b.u), GRAD, 'end', 17);
-      g += dot(PX_(cn), PY_(un), 6) + label(ML - 8, MT + 12, it('u'), '#555', 'end', 18);
+      g += dot(PX_(cn), PY_(un), 6) + label(ML - 8, MT + 12, it('u'), '#555', 'end', 18);   // the good's name is in the panel's coloured title (a label here would sit on the peak's tick)
       svgEl.innerHTML = g;
     }
     function draw() {
@@ -394,6 +404,9 @@
       h += label(A.X(x) + 14, A.Y(y) - 12, it('u') + ' = ' + r2(u), '#222');
       f.svg.innerHTML = h;
       mini(mx, 0, F, b, t); mini(my, 1, F, b, t);
+      const AF = ALONGF[key] || ALONGF.cd;
+      capX.innerHTML = '<div class="vp-formula small">' + AF[0]() + '</div><div class="vp-sub">peak at <b style="color:' + XC + '">' + m('<i>x</i> = ' + r2(bx)) + '</b>, ' + m('<i>u</i> = ' + r2(b.u)) + '</div>';
+      capY.innerHTML = '<div class="vp-formula small">' + AF[1]() + '</div><div class="vp-sub">peak at <b style="color:' + YC + '">' + m('<i>y</i> = ' + r2(by)) + '</b>, ' + m('<i>u</i> = ' + r2(b.u)) + '</div>';
       f.eq.innerHTML = '<div class="vp-disp">' + m(F.eq) + '</div><div class="vp-sub">' + F.name + ': ' + F.note + '</div><div class="vp-sub">budget ' + m(q.px + '<i>x</i> + <i>y</i> = ' + q.B) + '</div>';
       f.status.innerHTML = '<div>at ' + vec(x, y) + ': ' + m('<i>u</i> = ' + r2(u)) + '</div>' +
         (shown ? '<div><b style="color:' + GRAD + '">best feasible bundle ' + vec(bx, by) + ', ' + m('<i>u</i> = ' + r2(b.u)) + '</b>: ' + F.how + '</div>' : '<div class="dim">drag the dot along the line: where is ' + m('<i>u</i>') + ' highest?</div>');
@@ -729,17 +742,25 @@
       pt: (v, u) => [10, Math.pow(u / Math.pow(10, v['α']), 1 / v['β'])],
       mrs: (v, x, y) => m('MRS = ' + fr('α', 'β') + ' · ' + fr('<i>y</i>', '<i>x</i>') + ' = ' + r2(v['α'] / v['β'] * y / x)),
       best: (v, px, py, B) => { const s = v['α'] + v['β']; return [v['α'] / s * B / px, v['β'] / s * B / py]; } },
-    ql: { ps: [['α', 0.5, 5, 0.1, 2], ['β', 0.2, 0.9, 0.05, 0.5]], name: 'quasi-linear',
+    ql: { ps: [['α', 0.5, 5, 0.1, 2], ['β', 0.2, 2.5, 0.05, 0.5]], name: 'quasi-linear',
+      tag: v => v['β'] < 0.999 ? 'bowed in' : v['β'] > 1.001 ? 'bowed out' : 'straight',
       eq: v => m('<i>u</i> = ' + nb(v['α']) + '<i>x</i> + <i>y</i><sup>' + r2(v['β']) + '</sup>'), U: (v, x, y) => v['α'] * x + Math.pow(y, v['β']),
       curve: (v, u) => { const p = []; for (let i = 0; i <= 240; i++) { const y = 0.3 * i, x = (u - Math.pow(y, v['β'])) / v['α']; if (x < 0) break; p.push([x, y]); } return p; },
-      pt: (v, u) => [(u - Math.pow(20, v['β'])) / v['α'], 20],
+      pt: (v, u) => { if (v['β'] < 1) return [(u - Math.pow(20, v['β'])) / v['α'], 20]; const y = Math.pow(Math.max(0, u - 10 * v['α']), 1 / v['β']); return [10, y]; },   // bowed out: the dot at x = 10
       mrs: (v, x, y) => m('MRS = ' + fr('α', 'β <i>y</i><sup>β−1</sup>') + ' = ' + r2(v['α'] / (v['β'] * Math.pow(y, v['β'] - 1)))) + ' (depends on y only: the curves are sideways shifts)',
-      best: (v, px, py, B) => { const y = Math.pow(v['β'] * px / (v['α'] * py), 1 / (1 - v['β'])); return y * py >= B ? [0, B / py] : [(B - py * y) / px, y]; } }
+      best: (v, px, py, B) => {
+        if (v['β'] >= 0.999) {   // straight or bowed out: the best is a corner (or the whole line when straight and α/1 = px/py)
+          const ux = v['α'] * B / px, uy = Math.pow(B / py, v['β']);
+          if (Math.abs(v['β'] - 1) < 0.001 && Math.abs(v['α'] - px / py) < 1e-9) return null;
+          return ux >= uy ? [B / px, 0] : [0, B / py];
+        }
+        const y = Math.pow(v['β'] * px / (v['α'] * py), 1 / (1 - v['β'])); return y * py >= B ? [0, B / py] : [(B - py * y) / px, y]; } }
   };
   function nb(v, keep1) { const s = r2(v); return !keep1 && s === '1' ? '' : s; }
   function param(box) {
     const key = PFORMS[box.dataset.form] ? box.dataset.form : 'cd', F = PFORMS[key], f = frame(box), PX0 = 3, PY0 = 1, B0 = 60;
     const A = axes(B0 / PX0 * 1.4, B0 / PY0 * 1.08);
+    if (box.dataset.beta && key === 'ql') F.ps = F.ps.map(r => r[0] === 'β' ? [r[0], r[1], r[2], r[3], +box.dataset.beta] : r);   // e.g. data-beta="2" for u = x + y²
     const v = {}; F.ps.forEach(([k, , , , d]) => { v[k] = d; });
     const start = Object.assign({}, v), b0 = F.best(start, PX0, PY0, B0) || [B0 / PX0 / 2, B0 / PY0 / 2];
     const u0 = F.U(start, b0[0], b0[1]), LV = [0.55, 1, 1.6].map(c => u0 * c);   // fixed u levels (from the starting numbers)
@@ -772,10 +793,10 @@
       if (budget) { const b = F.best(v, PX0, PY0, B0); if (b) { h += dot(A.X(b[0]), A.Y(b[1]), 8, GRAD); bestTxt = '<div>best feasible bundle on ' + m('3<i>x</i> + <i>y</i> = 60') + ': ' + vec(b[0], b[1]) + '</div>'; } else bestTxt = '<div>every bundle on ' + m('3<i>x</i> + <i>y</i> = 60') + ' is best (MRS = price ratio)</div>'; }
       f.svg.innerHTML = h;
       fEq.innerHTML = F.eq(v);
-      f.eq.innerHTML = '<div class="vp-sub">' + F.name + (copies.length ? ' · dashed: ' + copies.map(parTxt).join(' | ') : '') + '</div>';
+      f.eq.innerHTML = '<div class="vp-sub">' + F.name + (F.tag ? ' · <b>' + F.tag(v) + '</b>' : '') + (copies.length ? ' · dashed: ' + copies.map(parTxt).join(' | ') : '') + '</div>';
       f.status.innerHTML = '<div>at the dot ' + vec(P[0], P[1]) + ': ' + F.mrs(v, P[0], P[1]) + '</div>' + bestTxt;
     }
-    const ins = F.ps.map(([k, lo, hi, st, d]) => slider(f.ctl, k, lo, hi, st, d, (val, o, first) => { v[k] = val; o.innerHTML = r2(val); if (!first) draw(); }));
+    const ins = F.ps.map(([k, lo, hi, st, d]) => slider(f.ctl, k, lo, hi, st, d, (val, o, first) => { v[k] = val; o.innerHTML = r2(val); if (!first) { draw(); fEq.classList.remove('glow'); void fEq.offsetWidth; fEq.classList.add('glow'); } }));
     f.ctl.appendChild(el('div', 'vp-break'));
     button(f.ctl, 'keep a copy', () => { if (copies.length >= 3) copies.shift(); copies.push(Object.assign({}, v)); draw(); });
     button(f.ctl, 'clear copies', () => { copies = []; draw(); });
@@ -784,7 +805,49 @@
     draw();
   }
 
-  const CSS = '.vp-formula{font-family:"STIX Two Math","STIX Two Text","Cambria Math",serif;font-size:1.5em;color:#1F1F1F;background:#F6F7F9;border-radius:10px;padding:.25em .8em;margin:.1em 0 .5em;display:inline-block}.vp-formula i{font-style:italic}.vp-formula sup{font-size:.62em}' +
+  // ---------- (l) op-along: the MRS by staying on one indifference curve (Can 29.10) ----------
+  //   <div class="op-along" data-u="300"></div>   u = x·y = 300 (blue), a dot dragged along it (starts at E = (10, 30)); a step
+  //   Δx = 1 / 0.5 / 0.1 / 0.01 draws the triangle (Δx →, Δy ↓) back onto the curve; read-out u still 300 and Δy/Δx, which
+  //   settles at the slope −y/x of the tangent (grey dashed).
+  function alongW(box) {
+    const U0 = +box.dataset.u || 300, f = frame(box);
+    let x = +box.dataset.x || 10, dx = 1;
+    // a zoomed window around the dot, the same units on both axes (21 px per unit)
+    const SC = 21, CX = L + pw * 0.38, CY = T + ph * 0.42;
+    function draw() {
+      const y = U0 / x, x2 = x + dx, y2 = U0 / x2, dy = y2 - y, slope = -y / x;
+      const X = v => CX + (v - x) * SC, Y = v => CY - (v - y) * SC;
+      let h = defs(f.id) + clipOpen(f.id);
+      // grid ticks every unit (faint), the curve, the tangent
+      const pts = []; for (let i = 0; i <= 300; i++) { const xx = x - 9 + 20 * i / 300; if (xx > 0.2) pts.push([X(xx).toFixed(1), Y(U0 / xx).toFixed(1)]); }
+      h += '<polyline points="' + pts.map(q => q.join(',')).join(' ') + '" fill="none" stroke="' + IC + '" stroke-width="3"/>';
+      h += '<line x1="' + X(x - 8) + '" y1="' + Y(y + slope * -8) + '" x2="' + X(x + 8) + '" y2="' + Y(y + slope * 8) + '" stroke="' + GREY + '" stroke-width="1.8" stroke-dasharray="7 5"/>';
+      // the step triangle: Δx to the right, then Δy down onto the curve
+      h += '<path d="M' + X(x) + ',' + Y(y) + ' L' + X(x2) + ',' + Y(y) + ' L' + X(x2) + ',' + Y(y2) + '" fill="none" stroke="' + ALONG + '" stroke-width="3"/>';
+      h += '</g>';
+      h += label(X(x2) + 4, Y(y) - 8, 'Δ' + it('x') + ' = ' + dx, ALONG, null, 18) + label(X(x2) + 8, (Y(y) + Y(y2)) / 2 + 6, 'Δ' + it('y') + ' = ' + String(+dy.toFixed(4)).replace('-', '−'), ALONG, null, 18);
+      h += label(X(x + 6.5) , Y(y + slope * 6.5) - 10, 'slope = −' + it('y') + '/' + it('x') + ' = ' + r2(slope).replace('-', '−'), '#555', 'end', 18);
+      h += label(X(x - 2.2), Y(U0 / (x - 2.2)) - 4, it('u') + ' = ' + U0, IC, 'end', 18);
+      h += dot(X(x), Y(y), 8) + dot(X(x2), Y(y2), 6, ALONG);
+      h += label(X(x) - 12, Y(y) + 6, '(' + r2(x) + ', ' + r2(y) + ')', '#222', 'end', 18);
+      f.svg.innerHTML = h;
+      f.eq.innerHTML = '<div class="vp-formula">' + m(fr('Δ<i>y</i>', 'Δ<i>x</i>') + ' = ' + String(+(dy / dx).toFixed(4)).replace('-', '−')) + '</div>';
+      f.status.innerHTML = '<div>' + m('<i>u</i> = ' + r2(x2 * y2)) + ' still: the step stays on the curve</div><div class="dim">smaller steps → ' + m(fr('Δ<i>y</i>', 'Δ<i>x</i>')) + ' settles at ' + m('−<i>y</i>/<i>x</i> = ' + r2(slope).replace('-', '−')) + ' = −MRS</div>';
+    }
+    [1, 0.5, 0.1, 0.01].forEach(d => { const b = button(f.ctl, 'Δx = ' + d, () => { dx = d; f.ctl.querySelectorAll('.btn').forEach(z => z.classList.toggle('on', z === b)); draw(); }); if (d === 1) b.classList.add('on'); });
+    let drag = null;
+    f.svg.addEventListener('pointerdown', ev => { drag = ev.clientX; try { f.svg.setPointerCapture(ev.pointerId); } catch (e) {} ev.stopPropagation(); ev.preventDefault(); });
+    f.svg.addEventListener('pointermove', ev => { if (drag == null) return; const r = f.svg.getBoundingClientRect(), k = W / r.width; x = Math.max(3, Math.min(40, x + (ev.clientX - drag) * k / SC)); drag = ev.clientX; draw(); });
+    f.svg.addEventListener('pointerup', () => { drag = null; });
+    f.svg.addEventListener('click', ev => ev.stopPropagation());
+    button(f.ctl, 'back to E', () => { x = +box.dataset.x || 10; draw(); });
+    f.ctl.appendChild(el('span', 'dim vp-hint', 'drag left or right: the dot moves along the curve'));
+    draw();
+  }
+
+  const CSS = '.vp-formula.small{font-size:1.05em;padding:.15em .6em;margin:.25em 0 .1em}.vp-mtitle{font-size:.85em;margin-bottom:.1em}.vp-mcap .vp-sub{font-size:.85em}' +
+    '@keyframes vpglow{0%{text-shadow:0 0 12px rgba(201,150,40,.55)}100%{text-shadow:none}}.vp-formula.glow{animation:vpglow 1.2s ease-out 1}@media (prefers-reduced-motion:reduce){.vp-formula.glow{animation:none}}' +
+    '.vp-formula{font-family:"STIX Two Math","STIX Two Text","Cambria Math",serif;font-size:1.5em;color:#1F1F1F;background:#F6F7F9;border-radius:10px;padding:.25em .8em;margin:.1em 0 .5em;display:inline-block}.vp-formula i{font-style:italic}.vp-formula sup{font-size:.62em}' +
     '.op-param .vp-ctl input[type=range]{height:2em}.op-param .vp-ctl input[type=range]::-webkit-slider-thumb{width:26px;height:26px}.op-param .vp-ctl input[type=range]::-moz-range-thumb{width:24px;height:24px}' +
     '.vp-bar{display:inline-block;height:.8em;vertical-align:middle;margin-left:.6em;border-radius:2px}.vp-row{display:flex;align-items:center;gap:.2em}' +
     '.vp{font-size:.6em;text-align:left;margin-top:.3em;display:grid;grid-template-columns:auto minmax(0,1fr);gap:1.2em;align-items:start}' +
@@ -801,7 +864,7 @@
     '.vp-ctl input[type=range]{accent-color:#0062C4;width:100%}.vp-ctl .btn.on{background:var(--p-green,#E3F2E6)}.vp-v{font-weight:600;text-align:right}.vp-hint{font-size:.95em}' +
     '.vp-status{line-height:1.55}.vp-status>div{margin:.15em 0}';
   window.__vpCSS = CSS;   // the 3D views use the same look
-  const KINDS = { 'op-forms': forms, 'op-walk': walk, 'op-price': price, 'op-grad': grad, 'op-split': split, 'op-stretch': stretch, 'op-step': step, 'op-two': two, 'op-gainloss': gainloss, 'op-exact': exact, 'op-param': param };   // names from Filiz's slide order
+  const KINDS = { 'op-forms': forms, 'op-walk': walk, 'op-price': price, 'op-grad': grad, 'op-split': split, 'op-stretch': stretch, 'op-step': step, 'op-two': two, 'op-gainloss': gainloss, 'op-exact': exact, 'op-param': param, 'op-along': alongW };   // names from Filiz's slide order
   function init() {
     const sel = Object.keys(KINDS).map(k => '.' + k).join(','); if (!document.querySelector(sel)) return;
     if (!document.getElementById('vp-css')) { const st = document.createElement('style'); st.id = 'vp-css'; st.textContent = CSS; document.head.appendChild(st); }
