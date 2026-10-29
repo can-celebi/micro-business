@@ -26,10 +26,7 @@
       { id: 'cf-lagr', t: 'the Lagrangian', kind: 'lik', lo: 'not at all', hi: 'very comfortable' },
       { id: 'cf-cd', t: 'Cobb-Douglas utility (e.g. ' + m('<i>u</i> = <i>x</i> · <i>y</i>') + ')', kind: 'lik', lo: 'not at all', hi: 'very comfortable' },
       { id: 'cf-corner', t: 'interior vs corner solutions', kind: 'lik', lo: 'not at all', hi: 'very comfortable' },
-      { head: 'right now' }, ...selfItems(),
-      { head: 'one question' },
-      { id: 'check', t: m('<i>u</i> = <i>x</i> · <i>y</i>') + '. ' + m('<i>p</i><sub>x</sub> = 2') + ', ' + m('<i>p</i><sub>y</sub> = 1') + ', ' + m('<i>B</i> = 40') + ', so the budget line is ' + m('2<i>x</i> + <i>y</i> = 40') + '. Which is the best feasible bundle? (all four cost exactly €40)', kind: 'choice', letters: true,
-        o: ['(20, 0)', '(10, 20)', '(5, 30)', '(15, 10)'] }
+      { head: 'right now' }, ...selfItems()
     ] },
     s2: { title: 'halfway', sub: 'anonymous · 4 taps · microeconomics · lecture 9', items: [
       { id: 'rightangle', t: 'At the best feasible bundle, the utility arrow (the mountain climb) stands at a right angle to the budget line. Did the pictures make it clear why?', kind: 'lik', lo: 'not at all', hi: 'I could explain it' },
