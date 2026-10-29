@@ -780,7 +780,8 @@
     // formula, A with its label, the text tags. data-full="1" brings back the copies, budget, move A, step triangles, table, magnifier.
     const FULL = box.dataset.full === '1';
     const A = axes(B0 / PX0 * 1.4, B0 / PY0 * 1.08);
-    if (box.dataset.beta && key === 'ql') F.ps = F.ps.map(r => r[0] === 'β' ? [r[0], r[1], r[2], r[3], +box.dataset.beta] : r);   // e.g. data-beta="2" for u = x + y²
+    // quasi-linear: β runs 0.2–1 (bowed in up to straight); only a slide that starts above 1 (data-beta="2", u = x + y²) gets 0.2–2.5
+    if (key === 'ql') F.ps = F.ps.map(r => r[0] !== 'β' ? r : (+box.dataset.beta > 1 ? [r[0], 0.2, 2.5, r[3], +box.dataset.beta] : [r[0], 0.2, 1, r[3], box.dataset.beta ? +box.dataset.beta : r[4]]));
     const v = {}; F.ps.forEach(([k, , , , d]) => { v[k] = d; }); if (CD1) v['β'] = 1 - v['α'];
     const start = Object.assign({}, v), b0 = F.best(start, PX0, PY0, B0) || [B0 / PX0 / 2, B0 / PY0 / 2];
     const u0 = F.U(start, b0[0], b0[1]), LV = [0.55, 1, 1.6].map(c => u0 * c);   // fixed u levels (from the starting numbers)
@@ -990,7 +991,23 @@
   }
 
   function view3d(box) {
-    const mode = (box.dataset.mode === 'fence' ? 'trail' : box.dataset.mode) || 'hill', id = 'v3' + (++NID);
+    const mode = box.classList.contains('op-param3d') ? (box.dataset.form === 'ql3d' ? 'ql3d' : 'cd3d') : (box.dataset.mode === 'fence' ? 'trail' : box.dataset.mode) || 'hill', id = 'v3' + (++NID);
+    const isP = mode === 'cd3d' || mode === 'ql3d', PV = mode === 'ql3d' ? { a: 2, b: 0.5 } : { a: 1, b: 1 };
+    let showBud = false;
+    // the utility of the current numbers; height lines through fixed bundles t·(10, 30), so for Cobb-Douglas the floor map
+    // depends only on α/β (scale both and the hill changes, the floor curves stay)
+    const UP = (x, y) => mode === 'ql3d' ? PV.a * x + Math.pow(y, PV.b) : Math.pow(x, PV.a) * Math.pow(y, PV.b);
+    const RAYS = [0.45, 0.7, 1, 1.35];
+    function contourP(c, z) {
+      const pts = [];
+      if (mode === 'ql3d') { for (let i = 0; i <= 640; i++) { const y = YM * i / 640, x = (c - Math.pow(y, PV.b)) / PV.a; if (x >= 0 && x <= XM) pts.push([x, y, z]); } }
+      else { for (let i = 1; i <= 640; i++) { const x = XM * Math.pow(i / 640, 1.6), y = Math.pow(c / Math.pow(x, PV.a), 1 / PV.b); if (y <= YM) pts.push([x, y, z]); } }
+      return pts;
+    }
+    const bestP = () => { const px = 3, py = 1, B = 60;
+      if (mode === 'cd3d') { const t = PV.a + PV.b; return [PV.a / t * B / px, PV.b / t * B / py]; }
+      if (PV.b >= 0.999) return PV.a * B / px >= Math.pow(B / py, PV.b) ? [B / px, 0] : [0, B / py];
+      const y = Math.pow(PV.b * px / (PV.a * py), 1 / (1 - PV.b)); return y * py >= B ? [0, B / py] : [(B - py * y) / px, y]; };
     const CAP = mode === 'plane' ? 1300 : UCAP, zu = u => Math.min(u, CAP) / CAP * ZH;   // the plane view climbs to u = 1200
     box.innerHTML = ''; box.setAttribute('data-prevent-swipe', ''); box.classList.add('vp');
     const svg = document.createElementNS(NS, 'svg'), side = el('div', 'vp-side'), eq = el('div', 'vp-eq'), ctl = el('div', 'vp-ctl'), status = el('div', 'vp-status');
@@ -1009,7 +1026,7 @@
       g += '<text x="' + (ML - 8) + '" y="' + (MT + 14) + '" text-anchor="end" font-size="18" fill="#555">' + it(mode === 'plane' ? 'u*' : 'u') + '</text><text x="' + (ML + w) + '" y="' + (MT + hh + 24) + '" text-anchor="end" font-size="18" fill="#555">' + it(xl) + '</text>';
       prof.innerHTML = g;
     }
-    const Y0 = { hill: 32, roof: 32, trail: 32, plane: 30, top: 90 }[mode] || 32, YAW0 = +box.dataset.yaw || 40;
+    const Y0 = { hill: 32, roof: 32, trail: 32, plane: 30, top: 90, cd3d: 30, ql3d: 30 }[mode] || 32, YAW0 = +box.dataset.yaw || 40;
     let FX = 5, BB = 60, showPlane = false, tops = [60], yaw = mode === 'top' ? 0 : YAW0, elev = Y0, P = mode === 'hill' ? [5, 45] : mode === 'roof' ? [10, 30] : [10, 30], stop = () => {};
     const K = 5.6;                                         // pixels per unit
     // world → screen: centre the floor, turn by yaw, tilt by elev (90 = straight down, then x right and y up)
@@ -1068,11 +1085,28 @@
         if (elev < 88) surface((x, y) => zu(x * y), hillFill, (x, y) => x * y >= CAP).forEach(p => parts.push(p));
         if (elev < 88 && showPlane) surface((x, y) => zs(3 * x + y), roofFill).forEach(p => parts.push(p));
       }
+      let capP = 0;
+      if (isP) {
+        capP = Math.max(UP(20, 45), UP(0, 60), UP(20, 0)) * 1.05;           // the hill reaches above the whole budget set
+        const zP = u => Math.min(u, capP) / capP * ZH;
+        RAYS.forEach(t => { h += line3(contourP(UP(10 * t, 30 * t), 0), IC, t === 1 ? 2.6 : 1.4, t === 1 ? '' : ' opacity="0.65"'); });   // the floor map
+        if (showBud) h += line3([[0, 60, 0], [20, 0, 0]], BUDGET, 3.5);
+        if (elev < 88) surface((x, y) => zP(UP(x, y)), hillFill, (x, y) => UP(x, y) >= capP).forEach(q => parts.push(q));
+      }
       parts.sort((a, b) => a[0] - b[0]);
       h += parts.map(p => p[1]).join('');
       if (elev < 88 && (mode === 'hill' || mode === 'trail')) LEVELS.forEach(u => { h += line3(hillCurve(u, zu(u)), IC, u === 300 && mode === 'trail' ? 3 : 2); });   // height lines on the hill
       if (elev < 88 && mode === 'plane') [75, 300, 675, 1200].forEach(u => { h += line3(hillCurve(u, zu(u)), IC, 1.8, ' opacity="0.8"'); });
       if (elev < 88 && mode === 'roof') [40, 60, 80].forEach(s => { h += line3([[(s - Math.min(YM, s)) / 3, Math.min(YM, s), zs(s)], [s / 3, 0, zs(s)]], BUDGET, s === 60 ? 3 : 2); });
+      if (isP) {
+        const zP = u => Math.min(u, capP) / capP * ZH;
+        if (elev < 88) RAYS.forEach(t => { const c = UP(10 * t, 30 * t); if (c < capP) h += line3(contourP(c, zP(c)), IC, 2); });   // height lines on the hill
+        if (showBud) { const b = bestP(), ub = UP(b[0], b[1]), q0 = pr(b[0], b[1], 0), q1 = pr(b[0], b[1], elev < 88 ? zP(ub) : 0);
+          if (elev < 88) h += line3([[b[0], b[1], 0], [b[0], b[1], zP(ub)]], GREY, 1.4, ' stroke-dasharray="4 4"');
+          h += '<circle cx="' + q0[0] + '" cy="' + q0[1] + '" r="6" fill="' + GRAD + '" stroke="#fff" stroke-width="2"/>' + (elev < 88 ? '<circle cx="' + q1[0] + '" cy="' + q1[1] + '" r="6" fill="' + GRAD + '" stroke="#fff" stroke-width="2"/>' : ''); }
+        const nb2 = v => r2(v);
+        eq.innerHTML = '<div class="vp-formula">' + (mode === 'ql3d' ? m('<i>u</i> = ' + nb2(PV.a) + '<i>x</i> + <i>y</i><sup>' + nb2(PV.b) + '</sup>') : m('<i>u</i> = <i>x</i><sup>' + nb2(PV.a) + '</sup> <i>y</i><sup>' + nb2(PV.b) + '</sup>')) + '</div>';
+      }
       let say = '';
       if (mode === 'hill') {
         const [x, y] = P, u = x * y, g = [y, x], k = 0.25;
@@ -1168,6 +1202,14 @@
       bInp = slider(ctl, 'budget B', 20, 120, 10, BB, (v, o, first) => { BB = v; o.innerHTML = '€' + v; if (!tops.includes(v)) tops.push(v); if (!first) draw(); });
       const bp = button(ctl, 'show the spending plane', () => { showPlane = !showPlane; bp.classList.toggle('on', showPlane); draw(); });
     }
+    if (isP) {
+      const lo = mode === 'ql3d' ? 0.5 : 0.2, hi = mode === 'ql3d' ? 5 : 2.5;
+      slider(ctl, 'α', lo, hi, 0.05, PV.a, (v, o, first) => { PV.a = v; o.innerHTML = r2(v); if (!first) draw(); });
+      slider(ctl, 'β', 0.2, 2.5, 0.05, PV.b, (v, o, first) => { PV.b = v; o.innerHTML = r2(v); if (!first) draw(); });
+      ctl.appendChild(el('div', 'vp-break'));
+      const sb = button(ctl, 'show budget', () => { showBud = !showBud; sb.classList.toggle('on', showBud); draw(); });
+      draw(); return;
+    }
     button(ctl, mode === 'trail' ? 'view from above' : 'top view', () => turnTo(0, 90));
     button(ctl, '3D view', () => turnTo(YAW0, 32));
     button(ctl, 'reset', () => { turnTo(mode === 'top' ? 0 : YAW0, Y0); if (mode === 'hill') { ctl.querySelectorAll('input').forEach((i, k) => i.set([5, 45][k])); } if (mode === 'roof') ctl.querySelector('input').set(10); if (mode === 'trail') walkInp.set(5); if (mode === 'plane') { tops = [60]; bInp.set(60); }; });
@@ -1175,7 +1217,7 @@
     draw();
   }
   function init3d() {
-    const all = document.querySelectorAll('.op-3d'); if (!all.length) return;
+    const all = document.querySelectorAll('.op-3d, .op-param3d'); if (!all.length) return;
     if (!document.getElementById('vp-css') && window.__vpCSS) { const st = document.createElement('style'); st.id = 'vp-css'; st.textContent = window.__vpCSS; document.head.appendChild(st); }
     all.forEach(view3d);
   }
