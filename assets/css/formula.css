@@ -15,24 +15,21 @@
 .reveal .formula math { font-family: "STIX Two Math", "Latin Modern Math", "Cambria Math", math; font-size: 1em; display: block; margin: 0 auto; }
 .reveal .formula mi.par, .reveal .formula mn.par, .reveal .formula .par { color: #7B2D26; }
 
-/* appear: fade in with a 6 px rise, then ONE soft light sweep (no loop) */
+/* appear: fade in with a 6 px rise, then a soft warm glow on the glyphs that fades (Can: no sweep) (no loop) */
 @keyframes formula-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
-@keyframes formula-sweep { from { transform: translateX(-120%); } to { transform: translateX(220%); } }
-.reveal .formula::after {
-  content: ""; position: absolute; top: 0; bottom: 0; left: 0; width: 45%; pointer-events: none; transform: translateX(-120%);
-  background: linear-gradient(100deg, rgba(255, 255, 255, 0) 0%, rgba(255, 236, 170, .55) 45%, rgba(255, 255, 255, .8) 50%, rgba(255, 236, 170, .55) 55%, rgba(255, 255, 255, 0) 100%);
-}
+@keyframes formula-glow { 0% { text-shadow: 0 0 10px rgba(201, 150, 40, .45), 0 0 2px rgba(123, 45, 38, .25); } 100% { text-shadow: none; } }
+@keyframes formula-glow-par { 0% { text-shadow: 0 0 14px rgba(201, 150, 40, .75), 0 0 3px rgba(123, 45, 38, .4); } 100% { text-shadow: none; } }
 /* a formula that is a fragment plays when it becomes visible; one that is not plays when its slide opens */
 .reveal .slides section.present .formula:not(.fragment), .reveal .formula.fragment.visible { animation: formula-in 300ms ease-out both; }
-.reveal .slides section.present .formula:not(.fragment)::after, .reveal .formula.fragment.visible::after { animation: formula-sweep 900ms ease-in-out 320ms 1 both; }
+.reveal .slides section.present .formula:not(.fragment) math, .reveal .formula.fragment.visible math { animation: formula-glow 1200ms ease-out 200ms 1 both; }
+.reveal .slides section.present .formula:not(.fragment) .par, .reveal .formula.fragment.visible .par { animation: formula-glow-par 1500ms ease-out 200ms 1 both; }
 /* the fragment's own fade stays as reveal does it (no double fade) */
 .reveal .formula.fragment { transition: opacity 0s; }
 
 @media (prefers-reduced-motion: reduce) {
-  .reveal .formula, .reveal .formula::after { animation: none !important; }
+  .reveal .formula, .reveal .formula math, .reveal .formula .par { animation: none !important; }
 }
-html.print-pdf .reveal .formula { animation: none !important; }
-html.print-pdf .reveal .formula::after { display: none; }
+html.print-pdf .reveal .formula, html.print-pdf .reveal .formula math, html.print-pdf .reveal .formula .par { animation: none !important; text-shadow: none !important; }
 html.mobile .reveal .formula { font-size: 1.1em; max-width: 100%; padding: 0.3em 0.7em; }
 /* never dimmed: earlier fragments fade in the deck ("earlier items fade"), a key formula stays full ink (Can: no grey) */
 .reveal .formula.fragment.visible, .reveal .formula.fragment.visible.past, .reveal .formula.fragment.semi-fade-out.visible, .reveal .formula.fragment.fade-dim.visible { opacity: 1 !important; }
