@@ -339,8 +339,8 @@
       U: (x, y) => Math.min(x, y), curve: u => [[u, 999], [u, u], [999, u]], how: 'the kink, where x = y' },
     cd: { name: 'Cobb-Douglas', eq: '<i>u</i> = <i>x</i> · <i>y</i>', note: 'more of both is better, a bit of each is best',
       U: (x, y) => x * y, curve: u => { const p = []; for (let i = 1; i <= 240; i++) { const x = 0.4 * i; p.push([x, u / x]); } return p; }, how: 'the curve just touches the line' },
-    ql: { name: 'quasi-linear', eq: '<i>u</i> = 12√<i>x</i> + <i>y</i>', note: 'x matters less and less, y always the same',
-      U: (x, y) => 12 * Math.sqrt(x) + y, curve: u => { const p = [], xe = Math.pow(u / 12, 2); for (let i = 0; i <= 200; i++) { const x = Math.min(xe, 0.5 * i); p.push([x, u - 12 * Math.sqrt(x)]); if (x >= xe) break; } return p; }, how: 'the curve just touches the line' }
+    ql: { name: 'quasi-linear', eq: '<i>u</i> = <i>x</i> + 2√<i>y</i>', note: 'x always counts the same, y less and less',
+      U: (x, y) => x + 2 * Math.sqrt(y), curve: u => { const p = [], ye = Math.pow(u / 2, 2); for (let i = 0; i <= 240; i++) { const y = Math.min(ye, 0.3 * i); p.push([u - 2 * Math.sqrt(y), y]); if (y >= ye) break; } return p; }, how: 'the curve just touches the line' }
   };
   function bestOnLine(F, xi, yi) {   // scan the budget line: t = share of the way from the y-axis end to the x-axis end
     let bt = 0, bu = -1; for (let k = 0; k <= 2000; k++) { const t = k / 2000, u = F.U(t * xi, (1 - t) * yi); if (u > bu + 1e-9) { bu = u; bt = t; } }
@@ -564,6 +564,7 @@
     '.vp-ctl label{display:grid;grid-template-columns:6.5em 1fr 3em;gap:.6em;align-items:center;min-width:22em}' +
     '.vp-ctl input[type=range]{accent-color:#0062C4;width:100%}.vp-ctl .btn.on{background:var(--p-green,#E3F2E6)}.vp-v{font-weight:600;text-align:right}.vp-hint{font-size:.95em}' +
     '.vp-status{line-height:1.55}.vp-status>div{margin:.15em 0}';
+  window.__vpCSS = CSS;   // the 3D views use the same look
   const KINDS = { 'op-forms': forms, 'op-walk': walk, 'op-price': price, 'op-grad': grad, 'op-split': split, 'op-stretch': stretch };   // names from Filiz's slide order
   function init() {
     const sel = Object.keys(KINDS).map(k => '.' + k).join(','); if (!document.querySelector(sel)) return;
@@ -571,4 +572,175 @@
     Object.entries(KINDS).forEach(([k, fn]) => document.querySelectorAll('.' + k).forEach(fn));
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
+})();
+
+// L09 3D views (Can, 29.10: "maybe you need to go to 3d and show what is going on there"). Own small SVG renderer, no
+// library, works offline. Drag to rotate; [ top view ] looks straight down (then it is the 2D graph: equal scales).
+//   <div class="op-3d" data-mode="hill"></div>    the utility hill u = x·y, its height lines (the indifference curves) on it
+//        and on the floor like a hiking map; sliders move the point; the mountain-climb arrow ∇u = (y, x) on the floor
+//   <div class="op-3d" data-mode="roof"></div>    the spending roof S = 3x + y, a tilted flat plane; its height lines on the
+//        floor are the budget lines for €40, €60, €80; the price arrow p = (3, 1) is its steepest way up
+//   <div class="op-3d" data-mode="fence"></div>   a wall on the budget line 3x + y = 60 cuts the hill; the cut is a path over
+//        the hill, highest at E (10, 30), u = 300; [ top view ]: the height line through E just touches the fence line
+//   <div class="op-3d" data-mode="top"></div>     at E from above: ∇u = (30, 10) and p = (3, 1), same direction, same
+//        arrow scale; λ = 10 = how many times longer ∇u is
+(function () {
+  const NS = 'http://www.w3.org/2000/svg', W = 560, H = 430;
+  const BLUE = '#0062C4', ORANGE = '#D9480F', PURPLE = '#7A3DB8', GREEN = '#1B7F3B', GREY = '#888';
+  const MATH = '"STIX Two Text", "Cambria Math", Georgia, serif';
+  const halo = 'paint-order="stroke" stroke="#fff" stroke-width="5" stroke-linejoin="round"';
+  const r2 = v => String(Math.round(v * 100) / 100);
+  const m = s => '<span class="vp-m">' + s + '</span>';
+  const it = v => '<tspan font-family=\'' + MATH + '\' font-style="italic">' + v + '</tspan>';
+  const XM = 30, YM = 64, ZH = 26, UCAP = 900;           // floor 0..30 × 0..64 (same units); the hill is drawn up to u = 900
+  const SMAX = 3 * XM + YM;
+  const zu = u => Math.min(u, UCAP) / UCAP * ZH, zs = s => s / SMAX * ZH;
+  const LEVELS = [100, 200, 300, 450, 700];
+  let NID = 0;
+  function el(tag, cls, html) { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; }
+  function button(ctl, label, on) { const b = el('button', 'btn ghost', label); b.type = 'button'; b.onclick = e => { e.stopPropagation(); b.blur(); on(b); }; ctl.appendChild(b); return b; }
+  function slider(ctl, label, mn, mx, step, val, on) {
+    const l = el('label', null, '<b>' + label + '</b><input type="range" min="' + mn + '" max="' + mx + '" step="' + step + '" value="' + val + '"><span class="vp-v"></span>');
+    const inp = l.querySelector('input'), v = l.querySelector('.vp-v');
+    inp.addEventListener('input', () => on(+inp.value, v)); inp.addEventListener('keydown', e => e.stopPropagation()); inp.addEventListener('pointerup', () => inp.blur());
+    ctl.appendChild(l); on(+inp.value, v, true); inp.set = x => { inp.value = x; on(+inp.value, v); }; return inp;
+  }
+
+  function view3d(box) {
+    const mode = box.dataset.mode || 'hill', id = 'v3' + (++NID);
+    box.innerHTML = ''; box.setAttribute('data-prevent-swipe', ''); box.classList.add('vp');
+    const svg = document.createElementNS(NS, 'svg'), side = el('div', 'vp-side'), eq = el('div', 'vp-eq'), ctl = el('div', 'vp-ctl'), status = el('div', 'vp-status');
+    svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H); svg.setAttribute('class', 'vp-svg op-3d-svg');
+    box.appendChild(svg); box.appendChild(side); side.appendChild(eq); side.appendChild(ctl); side.appendChild(status);
+    const Y0 = { hill: 32, roof: 32, fence: 32, top: 90 }[mode] || 32, YAW0 = +box.dataset.yaw || 40;
+    let yaw = mode === 'top' ? 0 : YAW0, elev = Y0, P = mode === 'hill' ? [5, 45] : mode === 'roof' ? [10, 30] : [10, 30], stop = () => {};
+    const K = 5.6;                                         // pixels per unit
+    // world → screen: centre the floor, turn by yaw, tilt by elev (90 = straight down, then x right and y up)
+    function pr(x, y, z) {
+      const a = yaw * Math.PI / 180, e = elev * Math.PI / 180, X = x - XM / 2, Y = y - YM / 2;
+      const X1 = X * Math.cos(a) - Y * Math.sin(a), Y1 = X * Math.sin(a) + Y * Math.cos(a);
+      return [W / 2 + X1 * K, H / 2 + 40 * Math.cos(e) - (Y1 * Math.sin(e) + (z - ZH / 3) * Math.cos(e)) * K, -Y1 * Math.cos(e) + z * Math.sin(e)];
+    }
+    const pt = (x, y, z) => { const p = pr(x, y, z); return p[0].toFixed(1) + ',' + p[1].toFixed(1); };
+    const line3 = (pts, col, w, extra) => '<polyline points="' + pts.map(p => pt(p[0], p[1], p[2])).join(' ') + '" fill="none" stroke="' + col + '" stroke-width="' + w + '"' + (extra || '') + '/>';
+    const label = (x, y, z, txt, col, dx, dy, anchor) => { const p = pr(x, y, z); return '<text x="' + (p[0] + (dx || 0)) + '" y="' + (p[1] + (dy || 0)) + '"' + (anchor ? ' text-anchor="' + anchor + '"' : '') + ' font-size="19" fill="' + (col || '#555') + '" ' + halo + '>' + txt + '</text>'; };
+    function arrow3(x0, y0, vx, vy, col, w) {             // an arrow on the floor
+      const a = pr(x0, y0, 0), b = pr(x0 + vx, y0 + vy, 0);
+      return '<line x1="' + a[0] + '" y1="' + a[1] + '" x2="' + b[0] + '" y2="' + b[1] + '" stroke="' + col + '" stroke-width="' + w + '" marker-end="url(#' + id + 'a)"/>';
+    }
+    function rightAngle3(x0, y0, u, v) {
+      const n = a => { const l = Math.hypot(a[0], a[1]); return [a[0] / l * 2.2, a[1] / l * 2.2]; }, a = n(u), b = n(v);
+      return line3([[x0 + a[0], y0 + a[1], 0], [x0 + a[0] + b[0], y0 + a[1] + b[1], 0], [x0 + b[0], y0 + b[1], 0]], '#222', 1.5);
+    }
+    const hillCurve = (u, z) => { const p = []; for (let i = 0; i <= 80; i++) { const x = u / YM + (XM - u / YM) * i / 80, y = u / x; if (y <= YM && x <= XM) p.push([x, y, z]); } return p; };
+    // surface patches, sorted far → near (painter)
+    function surface(f, fill, cap) {
+      const n = 20, mm = 32, out = [];
+      for (let i = 0; i < n; i++) for (let j = 0; j < mm; j++) {
+        const xs = [i * XM / n, (i + 1) * XM / n], ys = [j * YM / mm, (j + 1) * YM / mm];
+        const c = [[xs[0], ys[0]], [xs[1], ys[0]], [xs[1], ys[1]], [xs[0], ys[1]]].map(([x, y]) => pr(x, y, f(x, y)));
+        const d = (c[0][2] + c[1][2] + c[2][2] + c[3][2]) / 4, hz = f((xs[0] + xs[1]) / 2, (ys[0] + ys[1]) / 2) / ZH;
+        if (cap && cap(xs[0], ys[0])) continue;   // the hill ends at its u = 900 height line
+        out.push([d, '<polygon points="' + c.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ') + '" fill="' + fill(hz) + '" stroke="#fff" stroke-width="0.5" opacity="0.92"/>']);
+      }
+      return out;
+    }
+    const hillFill = hz => 'hsl(' + (40 - 25 * hz) + ',' + (55 + 20 * hz) + '%,' + (88 - 30 * hz) + '%)';
+    const roofFill = hz => 'hsl(210,' + (45 + 15 * hz) + '%,' + (90 - 22 * hz) + '%)';
+    function draw() {
+      let h = '<defs><marker id="' + id + 'a" viewBox="0 0 10 10" refX="8" refY="5" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="context-stroke"/></marker></defs>';
+      // the floor and its axes
+      h += '<polygon points="' + [pt(0, 0, 0), pt(XM, 0, 0), pt(XM, YM, 0), pt(0, YM, 0)].join(' ') + '" fill="#F4F4F0" stroke="#bbb"/>';
+      h += line3([[0, 0, 0], [XM, 0, 0]], '#222', 1.5) + line3([[0, 0, 0], [0, YM, 0]], '#222', 1.5);
+      h += label(XM, 0, 0, it('x'), '#555', 8, 6) + label(0, YM, 0, it('y'), '#555', -10, -6, 'end');
+      const parts = [];
+      if (mode === 'hill' || mode === 'fence' || mode === 'top') {
+        LEVELS.forEach(u => { h += line3(hillCurve(u, 0), ORANGE, u === 300 ? 2.6 : 1.4, u === 300 ? '' : ' opacity="0.6"'); });   // the hiking map on the floor
+        if (elev < 88) surface((x, y) => zu(x * y), hillFill, (x, y) => x * y >= UCAP).forEach(p => parts.push(p));
+      }
+      if (mode === 'roof') {
+        [40, 60, 80].forEach(s => { const yi = Math.min(YM, s), xi = s / 3; h += line3([[(s - Math.min(YM, s)) / 3, Math.min(YM, s), 0], [xi, 0, 0]], BLUE, s === 60 ? 3 : 1.6, s === 60 ? '' : ' opacity="0.6"'); });
+        if (elev < 88) surface((x, y) => zs(3 * x + y), roofFill).forEach(p => parts.push(p));
+      }
+      if (mode === 'fence' || mode === 'top') h += line3([[0, 60, 0], [20, 0, 0]], BLUE, 3.5);
+      parts.sort((a, b) => a[0] - b[0]);
+      // the fence: vertical strips on 3x + y = 60, mixed into the painter's order
+      if (mode === 'fence' && elev < 88) {
+        const fs = [];
+        for (let k = 0; k < 20; k++) {
+          const x0 = k, x1 = k + 1, c = [[x0, 60 - 3 * x0, 0], [x1, 60 - 3 * x1, 0], [x1, 60 - 3 * x1, ZH * 0.5], [x0, 60 - 3 * x0, ZH * 0.5]].map(q => pr(...q));
+          fs.push([(c[0][2] + c[1][2]) / 2 + 0.01, '<polygon points="' + c.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ') + '" fill="' + BLUE + '" opacity="0.26"/>']);
+        }
+        fs.forEach(f => parts.push(f)); parts.sort((a, b) => a[0] - b[0]);
+      }
+      h += parts.map(p => p[1]).join('');
+      if (elev < 88 && (mode === 'hill' || mode === 'fence')) LEVELS.forEach(u => { h += line3(hillCurve(u, zu(u)), ORANGE, u === 300 && mode === 'fence' ? 3 : 2); });   // height lines on the hill
+      if (elev < 88 && mode === 'roof') [40, 60, 80].forEach(s => { h += line3([[(s - Math.min(YM, s)) / 3, Math.min(YM, s), zs(s)], [s / 3, 0, zs(s)]], BLUE, s === 60 ? 3 : 2); });
+      let say = '';
+      if (mode === 'hill') {
+        const [x, y] = P, u = x * y, g = [y, x], k = 0.25;
+        h += line3([[x, y, 0], [x, y, zu(u)]], GREY, 1.5, ' stroke-dasharray="4 4"');
+        const s = pr(x, y, zu(u)), f = pr(x, y, 0);
+        h += '<circle cx="' + s[0] + '" cy="' + s[1] + '" r="7" fill="#222" stroke="#fff" stroke-width="2"/>';
+        h += arrow3(x, y, g[0] * k, g[1] * k, GREEN, 4) + label(x + g[0] * k, y + g[1] * k, 0, '∇' + it('u'), GREEN, 8, -6);
+        h += '<circle cx="' + f[0] + '" cy="' + f[1] + '" r="5" fill="' + GREEN + '"/>';
+        eq.innerHTML = '<div class="vp-disp">' + m('<i>u</i> = <i>x</i> · <i>y</i>') + '</div><div class="vp-sub">the utility hill: height = utility</div>';
+        say = '<div>at ' + m('(' + r2(x) + ', ' + r2(y) + ')') + ': height ' + m('<i>u</i> = ' + r2(u)) + ', ' + m('∇<i>u</i> = (' + r2(g[0]) + ', ' + r2(g[1]) + ')') + '</div>' +
+          '<div class="dim">the orange lines are height lines: walk along one and you stay at the same height (an indifference curve). The mountain-climb arrow on the floor points straight across them, the steepest way up.</div>';
+      }
+      if (mode === 'roof') {
+        const [x, y] = P, k = 2.2;
+        const s = pr(x, y, zs(3 * x + y));
+        h += line3([[x, y, 0], [x, y, zs(3 * x + y)]], GREY, 1.5, ' stroke-dasharray="4 4"') + '<circle cx="' + s[0] + '" cy="' + s[1] + '" r="7" fill="#222" stroke="#fff" stroke-width="2"/>';
+        h += rightAngle3(x, y, [1, -3], [3, 1]) + arrow3(x, y, 3 * k, 1 * k, BLUE, 4) + label(x + 3 * k, y + k, 0, it('p'), BLUE, 8, -4);
+        [40, 60, 80].forEach(v => { const yy = Math.min(v, YM - 2); h += label((v - yy) / 3, yy, 0, '€' + v, BLUE, -8, -6, 'end'); });
+        eq.innerHTML = '<div class="vp-disp">' + m('<i>S</i> = 3<i>x</i> + <i>y</i>') + '</div><div class="vp-sub">the spending roof: height = money spent</div>';
+        say = '<div>the roof is flat, so its steepest way up is the same everywhere: the price arrow ' + m('<i>p</i> = (3, 1)') + '</div>' +
+          '<div class="dim">its height lines on the floor are the budget lines for €40, €60 and €80. The price arrow points straight across them, at a right angle to the budget line.</div>';
+      }
+      if (mode === 'fence') {
+        const cut = []; for (let i = 0; i <= 60; i++) { const x = 20 * i / 60, y = 60 - 3 * x; cut.push([x, y, zu(x * y)]); }
+        if (elev < 88) h += line3(cut, PURPLE, 4);
+        const e = pr(10, 30, elev < 88 ? zu(300) : 0);
+        h += '<circle cx="' + e[0] + '" cy="' + e[1] + '" r="8" fill="' + GREEN + '" stroke="#fff" stroke-width="2"/>' + label(10, 30, elev < 88 ? zu(300) : 0, 'E', '#222', 12, -8);
+        eq.innerHTML = '<div class="vp-disp">' + m('3<i>x</i> + <i>y</i> = 60') + '</div><div class="vp-sub">a fence on the budget line cuts the hill</div>';
+        say = elev < 88 ? '<div>walking along the fence is walking along the budget line: the purple path goes up, then down. Its highest point is ' + m('E = (10, 30)') + ', ' + m('<i>u</i> = 300') + '.</div><div class="dim">press top view: from above, the height line through E just touches the fence line.</div>'
+          : '<div>from above: the height line ' + m('<i>u</i> = 300') + ' just touches the budget line at E. Any higher line misses it; any lower one crosses it twice.</div>';
+      }
+      if (mode === 'top') {
+        const k = 0.9;   // the same arrow scale for both (Murat)
+        h += arrow3(10, 30, 30 * k, 10 * k, GREEN, 4) + label(10 + 30 * k, 30 + 10 * k, 0, '∇' + it('u') + ' = (30, 10)', GREEN, 8, -8);
+        h += arrow3(10, 30, 3 * k, 1 * k, BLUE, 5) + label(10 + 3 * k, 30 + k, 0, it('p'), BLUE, 10, 24);
+        const e = pr(10, 30, 0); h += '<circle cx="' + e[0] + '" cy="' + e[1] + '" r="5" fill="#222" stroke="#fff" stroke-width="2"/>' + label(10, 30, 0, 'E', '#222', -12, 6, 'end');
+        eq.innerHTML = '<div class="vp-disp">' + m('∇<i>u</i> = 10 · <i>p</i>') + '</div><div class="vp-sub">at E, seen from above, the same scale for both arrows</div>';
+        say = '<div>' + m('∇<i>u</i> = (30, 10)') + ' and ' + m('<i>p</i> = (3, 1)') + ' point the same way: straight across the budget line.</div><div class="dim">∇u is 10 times as long as p: λ = 10. The hill climbs 10 times as fast as the roof.</div>';
+      }
+      svg.innerHTML = h; status.innerHTML = say;
+    }
+    // drag to rotate
+    let drag = null;
+    svg.addEventListener('pointerdown', ev => { stop(); drag = [ev.clientX, ev.clientY, yaw, elev]; try { svg.setPointerCapture(ev.pointerId); } catch (e) {} ev.stopPropagation(); ev.preventDefault(); });
+    svg.addEventListener('pointermove', ev => { if (!drag) return; yaw = drag[2] - (ev.clientX - drag[0]) * 0.45; elev = Math.max(5, Math.min(90, drag[3] + (ev.clientY - drag[1]) * 0.35)); draw(); });
+    svg.addEventListener('pointerup', () => { drag = null; });
+    svg.addEventListener('click', ev => ev.stopPropagation());
+    const turnTo = (y1, e1) => { stop(); const y0 = yaw, e0 = elev, s0 = performance.now(); let rid = 0;
+      const step = now => { const k = Math.min(1, (now - s0) / 1000), q = 1 - Math.pow(1 - k, 3); yaw = y0 + (y1 - y0) * q; elev = e0 + (e1 - e0) * q; draw(); if (k < 1) rid = requestAnimationFrame(step); };
+      rid = requestAnimationFrame(step); stop = () => cancelAnimationFrame(rid); };
+    if (mode === 'hill') {
+      slider(ctl, 'x', 1, 22, 0.5, P[0], (v, o, first) => { P = [v, P[1]]; o.innerHTML = r2(v); if (!first) draw(); });
+      slider(ctl, 'y', 2, 62, 0.5, P[1], (v, o, first) => { P = [P[0], v]; o.innerHTML = r2(v); if (!first) draw(); });
+    }
+    if (mode === 'roof') slider(ctl, 'point', 2, 18, 0.5, P[0], (v, o, first) => { P = [v, 60 - 3 * v]; o.innerHTML = ''; if (!first) draw(); });
+    button(ctl, 'top view', () => turnTo(0, 90));
+    button(ctl, '3D view', () => turnTo(YAW0, 32));
+    button(ctl, 'reset', () => { turnTo(mode === 'top' ? 0 : YAW0, Y0); if (mode === 'hill') { ctl.querySelectorAll('input').forEach((i, k) => i.set([5, 45][k])); } if (mode === 'roof') ctl.querySelector('input').set(10); });
+    ctl.appendChild(el('span', 'dim vp-hint', 'drag the picture to turn it'));
+    draw();
+  }
+  function init3d() {
+    const all = document.querySelectorAll('.op-3d'); if (!all.length) return;
+    if (!document.getElementById('vp-css') && window.__vpCSS) { const st = document.createElement('style'); st.id = 'vp-css'; st.textContent = window.__vpCSS; document.head.appendChild(st); }
+    all.forEach(view3d);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init3d); else init3d();
 })();
