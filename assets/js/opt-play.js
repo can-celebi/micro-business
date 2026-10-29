@@ -764,13 +764,27 @@
   }
 
   function view3d(box) {
-    const mode = box.dataset.mode || 'hill', id = 'v3' + (++NID);
+    const mode = (box.dataset.mode === 'fence' ? 'trail' : box.dataset.mode) || 'hill', id = 'v3' + (++NID);
+    const CAP = mode === 'plane' ? 1300 : UCAP, zu = u => Math.min(u, CAP) / CAP * ZH;   // the plane view climbs to u = 1200
     box.innerHTML = ''; box.setAttribute('data-prevent-swipe', ''); box.classList.add('vp');
     const svg = document.createElementNS(NS, 'svg'), side = el('div', 'vp-side'), eq = el('div', 'vp-eq'), ctl = el('div', 'vp-ctl'), status = el('div', 'vp-status');
     svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H); svg.setAttribute('class', 'vp-svg op-3d-svg');
     box.appendChild(svg); box.appendChild(side); side.appendChild(eq); side.appendChild(ctl); side.appendChild(status);
-    const Y0 = { hill: 32, roof: 32, fence: 32, top: 90 }[mode] || 32, YAW0 = +box.dataset.yaw || 40;
-    let FX = 5, yaw = mode === 'top' ? 0 : YAW0, elev = Y0, P = mode === 'hill' ? [5, 45] : mode === 'roof' ? [10, 30] : [10, 30], stop = () => {};
+    const prof = (mode === 'trail' || mode === 'plane') ? document.createElementNS(NS, 'svg') : null;
+    if (prof) { prof.setAttribute('viewBox', '0 0 320 200'); prof.setAttribute('class', 'vp-hill'); side.insertBefore(prof, status); }
+    function profile2(fn, x1, umax, xNow, xl, tops2, tangent) {   // a small 2D graph: fn on [0, x1]
+      const ML = 52, MB = 34, MT = 12, MR = 12, w = 320 - ML - MR, hh = 200 - MT - MB, X = v => ML + v / x1 * w, Y = u => MT + hh - u / umax * hh;
+      let g = '<line x1="' + ML + '" y1="' + MT + '" x2="' + ML + '" y2="' + (MT + hh) + '" stroke="#222"/><line x1="' + ML + '" y1="' + (MT + hh) + '" x2="' + (ML + w) + '" y2="' + (MT + hh) + '" stroke="#222"/>';
+      const pts = []; for (let i = 0; i <= 120; i++) { const v = x1 * i / 120; pts.push(X(v).toFixed(1) + ',' + Y(fn(v)).toFixed(1)); }
+      g += '<polyline points="' + pts.join(' ') + '" fill="none" stroke="' + BUDGET + '" stroke-width="3"/>';
+      if (tangent) { const [s0, half] = tangent, u0 = fn(xNow); g += '<line x1="' + X(xNow - half) + '" y1="' + Y(u0 - s0 * half) + '" x2="' + X(xNow + half) + '" y2="' + Y(u0 + s0 * half) + '" stroke="' + GRAD + '" stroke-width="2.2" stroke-dasharray="6 4"/>'; }
+      (tops2 || []).forEach(([v, lab]) => { g += '<line x1="' + X(v) + '" y1="' + Y(fn(v)) + '" x2="' + X(v) + '" y2="' + (MT + hh) + '" stroke="' + GRAD + '" stroke-dasharray="4 4"/>' + '<text x="' + X(v) + '" y="' + (MT + hh + 24) + '" text-anchor="middle" font-size="17" fill="' + GRAD + '">' + lab + '</text>'; });
+      g += '<circle cx="' + X(xNow) + '" cy="' + Y(fn(xNow)) + '" r="7" fill="#222" stroke="#fff" stroke-width="2"/>';
+      g += '<text x="' + (ML - 8) + '" y="' + (MT + 14) + '" text-anchor="end" font-size="18" fill="#555">' + it(mode === 'plane' ? 'u*' : 'u') + '</text><text x="' + (ML + w) + '" y="' + (MT + hh + 24) + '" text-anchor="end" font-size="18" fill="#555">' + it(xl) + '</text>';
+      prof.innerHTML = g;
+    }
+    const Y0 = { hill: 32, roof: 32, trail: 32, plane: 30, top: 90 }[mode] || 32, YAW0 = +box.dataset.yaw || 40;
+    let FX = 5, BB = 60, showPlane = false, tops = [60], yaw = mode === 'top' ? 0 : YAW0, elev = Y0, P = mode === 'hill' ? [5, 45] : mode === 'roof' ? [10, 30] : [10, 30], stop = () => {};
     const K = 5.6;                                         // pixels per unit
     // world → screen: centre the floor, turn by yaw, tilt by elev (90 = straight down, then x right and y up)
     function pr(x, y, z) {
@@ -811,27 +825,27 @@
       h += line3([[0, 0, 0], [XM, 0, 0]], '#222', 1.5) + line3([[0, 0, 0], [0, YM, 0]], '#222', 1.5);
       h += label(XM, 0, 0, it('x'), '#555', 8, 6) + label(0, YM, 0, it('y'), '#555', -10, -6, 'end');
       const parts = [];
-      if (mode === 'hill' || mode === 'fence' || mode === 'top') {
+      if (mode === 'hill' || mode === 'trail' || mode === 'top') {
         LEVELS.forEach(u => { h += line3(hillCurve(u, 0), IC, u === 300 ? 2.6 : 1.4, u === 300 ? '' : ' opacity="0.6"'); });   // the hiking map on the floor
-        if (elev < 88) surface((x, y) => zu(x * y), hillFill, (x, y) => x * y >= UCAP).forEach(p => parts.push(p));
+        if (elev < 88) surface((x, y) => zu(x * y), hillFill, (x, y) => x * y >= CAP).forEach(p => parts.push(p));
       }
       if (mode === 'roof') {
         [40, 60, 80].forEach(s => { const yi = Math.min(YM, s), xi = s / 3; h += line3([[(s - Math.min(YM, s)) / 3, Math.min(YM, s), 0], [xi, 0, 0]], BUDGET, s === 60 ? 3 : 1.6, s === 60 ? '' : ' opacity="0.6"'); });
         if (elev < 88) surface((x, y) => zs(3 * x + y), roofFill).forEach(p => parts.push(p));
       }
-      if (mode === 'fence' || mode === 'top') h += line3([[0, 60, 0], [20, 0, 0]], BUDGET, 3.5);
-      parts.sort((a, b) => a[0] - b[0]);
-      // the fence: vertical strips on 3x + y = 60, mixed into the painter's order
-      if (mode === 'fence' && elev < 88) {
-        const fs = [];
-        for (let k = 0; k < 20; k++) {
-          const x0 = k, x1 = k + 1, c = [[x0, 60 - 3 * x0, 0], [x1, 60 - 3 * x1, 0], [x1, 60 - 3 * x1, ZH * 0.5], [x0, 60 - 3 * x0, ZH * 0.5]].map(q => pr(...q));
-          fs.push([(c[0][2] + c[1][2]) / 2 + 0.01, '<polygon points="' + c.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ') + '" fill="' + BUDGET + '" opacity="0.26"/>']);
-        }
-        fs.forEach(f => parts.push(f)); parts.sort((a, b) => a[0] - b[0]);
+      if (mode === 'trail' || mode === 'top') h += line3([[0, 60, 0], [20, 0, 0]], BUDGET, 3.5);
+      if (mode === 'plane') {
+        [20, 40, 60, 80, 100, 120].forEach(b => { const y0 = Math.min(YM, b); h += line3([[(b - y0) / 3, y0, 0], [Math.min(XM, b / 3), b - 3 * Math.min(XM, b / 3), 0]], BUDGET, 1.4, ' opacity="0.55"'); });
+        const yb = Math.min(YM, BB); h += line3([[(BB - yb) / 3, yb, 0], [Math.min(XM, BB / 3), BB - 3 * Math.min(XM, BB / 3), 0]], BUDGET, 3.5);
+        h += line3(hillCurve(BB * BB / 12, 0), IC, 2.6);                                  // the height line that touches this budget line
+        h += line3([[0, 0, 0], [20, 60, 0]], GRAD, 2, ' stroke-dasharray="6 5" opacity="' + (tops.length > 1 ? 0.9 : 0) + '"');   // the path of best bundles, y = 3x
+        if (elev < 88) surface((x, y) => zu(x * y), hillFill, (x, y) => x * y >= CAP).forEach(p => parts.push(p));
+        if (elev < 88 && showPlane) surface((x, y) => zs(3 * x + y), roofFill).forEach(p => parts.push(p));
       }
+      parts.sort((a, b) => a[0] - b[0]);
       h += parts.map(p => p[1]).join('');
-      if (elev < 88 && (mode === 'hill' || mode === 'fence')) LEVELS.forEach(u => { h += line3(hillCurve(u, zu(u)), IC, u === 300 && mode === 'fence' ? 3 : 2); });   // height lines on the hill
+      if (elev < 88 && (mode === 'hill' || mode === 'trail')) LEVELS.forEach(u => { h += line3(hillCurve(u, zu(u)), IC, u === 300 && mode === 'trail' ? 3 : 2); });   // height lines on the hill
+      if (elev < 88 && mode === 'plane') [75, 300, 675, 1200].forEach(u => { h += line3(hillCurve(u, zu(u)), IC, 1.8, ' opacity="0.8"'); });
       if (elev < 88 && mode === 'roof') [40, 60, 80].forEach(s => { h += line3([[(s - Math.min(YM, s)) / 3, Math.min(YM, s), zs(s)], [s / 3, 0, zs(s)]], BUDGET, s === 60 ? 3 : 2); });
       let say = '';
       if (mode === 'hill') {
@@ -855,15 +869,31 @@
         say = '<div>flat roof: the same steepest way up everywhere, ' + m('<i>p</i> = (3, 1)') + '</div>' +
           '<div class="dim">height lines = budget lines €40, €60, €80 · p square to them</div>';
       }
-      if (mode === 'fence') {
-        const cut = []; for (let i = 0; i <= 60; i++) { const x = 20 * i / 60, y = 60 - 3 * x; cut.push([x, y, zu(x * y)]); }
-        if (elev < 88) h += line3(cut, ALONG, 4);
-        const e = pr(10, 30, elev < 88 ? zu(300) : 0), fy = 60 - 3 * FX, fp = pr(FX, fy, elev < 88 ? zu(FX * fy) : 0);
-        h += '<circle cx="' + fp[0] + '" cy="' + fp[1] + '" r="7" fill="#222" stroke="#fff" stroke-width="2"/>';
-        h += '<circle cx="' + e[0] + '" cy="' + e[1] + '" r="8" fill="' + GRAD + '" stroke="#fff" stroke-width="2"/>' + label(10, 30, elev < 88 ? zu(300) : 0, 'E', '#222', 12, -8);
-        eq.innerHTML = '<div class="vp-disp">' + m('3<i>x</i> + <i>y</i> = 60') + '</div><div class="vp-sub">a fence on the budget line cuts the hill</div>';
-        say = '<div>at ' + m('(' + r2(FX) + ', ' + r2(fy) + ')') + ': ' + m('<i>u</i> = ' + r2(FX * fy)) + '</div>' + (elev < 88 ? '<div>the fence path: highest at ' + m('E = (10, 30)') + ', ' + m('<i>u</i> = 300') + '</div><div class="dim">top view: the height line through E just touches the line</div>'
-          : '<div class="dim">from above: ' + m('<i>u</i> = 300') + ' just touches the budget line at E</div>');
+      if (mode === 'trail') {
+        const trail = []; for (let i = 0; i <= 80; i++) { const x = 20 * i / 80, y = 60 - 3 * x; trail.push([x, y, elev < 88 ? zu(x * y) : 0]); }
+        h += line3(trail, BUDGET, 5.5);                                                     // the budget line drawn ON the hill: the trail
+        const fy = 60 - 3 * FX, e = pr(10, 30, elev < 88 ? zu(300) : 0), fp = pr(FX, fy, elev < 88 ? zu(FX * fy) : 0);
+        h += '<circle cx="' + e[0] + '" cy="' + e[1] + '" r="8" fill="' + GRAD + '" stroke="#fff" stroke-width="2"/>' + label(10, 30, elev < 88 ? zu(300) : 0, 'E', '#222', 12, -10);
+        h += '<circle cx="' + fp[0] + '" cy="' + fp[1] + '" r="8" fill="#222" stroke="#fff" stroke-width="2.5"/>';
+        eq.innerHTML = '<div class="vp-disp">the hiking trail</div><div class="vp-sub">budget line = the trail · highest point on the trail = best bundle</div>';
+        say = '<div>walker at ' + m('(' + r2(FX) + ', ' + r2(fy) + ')') + ': height ' + m('<i>u</i> = ' + r2(FX * fy)) + '</div>' +
+          (elev < 88 ? '<div class="dim">top of the trail: ' + m('E = (10, 30)') + ', ' + m('<i>u</i> = 300') + '</div>' : '<div class="dim">from above: the height line ' + m('<i>u</i> = 300') + ' just touches the trail at E</div>');
+        profile2(x => x * (60 - 3 * x), 20, 330, FX, 'x', [[10, '10']]);
+      }
+      if (mode === 'plane') {
+        const xb = BB / 6, yb = BB / 2, ub = BB * BB / 12, lam = BB / 6;
+        const trail = []; for (let i = 0; i <= 80; i++) { const x = (BB / 3) * i / 80, y = BB - 3 * x; if (y <= YM && x <= XM) trail.push([x, y, elev < 88 ? zu(x * y) : 0]); }
+        h += line3(trail, BUDGET, 5);
+        const tp = tops.slice().sort((a, b) => a - b).map(b => [b / 6, b / 2, elev < 88 ? zu(b * b / 12) : 0]);
+        if (tp.length > 1) h += line3(tp, GRAD, 3.5);                                        // the tops of the trails: the path
+        tops.forEach(b => { const q = pr(b / 6, b / 2, elev < 88 ? zu(b * b / 12) : 0); h += '<circle cx="' + q[0] + '" cy="' + q[1] + '" r="4.5" fill="' + GRAD + '"/>'; });
+        if (elev < 88 && showPlane) h += line3([[(BB - Math.min(YM, BB)) / 3, Math.min(YM, BB), zs(BB)], [Math.min(XM, BB / 3), BB - 3 * Math.min(XM, BB / 3), zs(BB)]], BUDGET, 2.5, ' stroke-dasharray="6 4"');
+        const e = pr(xb, yb, elev < 88 ? zu(ub) : 0);
+        h += '<circle cx="' + e[0] + '" cy="' + e[1] + '" r="8" fill="' + GRAD + '" stroke="#fff" stroke-width="2"/>' + label(xb, yb, elev < 88 ? zu(ub) : 0, 'E(' + BB + ')', '#222', 12, -10);
+        eq.innerHTML = '<div class="vp-disp">' + m('3<i>x</i> + <i>y</i> = <i>B</i>') + '</div><div class="vp-sub">one trail per budget · the tops form the path</div>';
+        say = '<div>' + m('<i>B</i> = ' + BB) + ': best feasible bundle ' + m('(' + r2(xb) + ', ' + r2(yb) + ')') + ', ' + m('<i>u</i>* = ' + r2(ub)) + ', ' + m('λ = ' + r2(lam)) + '</div>' +
+          '<div class="dim">the tops lie on the ray ' + m('<i>y</i> = 3<i>x</i>') + ': the income-consumption curve</div>';
+        profile2(b => b * b / 12, 120, 1300, BB, 'B', [[BB, String(BB)]], [lam, 24]);
       }
       if (mode === 'top') {
         const k = 0.9;   // the same arrow scale for both (Murat)
@@ -889,10 +919,20 @@
       slider(ctl, 'y', 2, 62, 0.5, P[1], (v, o, first) => { P = [P[0], v]; o.innerHTML = r2(v); if (!first) draw(); });
     }
     if (mode === 'roof') slider(ctl, 'point', 2, 18, 0.5, P[0], (v, o, first) => { P = [v, 60 - 3 * v]; o.innerHTML = ''; if (!first) draw(); });
-    if (mode === 'fence') slider(ctl, 'x', 0, 20, 0.5, FX, (v, o, first) => { FX = v; o.innerHTML = r2(v); if (!first) draw(); });
-    button(ctl, 'top view', () => turnTo(0, 90));
+    let walkInp = null, bInp = null;
+    if (mode === 'trail') {
+      walkInp = slider(ctl, 'x', 0, 20, 0.25, FX, (v, o, first) => { FX = v; o.innerHTML = r2(v); if (!first) draw(); });
+      button(ctl, 'walk', () => { stop(); const s0 = performance.now(); let rid = 0;   // 0 → 20 in 6 s, up then down
+        const step = now => { const k = Math.min(1, (now - s0) / 6000); FX = Math.round(20 * k * 4) / 4; walkInp.value = FX; walkInp.nextSibling.innerHTML = r2(FX); draw(); if (k < 1) rid = requestAnimationFrame(step); };
+        rid = requestAnimationFrame(step); stop = () => cancelAnimationFrame(rid); });
+    }
+    if (mode === 'plane') {
+      bInp = slider(ctl, 'budget B', 20, 120, 10, BB, (v, o, first) => { BB = v; o.innerHTML = '€' + v; if (!tops.includes(v)) tops.push(v); if (!first) draw(); });
+      const bp = button(ctl, 'show the spending plane', () => { showPlane = !showPlane; bp.classList.toggle('on', showPlane); draw(); });
+    }
+    button(ctl, mode === 'trail' ? 'view from above' : 'top view', () => turnTo(0, 90));
     button(ctl, '3D view', () => turnTo(YAW0, 32));
-    button(ctl, 'reset', () => { turnTo(mode === 'top' ? 0 : YAW0, Y0); if (mode === 'hill') { ctl.querySelectorAll('input').forEach((i, k) => i.set([5, 45][k])); } if (mode === 'roof') ctl.querySelector('input').set(10); });
+    button(ctl, 'reset', () => { turnTo(mode === 'top' ? 0 : YAW0, Y0); if (mode === 'hill') { ctl.querySelectorAll('input').forEach((i, k) => i.set([5, 45][k])); } if (mode === 'roof') ctl.querySelector('input').set(10); if (mode === 'trail') walkInp.set(5); if (mode === 'plane') { tops = [60]; bInp.set(60); }; });
     ctl.appendChild(el('span', 'dim vp-hint', 'drag the picture to turn it'));
     draw();
   }
