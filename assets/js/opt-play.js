@@ -737,13 +737,14 @@
       kink: v => v.a / v.b,
       best: (v, px, py, B) => { const k = v.a / v.b, x = B / (px + py * k); return [x, k * x]; } },
     cd: { ps: [['α', 0.2, 2, 0.05, 1], ['β', 0.2, 2, 0.05, 1]], name: 'Cobb-Douglas',
+      note: v => 'only α/β changes the shape (ordinal): α/β = ' + r2(v['α'] / v['β']),
       eq: v => m('<i>u</i> = <i>x</i><sup>' + nb(v['α'], 1) + '</sup> <i>y</i><sup>' + nb(v['β'], 1) + '</sup>'), U: (v, x, y) => Math.pow(x, v['α']) * Math.pow(y, v['β']),
       curve: (v, u) => { const p = []; for (let i = 1; i <= 240; i++) { const x = 0.4 * i; p.push([x, Math.pow(u / Math.pow(x, v['α']), 1 / v['β'])]); } return p; },
       pt: (v, u) => [10, Math.pow(u / Math.pow(10, v['α']), 1 / v['β'])],
       mrs: (v, x, y) => m('MRS = ' + fr('α', 'β') + ' · ' + fr('<i>y</i>', '<i>x</i>') + ' = ' + r2(v['α'] / v['β'] * y / x)),
       best: (v, px, py, B) => { const s = v['α'] + v['β']; return [v['α'] / s * B / px, v['β'] / s * B / py]; } },
     ql: { ps: [['α', 0.5, 5, 0.1, 2], ['β', 0.2, 2.5, 0.05, 0.5]], name: 'quasi-linear',
-      tag: v => v['β'] < 0.999 ? 'bowed in' : v['β'] > 1.001 ? 'bowed out' : 'straight',
+      tag: v => v['β'] < 0.999 ? 'β < 1: bowed in: the next y is worth less → a tangency' : v['β'] > 1.001 ? 'β > 1: bowed out: the next y is worth MORE → corners' : 'β = 1: straight lines',
       eq: v => m('<i>u</i> = ' + nb(v['α']) + '<i>x</i> + <i>y</i><sup>' + r2(v['β']) + '</sup>'), U: (v, x, y) => v['α'] * x + Math.pow(y, v['β']),
       curve: (v, u) => { const p = []; for (let i = 0; i <= 240; i++) { const y = 0.3 * i, x = (u - Math.pow(y, v['β'])) / v['α']; if (x < 0) break; p.push([x, y]); } return p; },
       pt: (v, u) => { if (v['β'] < 1) return [(u - Math.pow(20, v['β'])) / v['α'], 20]; const y = Math.pow(Math.max(0, u - 10 * v['α']), 1 / v['β']); return [10, y]; },   // bowed out: the dot at x = 10
@@ -760,7 +761,7 @@
   function swapAt(key, w, x, y) {
     if (key === 'subs') return { y2: y - w.a / w.b, mrs: w.a / w.b, txt: r2(w.a / w.b) };
     if (key === 'cd') { const k = w['α'] / w['β']; return { y2: y * Math.pow(x / (x + 1), k), mrs: k * y / x, txt: r2(k * y / x) }; }
-    if (key === 'ql') { const yb = Math.pow(y, w['β']) - w['α'], mr = w['α'] / (w['β'] * Math.pow(y, w['β'] - 1)); return { y2: yb > 0 ? Math.pow(yb, 1 / w['β']) : null, mrs: mr, txt: r2(mr) }; }
+    if (key === 'ql') { const yb = Math.pow(y, w['β']) - w['α'], mr = w['α'] / (w['β'] * Math.pow(y, w['β'] - 1)); return { y2: yb >= 0 ? Math.pow(yb, 1 / w['β']) : null, mrs: mr, txt: r2(mr) }; }
     // comp: u = min{ax, by}; at the kink (ax = by) or with x in surplus an extra x alone is worth 0; with x scarce the extra
     // x raises u, so the surplus y down to the new kink can go
     const ax = w.a * x, by = w.b * y;
@@ -785,7 +786,7 @@
       LV.forEach((u, i) => {
         const pts = F.curve(w, u).map(([x, y]) => [x, Math.min(y, A.ymax * 1.6)]);
         h += poly(A, pts, col, wid, extra);
-        if (labels) { const end = pts.filter(([x, y]) => x <= A.xmax * 0.95 && y <= A.ymax * 0.9 && y >= A.ymax * 0.06).pop(); if (end) h += label(A.X(end[0]) + 6, A.Y(end[1]) - 6, it('u') + ' = ' + r2(u), IC, null, 17); }
+        if (labels) { const ok = pts.filter(([x, y]) => x <= A.xmax * 0.95 && y <= A.ymax * 0.9 && y >= A.ymax * 0.06), end = key === 'ql' ? ok[Math.floor(ok.length * (0.12 + 0.22 * i))] : ok.pop(); if (end) h += label(A.X(end[0]) + 6, A.Y(end[1]) - 6, it('u') + ' = ' + r2(u), IC, null, 17); }
       });
       return h;
     }
@@ -808,13 +809,36 @@
         if (S.mrs != null && isFinite(S.mrs)) { const L0 = 3.2; h += '<line x1="' + A.X(Apt[0] - L0) + '" y1="' + A.Y(Apt[1] + S.mrs * L0) + '" x2="' + A.X(Apt[0] + L0) + '" y2="' + A.Y(Apt[1] - S.mrs * L0) + '" stroke="' + GREY + '" stroke-width="1.5" stroke-dasharray="4 4"/>'; }
         if (S.y2 != null) h += '<path d="M' + A.X(Apt[0]) + ',' + A.Y(Apt[1]) + ' L' + A.X(Apt[0] + 1) + ',' + A.Y(Apt[1]) + ' L' + A.X(Apt[0] + 1) + ',' + A.Y(S.y2) + '" fill="none" stroke="' + col + '" stroke-width="2.6"' + dash + '/>';
       });
+      {
+        const ZR = 72, ZC = [L + pw - ZR - 8, T + ZR + 8], ZK = 5 * A.s, zx = q => ZC[0] + (q - Apt[0]) * ZK, zy = q => ZC[1] - (q - Apt[1]) * ZK;
+        const ring = ZR / 5, zid = f.id + 'z';
+        h += '<circle cx="' + A.X(Apt[0]) + '" cy="' + A.Y(Apt[1]) + '" r="' + ring + '" fill="none" stroke="#9AA3AE" stroke-width="1.2"/>' +
+          '<line x1="' + (A.X(Apt[0]) + ring * 0.7) + '" y1="' + (A.Y(Apt[1]) - ring * 0.7) + '" x2="' + (ZC[0] - ZR * 0.7) + '" y2="' + (ZC[1] + ZR * 0.7) + '" stroke="#9AA3AE" stroke-width="1.2"/>';
+        h += '<clipPath id="' + zid + '"><circle cx="' + ZC[0] + '" cy="' + ZC[1] + '" r="' + ZR + '"/></clipPath><circle cx="' + ZC[0] + '" cy="' + ZC[1] + '" r="' + ZR + '" fill="#fff" stroke="#9AA3AE" stroke-width="1.5"/><g clip-path="url(#' + zid + ')">';
+        const zpoly = (pts, col, wid, extra) => { const dense = [], lo = [Apt[0] - 4, Apt[1] - 4], hi = [Apt[0] + 4, Apt[1] + 4];
+          pts.forEach((q, i) => { if (!i) { dense.push(q); return; } const a = pts[i - 1], d = [q[0] - a[0], q[1] - a[1]]; let t0 = 0, t1 = 1;   // clip the segment to the window, then sample it
+            for (let k = 0; k < 2; k++) { if (Math.abs(d[k]) < 1e-12) { if (a[k] < lo[k] || a[k] > hi[k]) { t0 = 1; t1 = 0; } continue; } let ta = (lo[k] - a[k]) / d[k], tb = (hi[k] - a[k]) / d[k]; if (ta > tb) [ta, tb] = [tb, ta]; t0 = Math.max(t0, ta); t1 = Math.min(t1, tb); }
+            if (t1 > t0) for (let j = 0; j <= 16; j++) { const t = t0 + (t1 - t0) * j / 16; dense.push([a[0] + d[0] * t, a[1] + d[1] * t]); } });
+          const near = dense.filter(([x, y]) => Math.abs(x - Apt[0]) < 4 && Math.abs(y - Apt[1]) < 4); return near.length > 1 ? '<polyline points="' + near.map(([x, y]) => zx(x).toFixed(1) + ',' + zy(y).toFixed(1)).join(' ') + '" fill="none" stroke="' + col + '" stroke-width="' + wid + '"' + (extra || '') + '/>' : ''; };
+        sets.forEach(([w, col, dash]) => {
+          h += zpoly(F.curve(w, uA(w)), col === IC ? IC : '#8FB3DA', col === IC ? 3 : 2.2, dash);
+          const S = swapAt(key, w, Apt[0], Apt[1]);
+          if (S.mrs != null && isFinite(S.mrs)) h += '<line x1="' + zx(Apt[0] - 4) + '" y1="' + zy(Apt[1] + S.mrs * 4) + '" x2="' + zx(Apt[0] + 4) + '" y2="' + zy(Apt[1] - S.mrs * 4) + '" stroke="' + GREY + '" stroke-width="1.5" stroke-dasharray="4 4"/>';
+          if (S.y2 != null) h += '<path d="M' + zx(Apt[0]) + ',' + zy(Apt[1]) + ' L' + zx(Apt[0] + 1) + ',' + zy(Apt[1]) + ' L' + zx(Apt[0] + 1) + ',' + zy(S.y2) + '" fill="none" stroke="' + col + '" stroke-width="3"' + dash + '/>';
+        });
+        const S0 = swapAt(key, v, Apt[0], Apt[1]);
+        h += '<circle cx="' + ZC[0] + '" cy="' + ZC[1] + '" r="5" fill="#222"/></g>';
+        h += label(zx(Apt[0] + 0.5), zy(Apt[1]) - 6, '+1 ' + it('x'), IC, 'middle', 17);
+        if (S0.y2 != null && Apt[1] - S0.y2 > 0.05) h += label(zx(Apt[0] + 1) + 6, (zy(Apt[1]) + zy(Math.max(S0.y2, Apt[1] - 72 / ZK))) / 2 + 6, '−' + r2(Apt[1] - S0.y2), IC, null, 17);
+        h += label(ZC[0] + ZR - 4, ZC[1] + ZR - 2, '×5', '#9AA3AE', 'end', 17);
+      }
       h += dot(A.X(Apt[0]), A.Y(Apt[1]), 7) + label(A.X(Apt[0]) - 12, A.Y(Apt[1]) - 10, 'A ' + '(' + r2(Apt[0]) + ', ' + r2(Apt[1]) + ')', '#222', 'end', 17);
       if (copies.length) h += label(A.X(Apt[0]) - 12, A.Y(Apt[1]) + 22, 'same bundle, different preferences', '#555', 'end', 17);
       let bestTxt = '';
       if (budget) { const b = F.best(v, PX0, PY0, B0); if (b) { h += dot(A.X(b[0]), A.Y(b[1]), 8, GRAD); bestTxt = '<div>best feasible bundle on ' + m('3<i>x</i> + <i>y</i> = 60') + ': ' + vec(b[0], b[1]) + '</div>'; } else bestTxt = '<div>every bundle on ' + m('3<i>x</i> + <i>y</i> = 60') + ' is best (MRS = price ratio)</div>'; }
       f.svg.innerHTML = h;
       fEq.innerHTML = F.eq(v);
-      f.eq.innerHTML = '<div class="vp-sub">' + F.name + (F.tag ? ' · <b>' + F.tag(v) + '</b>' : '') + (copies.length ? ' · dashed: ' + copies.map(parTxt).join(' | ') : '') + '</div>';
+      f.eq.innerHTML = (F.tag ? '<div class="vp-tag' + (v['β'] > 1.001 ? ' out' : '') + '">' + F.tag(v) + '</div>' : '') + (F.note ? '<div class="vp-tag">' + F.note(v) + '</div>' : '') + '<div class="vp-sub">' + F.name + (copies.length ? ' · dashed: ' + copies.map(parTxt).join(' | ') : '') + '</div>';
       const row = (w, tag) => { const S = swapAt(key, w, Apt[0], Apt[1]), dy = S.y2 == null ? null : Apt[1] - S.y2;
         return '<tr><td>' + tag + '</td><td>' + parTxt(w) + '</td><td>' + (S.note ? S.note : dy == null ? 'not possible: not enough y' : 'one more ' + m('<i>x</i>') + ' costs ' + m('Δ<i>y</i> = ' + r2(dy))) + '</td><td>' + m('MRS = ' + S.txt) + '</td></tr>'; };
       f.status.innerHTML = '<table class="vp-swap"><tr><th></th><th>numbers</th><th>from A, keeping u the same</th><th>at A</th></tr>' + row(v, 'now') + copies.map((c, i) => row(c, 'copy ' + (i + 1))).join('') + '</table>' +
@@ -871,7 +895,8 @@
     draw();
   }
 
-  const CSS = '.vp-swap{border-collapse:collapse;font-size:.85em;margin:.2em 0}.vp-swap td,.vp-swap th{padding:.15em .45em;border-bottom:1px solid #E3DFD5;text-align:left}.vp-swap th{color:#55534E;font-weight:600}' +
+  const CSS = '.vp-tag{font-weight:600;margin:.1em 0 .2em}.vp-tag.out{color:#7B2D26}' +
+    '.vp-swap{border-collapse:collapse;font-size:.85em;margin:.2em 0}.vp-swap td,.vp-swap th{padding:.15em .45em;border-bottom:1px solid #E3DFD5;text-align:left}.vp-swap th{color:#55534E;font-weight:600}' +
     '.vp-formula.small{font-size:1.05em;padding:.15em .6em;margin:.25em 0 .1em}.vp-mtitle{font-size:.85em;margin-bottom:.1em}.vp-mcap .vp-sub{font-size:.85em}' +
     '@keyframes vpglow{0%{text-shadow:0 0 12px rgba(201,150,40,.55)}100%{text-shadow:none}}.vp-formula.glow{animation:vpglow 1.2s ease-out 1}@media (prefers-reduced-motion:reduce){.vp-formula.glow{animation:none}}' +
     '.vp-formula{font-family:"STIX Two Math","STIX Two Text","Cambria Math",serif;font-size:1.5em;color:#1F1F1F;background:#F6F7F9;border-radius:10px;padding:.25em .8em;margin:.1em 0 .5em;display:inline-block}.vp-formula i{font-style:italic}.vp .vp-formula sup,.vp .vp-m sup,.vp-formula sup{font-size:.62em;vertical-align:super;line-height:0}.vp .vp-m sub{vertical-align:-.25em;line-height:0}' +
