@@ -340,7 +340,7 @@
   const FORMS = {
     subs: { name: 'perfect substitutes', eq: '<i>u</i> = <i>x</i> + <i>y</i>', note: 'one x is as good as one y',
       U: (x, y) => x + y, curve: u => [[0, u], [u, 0]], how: 'a corner: only y (x costs 3, y costs 1, and they are equally good)' },
-    comp: { name: 'perfect complements (Leontief)', eq: '<i>u</i> = min{<i>x</i>, <i>y</i>}', note: 'x and y are used 1 to 1',
+    comp: { name: 'perfect complements (Leontief)', eq: '<i>u</i> = min{<i>x</i>, <i>y</i>}', note: 'x and y are used 1 to 1', ray: [1, () => it('x') + ' = ' + it('y')],
       U: (x, y) => Math.min(x, y), curve: u => [[u, 999], [u, u], [999, u]], how: 'the kink, where x = y' },
     cd: { name: 'Cobb-Douglas', eq: '<i>u</i> = <i>x</i> · <i>y</i>', note: 'more of both is better, a bit of each is best',
       U: (x, y) => x * y, curve: u => { const p = []; for (let i = 1; i <= 240; i++) { const x = 0.4 * i; p.push([x, u / x]); } return p; }, how: 'the curve just touches the line' },
@@ -351,9 +351,9 @@
       U: (x, y) => 4 * x + y, curve: u => [[0, u], [u / 4, 0]], how: 'a corner: only x (x costs 3 times y, but is worth 4 times y)' },
     subs3: { name: 'perfect substitutes', eq: '<i>u</i> = 3<i>x</i> + <i>y</i>', note: 'α = 3, β = 1: one x is as good as 3 y', every: true,
       U: (x, y) => 3 * x + y, curve: u => [[0, u], [u / 3, 0]], how: 'x costs 3 times y and is worth 3 times y' },
-    comp31: { name: 'perfect complements (Leontief)', eq: '<i>u</i> = min{3<i>x</i>, <i>y</i>}', note: 'α = 3, β = 1: 3 y go with each x',
+    comp31: { name: 'perfect complements (Leontief)', eq: '<i>u</i> = min{3<i>x</i>, <i>y</i>}', note: 'α = 3, β = 1: 3 y go with each x', ray: [3, () => '3' + it('x') + ' = ' + it('y')],
       U: (x, y) => Math.min(3 * x, y), curve: u => [[u / 3, 999], [u / 3, u], [999, u]], how: 'the kink, where 3x = y' },
-    comp13: { name: 'perfect complements (Leontief)', eq: '<i>u</i> = min{<i>x</i>, 3<i>y</i>}', note: 'α = 1, β = 3: 3 x go with each y',
+    comp13: { name: 'perfect complements (Leontief)', eq: '<i>u</i> = min{<i>x</i>, 3<i>y</i>}', note: 'α = 1, β = 3: 3 x go with each y', ray: [1 / 3, () => it('x') + ' = 3' + it('y')],
       U: (x, y) => Math.min(x, 3 * y), curve: u => [[u, 999], [u, u / 3], [999, u / 3]], how: 'the kink, where x = 3y' },
     cd31: { name: 'Cobb-Douglas', eq: '<i>u</i> = <i>x</i><sup>3/4</sup><i>y</i><sup>1/4</sup>', note: 'α = 3/4, β = 1/4: more weight on x',
       U: (x, y) => Math.pow(x, 0.75) * Math.pow(y, 0.25), curve: u => { const p = []; for (let i = 1; i <= 240; i++) { const x = 0.4 * i; p.push([x, Math.pow(u / Math.pow(x, 0.75), 4)]); } return p; }, how: 'the curve just touches the line' },
@@ -412,10 +412,14 @@
       // (2) the budget set, shaded, and the names on the graph
       h += '<polygon points="' + A.X(0) + ',' + A.Y(0) + ' ' + A.X(0) + ',' + A.Y(yi) + ' ' + A.X(xi) + ',' + A.Y(0) + '" fill="#FDE3CF" opacity="0.75"/>';
       h += '<line x1="' + A.X(0) + '" y1="' + A.Y(yi) + '" x2="' + A.X(xi) + '" y2="' + A.Y(0) + '" stroke="' + BUDGET + '" stroke-width="' + (F.every ? 8 : 3.5) + '"/>';
+      // the line of kinks (Can 04.11: always on the graph for perfect complements)
+      let rayEnd = null;
+      if (F.ray) { const xe = Math.min(A.xmax, A.ymax / F.ray[0]), ye = F.ray[0] * xe; rayEnd = [xe, ye]; h += '<line x1="' + A.X(0) + '" y1="' + A.Y(0) + '" x2="' + A.X(xe) + '" y2="' + A.Y(ye) + '" stroke="#333" stroke-width="2.2" stroke-dasharray="6 4"/>'; }
       [0.35, 0.7, 1.4].forEach(c => { h += poly(A, F.curve(b.u * c), IC, 1.8, ' opacity="0.35"'); });   // a few curves of the map
       if (shown) h += poly(A, F.curve(b.u), GRAD, 3);
       h += poly(A, F.curve(u), IC, 3);
       h += '</g>' + axisLines();
+      if (rayEnd) h += rayEnd[0] >= A.xmax ? label(A.X(rayEnd[0]) - 4, A.Y(rayEnd[1]) - 10, F.ray[1](), '#333', 'end', 18) : label(A.X(rayEnd[0]) + 8, A.Y(rayEnd[1]) + 16, F.ray[1](), '#333', 'start', 18);
       const ang = Math.atan2(A.Y(0) - A.Y(yi), A.X(xi) - A.X(0)) * 180 / Math.PI, n = Math.hypot(q.px, q.py), nx = q.px / n, ny = q.py / n;
       const mxp = (A.X(0) + A.X(xi)) / 2, myp = (A.Y(yi) + A.Y(0)) / 2;
       const rot = (cx, cy, txt, col) => '<text x="' + cx.toFixed(1) + '" y="' + cy.toFixed(1) + '" transform="rotate(' + ang.toFixed(1) + ' ' + cx.toFixed(1) + ' ' + cy.toFixed(1) + ')" text-anchor="middle" font-size="18" fill="' + col + '" ' + halo + '>' + txt + '</text>';
