@@ -2,6 +2,7 @@
 //   <div class="op-lab" data-mode="u"></div>    utility only: curves, ∇u, the mountain; sliders α, β
 //   <div class="op-lab" data-mode="b"></div>    budget line only, 2D: p = (p_x, 0) + (0, p_y), green arrow along the line
 //   <div class="op-lab" data-mode="p"></div>    the same with sliders p_x, p_y and the spending roof in 3D, ending at its rim
+//   <div class="op-lab" data-mode="lam"></div>  2D only: ∇u and ∇c at one scale, the point on the budget line, slider λ stretches ∇c
 //   <div class="op-lab" data-mode="all"></div>  both: curves, ∇u, p, the mountain and the roof; sliders p_x, p_y, α, β, B
 // u = x^α y^β. Both axes of the 2D graph use one scale, so right angles are right angles.
 // Heights in 3D: the mountain is u, the roof is spending. They have different units, so in "all" the roof is scaled to
@@ -31,7 +32,7 @@
       '.lab-two svg{width:100%;height:auto;max-height:440px;display:block;user-select:none;touch-action:none}.lab-two svg.lab-2d{cursor:grab}.lab-two svg.lab-3d{cursor:move}' +
       '.lab-two svg text{font-family:"STIX Two Text","Cambria Math",Georgia,serif}.op-lab .lab-low{display:flex;flex-wrap:wrap;gap:.3em 1.4em;align-items:center;margin-top:.2em}' +
       '.op-lab .vp-ctl{margin:0;gap:.3em 1em}.op-lab .vp-ctl label{min-width:13em;grid-template-columns:2.6em 1fr 2.6em}.op-lab .vp-status{font-size:1.1em}.op-lab .lab-side{font-size:1.15em}.op-lab sub{vertical-align:-.25em;font-size:.7em}' +
-      'html.mobile .lab-two{display:block}';
+      'html.mobile .lab-two{display:block}.lab-lam{margin-top:.1em;font-size:.6em;text-align:left}.lab-lam label{min-width:20em;display:grid;grid-template-columns:1.6em 1fr 2.6em;gap:.6em;align-items:center}.lab-lam input[type=range]{accent-color:#0062C4;width:100%}.lab-lam .vp-v{font-weight:600;text-align:right}';
     document.head.appendChild(st);
   }
   function button(ctl, label, on) { const b = el('button', 'btn ghost', label); b.type = 'button'; b.onclick = e => { e.stopPropagation(); b.blur(); on(b); }; ctl.appendChild(b); return b; }
@@ -50,14 +51,15 @@
   function lab(box) {
     css();
     const mode = box.dataset.mode || 'u', id = 'lab' + (++NID);
-    const hasU = mode === 'u' || mode === 'all', hasB = mode !== 'u', has3 = mode !== 'b', movesP = mode === 'p' || mode === 'all', movesU = hasU;
-    const D0 = { al: 1, be: 1, px: 3, py: 1, B: 60, P: hasB ? [10, 30] : [10, 30], yaw: 40, elev: 30 };
-    let al = D0.al, be = D0.be, px = D0.px, py = D0.py, B = D0.B, P = D0.P.slice(), yaw = D0.yaw, elev = D0.elev;
+    const isL = mode === 'lam', hasU = mode === 'u' || mode === 'all' || isL, hasB = mode !== 'u', has3 = mode !== 'b' && !isL, movesP = mode === 'p' || mode === 'all', movesU = hasU && !isL;
+    const D0 = { al: 1, be: 1, px: 3, py: 1, B: 60, P: isL ? [5, 45] : [10, 30], yaw: 40, elev: 30, lam: 1 };
+    let lam = D0.lam, al = D0.al, be = D0.be, px = D0.px, py = D0.py, B = D0.B, P = D0.P.slice(), yaw = D0.yaw, elev = D0.elev;
     box.innerHTML = ''; box.setAttribute('data-prevent-swipe', '');
     const two = el('div', 'lab-two'), s2 = document.createElementNS(NS, 'svg'), low = el('div', 'lab-low'), ctl = el('div', 'vp-ctl'), status = el('div', 'vp-status');
     s2.setAttribute('viewBox', '0 0 ' + W + ' ' + H); s2.setAttribute('class', 'lab-2d'); two.appendChild(s2);
     let s3 = null, side = null;
     if (has3) { s3 = document.createElementNS(NS, 'svg'); s3.setAttribute('viewBox', '0 0 ' + W + ' ' + H); s3.setAttribute('class', 'lab-3d'); two.appendChild(s3); }
+    else if (isL) { two.style.gridTemplateColumns = 'minmax(0,1fr)'; }
     else { side = el('div', 'lab-side'); two.appendChild(side); }
     box.appendChild(two); box.appendChild(low); low.appendChild(ctl); (side || low).appendChild(status);
 
@@ -75,7 +77,7 @@
       const p = []; for (let i = 1; i <= 240; i++) { const x = xm * Math.pow(i / 240, 1.5), y = Math.pow(c / Math.pow(x, al), 1 / be); if (y <= ym * 1.02) p.push(z === undefined ? [x, y] : [x, Math.min(y, ym), z]); } return p;
     }
     const U0 = () => U(20, 30);                            // sets the height scale in mode "u"
-    const levels = () => hasB && mode === 'all' ? [0.25, 0.5, 1, 1.5, 2].map(t => uStar() * t) : [0.25, 0.5, 1, 1.5, 2].map(t => U0() * t);
+    const levels = () => mode === 'all' || isL ? [0.25, 0.5, 1, 1.5, 2].map(t => uStar() * t) : [0.25, 0.5, 1, 1.5, 2].map(t => U0() * t);
     // the budget line inside a box: [[x, y], [x, y]]
     function rim(xm, ym) {
       let a = [0, B / py], b = [B / px, 0];
@@ -84,6 +86,7 @@
       return [a, b];
     }
     function clampP(x, y) {
+      if (isL) { const xi = B / px, yi = B / py, t = Math.max(0.03, Math.min(0.97, (x * xi + (yi - y) * yi) / (xi * xi + yi * yi))); return [t * xi, (1 - t) * yi]; }
       x = Math.max(0.3, Math.min(XM, x)); y = Math.max(0.3, Math.min(YM, y));
       if (hasB && Sp(x, y) > B) {   // stay in the budget set: the nearest point of the line
         const n = px * px + py * py, e = (Sp(x, y) - B) / n; x -= e * px; y -= e * py;
@@ -112,7 +115,13 @@
       [10, 20, 30, 40, 50, 60].forEach(v => { h += '<text x="' + (L - 7) + '" y="' + (Y2(v) + 5) + '" text-anchor="end" font-size="15" fill="#555">' + v + '</text>'; });
       [10, 20, 30, 40, 50, 60, 70, 80].forEach(v => { h += '<text x="' + X2(v) + '" y="' + (T + PH + 18) + '" text-anchor="middle" font-size="15" fill="#555">' + v + '</text>'; });
       h += label(L - 8, T + 14, it('y'), '#555', 'end') + label(L + PW, T + PH + 34, it('x'), '#555', 'end');
-      if (hasB) {
+      if (isL) {   // one scale for both arrows, so λ∇c lies on ∇u exactly when they are equal
+        const K = 4, g = grad(x, y);
+        if (lam !== 1) h += arrow2(id, sx, sy, px * lam, py * lam, K, '#E8955F', 7) + label(sx + px * lam * K + 8, sy - py * lam * K + 24, 'λ∇' + it('c'), BUDGET, null, 22);
+        h += arrow2(id, sx, sy, g[0], g[1], K, GRAD, 3.5) + label(sx + g[0] * K + 8, sy - g[1] * K - 8, '∇' + it('u'), GRAD, null, 22);
+        h += arrow2(id, sx, sy, px, py, K, P_ARROW, 4.5) + label(sx + px * K + 2, sy + 22, '∇' + it('c'), P_ARROW, null, 22);
+      }
+      if (hasB && !isL) {
         const K = 24, d = [py, -px], dn = Math.hypot(d[0], d[1]), dl = 3.4 / dn;
         // green: along the budget line, at a right angle to p
         h += arrow2(id, sx, sy, d[0] * dl, d[1] * dl, K, GREEN, 3.5) + label(sx + d[0] * dl * K + 8, sy - d[1] * dl * K + 18, 'along the line', GREEN, null, 17);
@@ -120,7 +129,7 @@
         if (mode !== 'all') h += arrow2(id, sx, sy, px, 0, K, '#777', 2.5) + arrow2(id, sx + px * K, sy, 0, py, K, '#777', 2.5) + label(sx + px * K / 2, sy + 20, r2(px), '#555', 'middle', 16) + label(sx + px * K + 7, sy - py * K / 2 + 5, r2(py), '#555', null, 16);
         h += arrow2(id, sx, sy, px, py, K, P_ARROW, 4) + label(sx + px * K + (mode === 'all' ? 0 : 8), sy - py * K + (mode === 'all' ? 24 : -8), it('p'), P_ARROW, null, 22);
       }
-      if (hasU) {
+      if (hasU && !isL) {
         const g = grad(x, y), gl = Math.hypot(g[0], g[1]) || 1, kk = Math.min(130 / gRef(), 170 / gl);
         h += arrow2(id, sx, sy, g[0], g[1], kk, GRAD, 4) + label(sx + g[0] * kk + 8, sy - g[1] * kk - 8, '∇' + it('u'), GRAD, null, 22);
       }
@@ -197,6 +206,7 @@
       s3.innerHTML = h;
     }
     function text() {
+      if (isL) return;   // Can 04.11: graph only, no read-outs
       const [x, y] = P;
       let t = '<div>at ' + vec(x, y);
       if (hasU) { const g = grad(x, y); t += ': ' + mv('<i>u</i> = ' + r2(U(x, y))) + ', ' + mv('∇<i>u</i> = ') + vec(g[0], g[1]); }
@@ -233,11 +243,12 @@
       inputs.push(slider(ctl, 'α', 0.2, 2, 0.05, al, (v, o, first) => { al = v; o.innerHTML = r2(v); if (!first) draw(); }));
       inputs.push(slider(ctl, 'β', 0.2, 2, 0.05, be, (v, o, first) => { be = v; o.innerHTML = r2(v); if (!first) draw(); }));
     }
+    if (isL) { const here = (box.parentElement && box.parentElement.querySelector('.lab-lam')) || ctl; here.classList.add('vp-ctl'); inputs.push(slider(here, 'λ', 0, 30, 0.5, lam, (v, o, first) => { lam = v; o.innerHTML = r2(v); if (!first) draw2(); })); }
     if (mode === 'all') inputs.push(slider(ctl, '<i>B</i>', 20, 100, 5, B, (v, o, first) => { B = v; o.innerHTML = '€' + r2(v); if (!first) { refit(); draw(); } }));
     if (s3) button(ctl, 'from above', () => { elev = elev >= 88 ? D0.elev : 90; draw3(); });
     button(ctl, 'reset', () => {
-      [al, be, px, py, B, yaw, elev] = [D0.al, D0.be, D0.px, D0.py, D0.B, D0.yaw, D0.elev]; P = D0.P.slice();
-      const vals = (movesP ? [px, py] : []).concat(movesU ? [al, be] : []).concat(mode === 'all' ? [B] : []);
+      [al, be, px, py, B, yaw, elev, lam] = [D0.al, D0.be, D0.px, D0.py, D0.B, D0.yaw, D0.elev, D0.lam]; P = D0.P.slice();
+      const vals = (movesP ? [px, py] : []).concat(movesU ? [al, be] : []).concat(mode === 'all' ? [B] : []).concat(isL ? [lam] : []);
       inputs.forEach((inp, k) => inp.set(vals[k])); draw();
     });
     draw();
