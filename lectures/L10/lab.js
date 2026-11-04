@@ -265,7 +265,7 @@
       s3.addEventListener('click', ev => ev.stopPropagation());
     }
     // sliders
-    const inputs = []; let lineBtn = null, bestBtn = null;
+    const inputs = [], opInputs = []; let lineBtn = null, bestBtn = null;
     const refit = () => { P = clampP(P[0], P[1]); };
     if (movesP) {
       inputs.push(slider(ctl, '<i>p<sub>x</sub></i>', 1, 6, 0.5, px, (v, o, first) => { px = v; o.innerHTML = '€' + r2(v); if (!first) { refit(); draw(); } }));
@@ -282,14 +282,14 @@
     if (isS) { const b = button(ctl, 'show the best', () => { showBest = !showBest; b.classList.toggle('on', showBest); draw2(); }); bestBtn = b; }
     if (mode === 'all') {   // how see-through the roof and the mountain are
       const tr = el('div', 'vp-ctl lab-tr'); col3.appendChild(tr);
-      slider(tr, 'roof', 0, 1, 0.05, roofOp, (v, o, first) => { roofOp = v; if (!first) draw3(); });
-      slider(tr, 'mountain', 0.1, 1, 0.05, mtOp, (v, o, first) => { mtOp = v; if (!first) draw3(); });
+      opInputs.push(slider(tr, 'roof', 0, 1, 0.05, roofOp, (v, o, first) => { roofOp = v; if (!first) draw3(); }));
+      opInputs.push(slider(tr, 'mountain', 0.1, 1, 0.05, mtOp, (v, o, first) => { mtOp = v; if (!first) draw3(); }));
     }
     if (s3) button(ctl, 'from above', () => { elev = elev >= 88 ? D0.elev : 90; draw3(); });
     button(ctl, 'reset', () => {
       [al, be, px, py, B, yaw, elev, lam] = [D0.al, D0.be, D0.px, D0.py, D0.B, D0.yaw, D0.elev, D0.lam]; P = D0.P.slice();
       const vals = (movesP ? [px, py] : []).concat(movesU ? [al, be] : []).concat(isL ? [lam] : []).concat(isS ? [px] : []).concat(mode === 'p' || mode === 'all' ? [B] : []);
-      inputs.forEach((inp, k) => inp.set(vals[k]));
+      inputs.forEach((inp, k) => inp.set(vals[k])); opInputs.forEach((inp, k) => inp.set([0.5, 0.92][k]));
       showD = mode === 'all'; showBest = false; if (lineBtn) lineBtn.classList.remove('on'); if (bestBtn) bestBtn.classList.remove('on'); draw();
     });
     draw();
