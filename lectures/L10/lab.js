@@ -3,6 +3,7 @@
 //   <div class="op-lab" data-mode="b"></div>    budget line only, 2D: p = (p_x, 0) + (0, p_y), green arrow along the line
 //   <div class="op-lab" data-mode="p"></div>    the same with sliders p_x, p_y and the spending roof in 3D, ending at its rim
 //   <div class="op-lab" data-mode="lam"></div>  2D only: ∇u and ∇c at one scale, the point on the budget line, slider λ stretches ∇c
+//   <div class="op-lab" data-mode="f"></div>    one variable: a concave f(x), drag a point, its tangent's slope goes to 0 at the top
 //   <div class="op-lab" data-mode="all"></div>  both: curves, ∇u, p, the mountain and the roof; sliders p_x, p_y, α, β, B
 // u = x^α y^β. Both axes of the 2D graph use one scale, so right angles are right angles.
 // Heights in 3D: the mountain is u, the roof is spending. They have different units, so in "all" the roof is scaled to
@@ -253,6 +254,39 @@
     });
     draw();
   }
-  function init() { document.querySelectorAll('.op-lab').forEach(lab); }
+  // one variable: f(x) = 10x − x², a point with its tangent; the slope goes to 0 at the top
+  function fun(box) {
+    css();
+    const id = 'lab' + (++NID), f = x => 10 * x - x * x, fp = x => 10 - 2 * x, XM1 = 11, YM1 = 30, X1 = 1.5;
+    const X = v => L + v / XM1 * PW, Y = v => T + PH - v / YM1 * PH;
+    let x = X1, raf = 0;
+    box.innerHTML = ''; box.setAttribute('data-prevent-swipe', '');
+    const two = el('div', 'lab-two'), s2 = document.createElementNS(NS, 'svg'), low = el('div', 'lab-low'), ctl = el('div', 'vp-ctl'), status = el('div', 'vp-status');
+    two.style.gridTemplateColumns = 'minmax(0,1fr)'; s2.setAttribute('viewBox', '0 0 ' + W + ' ' + H); s2.setAttribute('class', 'lab-2d'); two.appendChild(s2);
+    box.appendChild(two); box.appendChild(low); low.appendChild(ctl); low.appendChild(status);
+    function draw() {
+      const pts = []; for (let i = 0; i <= 200; i++) { const v = 10 * i / 200; pts.push(X(v).toFixed(1) + ',' + Y(f(v)).toFixed(1)); }
+      const s = fp(x), a = x - 1.8, b = x + 1.8, sx = X(x), sy = Y(f(x)), top = Math.abs(s) < 0.005;
+      let h = marker(id) + '<line x1="' + L + '" y1="' + T + '" x2="' + L + '" y2="' + (T + PH) + '" stroke="#222"/><line x1="' + L + '" y1="' + (T + PH) + '" x2="' + (L + PW) + '" y2="' + (T + PH) + '" stroke="#222"/>';
+      [2, 4, 6, 8, 10].forEach(v => { h += '<text x="' + X(v) + '" y="' + (T + PH + 18) + '" text-anchor="middle" font-size="15" fill="#555">' + v + '</text>'; });
+      [5, 10, 15, 20, 25].forEach(v => { h += '<text x="' + (L - 7) + '" y="' + (Y(v) + 5) + '" text-anchor="end" font-size="15" fill="#555">' + v + '</text>'; });
+      h += label(L - 8, T + 14, it('f'), '#555', 'end') + label(L + PW, T + PH + 34, it('x'), '#555', 'end');
+      h += '<polyline points="' + pts.join(' ') + '" fill="none" stroke="' + IC + '" stroke-width="3.2"/>';
+      h += '<line x1="' + X(a) + '" y1="' + Y(f(x) + s * (a - x)) + '" x2="' + X(b) + '" y2="' + Y(f(x) + s * (b - x)) + '" stroke="' + GREEN + '" stroke-width="3" stroke-dasharray="7 5"/>';
+      h += dot(sx, sy) + label(sx + (x > 5 ? 14 : -14), sy - 16, 'slope = ' + r2(s), GREEN, x > 5 ? 'start' : 'end', 20);
+      s2.innerHTML = h;
+      status.innerHTML = mv("<i>f</i>′(<i>x</i>) = " + r2(s)) + (top ? ': the change stops' : '');
+    }
+    let d = false;
+    const at = ev => { const r = s2.getBoundingClientRect(); x = Math.max(0.1, Math.min(9.9, ((ev.clientX - r.left) / r.width * W - L) / PW * XM1)); if (Math.abs(x - 5) < 0.06) x = 5; draw(); };
+    s2.addEventListener('pointerdown', ev => { cancelAnimationFrame(raf); d = true; try { s2.setPointerCapture(ev.pointerId); } catch (e) {} at(ev); ev.stopPropagation(); ev.preventDefault(); });
+    s2.addEventListener('pointermove', ev => { if (d) at(ev); });
+    ['pointerup', 'pointercancel'].forEach(n => s2.addEventListener(n, () => { d = false; }));
+    s2.addEventListener('click', ev => ev.stopPropagation());
+    button(ctl, 'walk to the top', () => { cancelAnimationFrame(raf); const x0 = x, t0 = performance.now(); const go = t => { const k = Math.min(1, (t - t0) / 1800); x = x0 + (5 - x0) * k; draw(); if (k < 1) raf = requestAnimationFrame(go); }; raf = requestAnimationFrame(go); });
+    button(ctl, 'reset', () => { cancelAnimationFrame(raf); x = X1; draw(); });
+    draw();
+  }
+  function init() { document.querySelectorAll('.op-lab').forEach(b => (b.dataset.mode === 'f' ? fun : lab)(b)); }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 })();
