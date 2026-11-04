@@ -35,7 +35,7 @@
       '.lab-two svg text{font-family:"STIX Two Text","Cambria Math",Georgia,serif}.op-lab .lab-low{display:flex;flex-wrap:wrap;gap:.3em 1.4em;align-items:center;margin-top:.2em}' +
       '.op-lab .vp-ctl{margin:0;gap:.3em 1em}.op-lab .vp-ctl label{min-width:13em;grid-template-columns:2.6em 1fr 2.6em}.op-lab .vp-status{font-size:1.1em}.op-lab .lab-side{font-size:1.15em}.op-lab sub{vertical-align:-.25em;font-size:.7em}' +
       '.op-lab .lab-tr{position:absolute;top:0;right:0;display:block;font-size:.85em;background:rgba(255,255,255,.8)}.op-lab .lab-tr label{min-width:11em;grid-template-columns:4.6em 1fr 0;gap:.4em}.lab-tr .vp-v{display:none}' +
-      'html.mobile .lab-two{display:block}.lab-lam{margin-top:.1em;font-size:.6em;text-align:left}.lab-lam label{min-width:20em;display:grid;grid-template-columns:1.6em 1fr 2.6em;gap:.6em;align-items:center}.lab-lam input[type=range]{accent-color:#0062C4;width:100%}.lab-lam .vp-v{font-weight:600;text-align:right}';
+      'html.mobile .lab-two{display:block}.lab-lam{margin-top:.1em;font-size:.6em;text-align:left}.lab-lam label{min-width:20em;display:grid;grid-template-columns:1.6em 1fr 2.6em;gap:.6em;align-items:center}.lab-lam input[type=range]{accent-color:#0062C4;width:100%}.lab-lam .vp-v{font-weight:600;text-align:right}.lab-lam sub{vertical-align:-.25em;font-size:.7em}';
     document.head.appendChild(st);
   }
   function button(ctl, label, on) { const b = el('button', 'btn ghost', label); b.type = 'button'; b.onclick = e => { e.stopPropagation(); b.blur(); on(b); }; ctl.appendChild(b); return b; }
@@ -73,7 +73,7 @@
     // the 3D floor. Utility alone: a smaller floor, so the mountain near the point has real height
     const XM = mode === 'u' ? 40 : 50, YM = mode === 'u' ? 60 : 70, K3 = mode === 'u' ? 5.2 : 4.9;
     // the 2D plot, one scale for both axes. Utility alone: the plot is exactly the floor, so the point can go everywhere on it
-    const YMAX = mode === 'u' ? YM : 70, S2 = PH / YMAX, PWL = mode === 'u' ? XM * S2 : PW, XMAX = PWL / S2;
+    const S2 = isS ? PW / 155 : PH / (mode === 'u' ? YM : 70), YMAX = PH / S2, PWL = mode === 'u' ? XM * S2 : PW, XMAX = PWL / S2;
     const X2 = v => L + v * S2, Y2 = v => T + PH - v * S2;
     const ZCAP = mode === 'u' ? ZH * 1.4 : ZH * 1.1;
     const U = (x, y) => isS ? x + y : Math.pow(x, al) * Math.pow(y, be);
@@ -88,7 +88,7 @@
       const p = []; for (let i = 1; i <= 240; i++) { const x = xm * Math.pow(i / 240, 1.5), y = Math.pow(c / Math.pow(x, al), 1 / be); if (y <= ym * 1.02) p.push(z === undefined ? [x, y] : [x, Math.min(y, ym), z]); } return p;
     }
     const U0 = () => U(20, 30);                            // sets the height scale in mode "u"
-    const levels = () => isS ? [20, 40, 60, 80, 100, 120] : box.dataset.plain ? [0.15, 0.25, 0.4, 0.6, 0.8, 1, 1.25, 1.5, 2, 2.6].map(t => uStar() * t) : mode === 'all' || isL ? [0.25, 0.5, 1, 1.5, 2].map(t => uStar() * t) : [0.25, 0.5, 1, 1.5, 2].map(t => U0() * t);
+    const levels = () => isS ? [30, 60, 90, 120, 150, 180, 210] : box.dataset.plain ? [0.15, 0.25, 0.4, 0.6, 0.8, 1, 1.25, 1.5, 2, 2.6].map(t => uStar() * t) : mode === 'all' || isL ? [0.25, 0.5, 1, 1.5, 2].map(t => uStar() * t) : [0.25, 0.5, 1, 1.5, 2].map(t => U0() * t);
     // the budget line inside a box: [[x, y], [x, y]]
     function rim(xm, ym) {
       let a = [0, B / py], b = [B / px, 0];
@@ -122,16 +122,16 @@
       }
       h += '</g>';
       h += '<line x1="' + L + '" y1="' + T + '" x2="' + L + '" y2="' + (T + PH) + '" stroke="#222"/><line x1="' + L + '" y1="' + (T + PH) + '" x2="' + (L + PWL) + '" y2="' + (T + PH) + '" stroke="#222"/>';
-      [10, 20, 30, 40, 50, 60].filter(v => v < YMAX).forEach(v => { h += '<text x="' + (L - 7) + '" y="' + (Y2(v) + 5) + '" text-anchor="end" font-size="15" fill="#555">' + v + '</text>'; });
-      [10, 20, 30, 40, 50, 60, 70, 80].filter(v => v < XMAX).forEach(v => { h += '<text x="' + X2(v) + '" y="' + (T + PH + 18) + '" text-anchor="middle" font-size="15" fill="#555">' + v + '</text>'; });
+      (isS ? [20, 40, 60, 80, 100] : [10, 20, 30, 40, 50, 60]).filter(v => v < YMAX).forEach(v => { h += '<text x="' + (L - 7) + '" y="' + (Y2(v) + 5) + '" text-anchor="end" font-size="15" fill="#555">' + v + '</text>'; });
+      (isS ? [20, 40, 60, 80, 100, 120, 140] : [10, 20, 30, 40, 50, 60, 70, 80]).filter(v => v < XMAX).forEach(v => { h += '<text x="' + X2(v) + '" y="' + (T + PH + 18) + '" text-anchor="middle" font-size="15" fill="#555">' + v + '</text>'; });
       h += label(L - 8, T + 14, it('y'), '#555', 'end') + label(L + PWL, T + PH + 34, it('x'), '#555', 'end');
       if (isS) {
-        const K = 40, g = grad(x, y);
+        const K = 46, g = grad(x, y);
         if (showBest) {
           if (px === py) h += '<line x1="' + X2(0) + '" y1="' + Y2(B / py) + '" x2="' + X2(B / px) + '" y2="' + Y2(0) + '" stroke="' + GRAD + '" stroke-width="6"/>';
-          else { const c = px > py ? [0, B / py] : [B / px, 0]; h += dot(X2(c[0]), Y2(c[1]), 9) + label(X2(c[0]) + 14, Y2(c[1]) + (px > py ? 6 : -12), 'best', GRAD, null, 20); }
+          else { const c = px > py ? [0, B / py] : [B / px, 0]; h += dot(X2(c[0]), Y2(c[1]), 9) + label(X2(c[0]) + (px > py ? 14 : -6), Y2(c[1]) + (px > py ? 6 : -14), 'best', GRAD, px > py ? null : 'end', 20); }
         }
-        h += arrow2(id, sx, sy, px, py, K, P_ARROW, 4.5) + label(sx + px * K + 8, sy - py * K + 22, '∇' + it('c'), P_ARROW, null, 22);
+        h += arrow2(id, sx, sy, px, py, K, P_ARROW, 4.5) + (px < py ? label(sx + px * K - 8, sy - py * K - 4, '∇' + it('c'), P_ARROW, 'end', 22) : label(sx + px * K + 8, sy - py * K + 22, '∇' + it('c'), P_ARROW, null, 22));
         h += arrow2(id, sx, sy, g[0], g[1], K, GRAD, 4) + label(sx + g[0] * K + 6, sy - g[1] * K - 8, '∇' + it('u'), GRAD, null, 22);
       }
       if (isL) {
@@ -142,8 +142,9 @@
       if (isL && (!box.dataset.wait || !here || here.classList.contains('visible'))) {   // one scale for both arrows, so λ∇c lies on ∇u exactly when they are equal
         const K = 4, g = grad(x, y);
         if (lam !== 1) h += arrow2(id, sx, sy, px * lam, py * lam, K, '#E8955F', 7) + label(sx + px * lam * K + 8, sy - py * lam * K + 24, 'λ∇' + it('c'), BUDGET, null, 22);
+        const Kc = box.dataset.plain ? 15 : K;   // slide 24: ∇c drawn larger than ∇u, same direction; nothing compares their lengths there
         h += arrow2(id, sx, sy, g[0], g[1], K, GRAD, 3.5) + label(sx + g[0] * K + 8, sy - g[1] * K - 8, '∇' + it('u'), GRAD, null, 22);
-        h += arrow2(id, sx, sy, px, py, K, P_ARROW, 4.5) + label(sx + px * K + 2, sy + 22, '∇' + it('c'), P_ARROW, null, 22);
+        h += arrow2(id, sx, sy, px, py, Kc, P_ARROW, box.dataset.plain ? 5.5 : 4.5) + label(sx + px * Kc + 4, sy - py * Kc + 24, '∇' + it('c'), P_ARROW, null, 22);
       }
       if (hasB && !onLine) {
         const K = 24, d = [py, -px], dn = Math.hypot(d[0], d[1]), dl = 3.4 / dn;
@@ -276,7 +277,7 @@
       inputs.push(slider(ctl, 'β', 0.2, 2, 0.05, be, (v, o, first) => { be = v; o.innerHTML = r2(v); if (!first) draw(); }));
     }
     if (isL && !box.dataset.plain) inputs.push(slider(here || ctl, 'λ', 0, 30, 0.5, lam, (v, o, first) => { lam = v; o.innerHTML = r2(v); if (!first) draw2(); }));
-    if (isS) inputs.push(slider(here || ctl, '<i>p<sub>x</sub></i>', 0.75, 4, 0.25, px, (v, o, first) => { px = v; o.innerHTML = '€' + r2(v); if (!first) { refit(); draw(); } }));
+    if (isS) inputs.push(slider(here || ctl, '<i>p<sub>x</sub></i>', 0.4, 4, 0.1, px, (v, o, first) => { px = v; o.innerHTML = '€' + r2(v); if (!first) { refit(); draw(); } }));
     if (mode === 'p' || mode === 'all') inputs.push(slider(ctl, '<i>B</i>', 20, 100, 5, B, (v, o, first) => { B = v; o.innerHTML = '€' + r2(v); if (!first) { refit(); draw(); } }));
     if (mode === 'p') { const b = button(ctl, 'along the line', () => { showD = !showD; b.classList.toggle('on', showD); draw2(); }); lineBtn = b; }
     if (isS) { const b = button(ctl, 'show the best', () => { showBest = !showBest; b.classList.toggle('on', showBest); draw2(); }); bestBtn = b; }
