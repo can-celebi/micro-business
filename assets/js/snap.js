@@ -22,7 +22,10 @@
 
   const style = document.createElement('style');
   style.textContent = `
-  #snap-box { position: fixed; left: 104px; bottom: 44px; z-index: 62; display: flex; align-items: center; gap: 8px; font: 13px "Inter", system-ui, sans-serif; }
+  /* in the bottom row with the menu and pen buttons, out of the slide's writing area; it moves up only while the pen's toolbar needs that spot */
+  #snap-box { position: fixed; left: 214px; bottom: 10px; z-index: 62; display: flex; align-items: center; gap: 8px; font: 13px "Inter", system-ui, sans-serif; }
+  html:has(.ink-bar.on) #snap-box { bottom: 44px; }
+  @media (max-width: 760px) { #snap-box { display: none; } }
   #snap-btn { font: inherit; background: #fff; color: #333; border: 1.5px solid #bbb; border-radius: 4px; padding: 4px 9px; cursor: pointer; }
   #snap-btn:hover { border-color: #333; }
   #snap-say { background: #fff; color: #111; border: 1px solid #ddd; border-radius: 4px; padding: 3px 8px; max-width: 46vw; }
