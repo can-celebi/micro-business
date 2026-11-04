@@ -25,10 +25,11 @@
   const KEY = 'micro-ink-' + LEC;
   const COLS = { black: '#222', blue: '#0062C4', red: '#C92A2A', green: '#1B7F3B' };
   const WIDTH = { thin: 1.6, medium: 3.2 };   // px on a 1280-wide slide; scaled with the slide
+  const ERASER = 32, OLD_ERASER = 22;   // the eraser's diameter, same units (Can, 04.11: "a bit bigger"). Older saved erasures keep their size, or they would wipe more when redrawn
 
   const css = document.createElement('style');
   css.textContent = `
-  .ink-sheet { position: fixed; inset: 0; z-index: 55; pointer-events: none; }
+  .ink-sheet { position: fixed; left: 0; top: 0; width: 100vw; height: 100vh; z-index: 55; pointer-events: none; }  /* the size must be set here: without it a canvas shows at its pixel size, and on a scaled screen the ink lands off the pen (Can, 04.11) */
   .ink-sheet.on { pointer-events: auto; touch-action: none; cursor: crosshair; }
   .ink-btn { position: fixed; left: 104px; bottom: 10px; z-index: 62; font: 13px "IBM Plex Mono", ui-monospace, monospace; background: #fff; color: #333; border: 1px solid #c9cfd8; border-radius: 4px; padding: 3px 10px; cursor: pointer; }
   .ink-btn.on { background: #FFF9D0; border-color: #222; }
@@ -38,6 +39,8 @@
   .ink-bar button.on { border-color: #222; background: #FFF9D0; }
   .ink-bar .dot { display: inline-block; width: 12px; height: 12px; border-radius: 50%; vertical-align: -1px; }
   .ink-bar .sep { width: 1px; height: 18px; background: #ddd; margin: 0 2px; }
+  .ink-eraser { position: fixed; z-index: 61; display: none; box-sizing: border-box; border-radius: 50%; border: 1.5px solid #222; box-shadow: inset 0 0 0 1px #fff; pointer-events: none; }
+  .ink-read { color: #555; font-size: 12px; white-space: nowrap; padding: 0 3px; }
   html.l06-dark .ink-btn, html.l06-dark .ink-bar { display: none !important; }
   @media (max-width: 760px) { .ink-btn { left: 8px; bottom: 8px; } .ink-bar { left: 8px; right: 8px; bottom: 44px; flex-wrap: wrap; } }`;
   document.head.appendChild(css);
@@ -48,10 +51,59 @@
   const bar = document.createElement('div'); bar.className = 'ink-bar';
   bar.innerHTML = Object.keys(COLS).map(k => `<button type="button" data-c="${k}" title="${k}"><span class="dot" style="background:${COLS[k]}"></span></button>`).join('') +
     '<span class="sep"></span><button type="button" data-w="thin">thin</button><button type="button" data-w="medium">medium</button>' +
-    '<span class="sep"></span><button type="button" data-a="tidy" title="hold the pen still at the end of a stroke: straight lines and curves get tidied">tidy</button><button type="button" data-a="erase">eraser</button><button type="button" data-a="undo">undo</button><button type="button" data-a="clear">clear slide</button>';
+    '<span class="sep"></span><button type="button" data-a="tidy" title="hold the pen still at the end of a stroke: straight lines and curves get tidied">tidy</button><button type="button" data-a="erase">eraser</button><button type="button" data-a="undo">undo</button><button type="button" data-a="clear">clear slide</button><button type="button" data-a="data" title="download a small file about the pen strokes on this computer, to mail to Ali">save pen data</button><span class="ink-read" title="for testing the pen: screen scale · input type · samples in the last stroke · samples per second"></span>';
   document.body.appendChild(sheet); document.body.appendChild(pred); document.body.appendChild(btn); document.body.appendChild(bar);
   const ctx2d = c => { try { return c.getContext('2d', { desynchronized: true }) || c.getContext('2d'); } catch (e) { return c.getContext('2d'); } };
   const cx = ctx2d(sheet), px = ctx2d(pred);
+  // what tonight's try can tell us (Can, 04.11: "Each class is an attempt to improve it"): the screen's scale, the input type, the samples the browser delivered in the last stroke
+  const readEl = bar.querySelector('.ink-read');
+  let inputType = '', strokeStart = 0;
+  // Pen data (Can, 04.11: "another file to send with the email"): what the browser delivered and where the ink landed, for this page load.
+  // In memory only, so it can't fill the storage the drawings are saved in. Strokes and settings only: no names, chat, codes or poll data, and nothing is uploaded.
+  const MAX_LOG = 300000;
+  const log = { strokes: [], samples: 0, full: false };
+  let logCur = null;
+  function logStart(e) {
+    const r = sheet.getBoundingClientRect();
+    logCur = { slide: slideKey(), input: e.pointerType, eraser: erasing, started: new Date().toISOString(), updates: 0, canvas: [r.left, r.top, r.width, r.height].map(v => +v.toFixed(1)), samples: [] };
+    logCur.fx = r.width / innerWidth; logCur.fy = r.height / innerHeight; logCur.ox = r.left; logCur.oy = r.top;
+    log.strokes.push(logCur);
+    logSample(e);
+  }
+  function logSample(e) {   // [time in ms, pointer x, y, pressure, ink landed x, y], all in CSS pixels of the window
+    if (!logCur) return;
+    if (log.samples >= MAX_LOG) { log.full = true; return; }
+    const q = toSlide(e.clientX, e.clientY), s = toScreen(q[0], q[1]), n = v => +v.toFixed(1);
+    logCur.samples.push([n(e.timeStamp), n(e.clientX), n(e.clientY), +(+e.pressure || 0).toFixed(3), n(logCur.ox + s[0] * logCur.fx), n(logCur.oy + s[1] * logCur.fy)]);
+    log.samples++;
+  }
+  function saveData() {
+    const d = new Date(), p = x => String(x).padStart(2, '0');
+    const when = d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + '_' + p(d.getHours()) + '-' + p(d.getMinutes()) + '-' + p(d.getSeconds());
+    const vv = window.visualViewport;
+    const out = {
+      about: 'Pen data for Ali: strokes and settings only. Sample = [time ms, pointer x, y, pressure, ink landed x, y] in CSS pixels of the window.',
+      lecture: LEC, saved: d.toISOString(), browser: navigator.userAgent, platform: navigator.platform,
+      screen: { width: screen.width, height: screen.height, availWidth: screen.availWidth, availHeight: screen.availHeight },
+      devicePixelRatio: window.devicePixelRatio,
+      window: { innerWidth, innerHeight, outerWidth, outerHeight, pinchZoom: vv ? vv.scale : null },
+      input: { maxTouchPoints: navigator.maxTouchPoints, moveEvent: MOVE, getCoalescedEvents: !!(window.PointerEvent && PointerEvent.prototype.getCoalescedEvents), getPredictedEvents: !!(window.PointerEvent && PointerEvent.prototype.getPredictedEvents) },
+      logFull: log.full,
+      strokesThisPageLoad: log.strokes.map(({ fx, fy, ox, oy, ...rest }) => rest),
+      strokesSavedPerSlide: store,
+    };
+    const url = URL.createObjectURL(new Blob([JSON.stringify(out)], { type: 'application/json' }));
+    const a = document.createElement('a'); a.href = url; a.download = LEC + '-pen-data-' + when + '.json'; a.style.display = 'none';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+    readEl.textContent = 'saved to Downloads: ' + a.download;
+  }
+  function readout() {
+    const pct = Math.round((window.devicePixelRatio || 1) * 100) + '%';
+    if (!cur) { readEl.textContent = pct; return; }
+    const secs = (performance.now() - strokeStart) / 1000, n = cur.p.length;
+    readEl.textContent = pct + ' · ' + (inputType || '?') + ' · ' + n + (n === 1 ? ' sample' : ' samples') + (secs > 0.05 ? ' · ' + Math.round(n / secs) + '/s' : '');
+  }
 
   let on = false, colour = 'blue', width = 'thin', erasing = false, cur = null, tidy = false, lastMove = 0;
   let store = {}; try { store = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) { store = {}; }
@@ -63,20 +115,22 @@
   };
   const strokes = () => (store[slideKey()] = store[slideKey()] || []);
   // slide coordinates: the .slides box (reveal scales it), 0…1 on both axes
-  const box = () => (document.querySelector('.reveal .slides') || document.body).getBoundingClientRect();
+  let strokeBox = null;   // kept during a stroke: the slide doesn't move then, and reading the layout for every sample costs time in a busy deck
+  const box = () => strokeBox || (document.querySelector('.reveal .slides') || document.body).getBoundingClientRect();
   const toSlide = (x, y) => { const b = box(); return [(x - b.left) / b.width, (y - b.top) / b.height]; };
   const toScreen = (u, v) => { const b = box(); return [b.left + u * b.width, b.top + v * b.height]; };
   const scale = () => box().width / 1280;
 
   function size() {
+    strokeBox = null;
     const d = window.devicePixelRatio || 1;
     [sheet, pred].forEach(c => { c.width = Math.round(innerWidth * d); c.height = Math.round(innerHeight * d); });
-    cx.setTransform(d, 0, 0, d, 0, 0); px.setTransform(d, 0, 0, d, 0, 0); redraw();
+    cx.setTransform(d, 0, 0, d, 0, 0); px.setTransform(d, 0, 0, d, 0, 0); redraw(); if (!cur) readout();
   }
   function style(c, st, pr) {
     c.globalCompositeOperation = st.e ? 'destination-out' : 'source-over';
     c.strokeStyle = COLS[st.c] || '#222'; c.lineCap = 'round'; c.lineJoin = 'round';
-    c.lineWidth = (st.e ? 22 : WIDTH[st.w] * (0.6 + 0.8 * (pr == null ? 0.5 : pr))) * scale();
+    c.lineWidth = (st.e ? (st.es || OLD_ERASER) : WIDTH[st.w] * (0.6 + 0.8 * (pr == null ? 0.5 : pr))) * scale();
   }
   const S = q => toScreen(q[0], q[1]), mid = (a, b) => [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
   // one piece of a live stroke: from the midpoint of (p[n-3], p[n-2]) to the midpoint of (p[n-2], p[n-1]), bent through p[n-2]
@@ -122,24 +176,41 @@
   sheet.addEventListener('pointerdown', e => {
     if (!on) return;
     e.preventDefault(); e.stopPropagation(); try { sheet.setPointerCapture(e.pointerId); } catch (err) { /* no capture: the stroke still draws */ }
-    cur = { c: colour, w: width, e: erasing, p: [pt(e)] }; strokes().push(cur); piece(cx, cur, 1); lastMove = performance.now();
+    strokeBox = null; strokeBox = box(); logStart(e);
+    inputType = e.pointerType; strokeStart = performance.now();
+    cur = { c: colour, w: width, e: erasing, p: [pt(e)] }; if (erasing) cur.es = ERASER; strokes().push(cur); piece(cx, cur, 1); lastMove = performance.now();
   });
   const MOVE = 'onpointerrawupdate' in window ? 'pointerrawupdate' : 'pointermove';   // raw updates: every sample, as early as possible
   sheet.addEventListener(MOVE, e => {
     if (!cur) return;
     const list = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
-    (list.length ? list : [e]).forEach(ev => { const b = pt(ev), a = cur.p[cur.p.length - 1]; if (b[0] === a[0] && b[1] === a[1]) return; cur.p.push(b); piece(cx, cur, cur.p.length); lastMove = performance.now(); });
+    if (logCur) logCur.updates++;
+    (list.length ? list : [e]).forEach(ev => { logSample(ev); const b = pt(ev), a = cur.p[cur.p.length - 1]; if (b[0] === a[0] && b[1] === a[1]) return; cur.p.push(b); piece(cx, cur, cur.p.length); lastMove = performance.now(); });
     // the predicted next points, drawn on the preview sheet only (cleared on every update), so the line keeps up with the pen
     px.clearRect(0, 0, innerWidth, innerHeight);
     const pr = e.getPredictedEvents ? e.getPredictedEvents() : [];
     if (pr.length && !cur.e) { style(px, cur, null); px.beginPath(); const s0 = S(cur.p[cur.p.length - 1]); px.moveTo(s0[0], s0[1]); pr.forEach(ev => px.lineTo(ev.clientX, ev.clientY)); px.stroke(); }
   });
+  // the eraser's outline: an element over the page, never drawn into the ink. Its size is exactly what a stroke wipes (a round brush, so it has no corners)
+  const ring = document.createElement('div'); ring.className = 'ink-eraser'; document.body.appendChild(ring);
+  const ringOff = () => { ring.style.display = 'none'; };
+  function ringAt(e) {
+    if (!on || !erasing) return ringOff();
+    const d = ERASER * scale();
+    ring.style.width = ring.style.height = d + 'px';
+    ring.style.left = (e.clientX - d / 2) + 'px'; ring.style.top = (e.clientY - d / 2) + 'px';
+    ring.style.display = 'block';
+  }
+  ['pointermove', 'pointerdown'].concat(MOVE === 'pointermove' ? [] : [MOVE]).forEach(t => sheet.addEventListener(t, ringAt));
+  sheet.addEventListener('pointerleave', ringOff);
+  sheet.addEventListener('pointerup', e => { if (e.pointerType === 'touch') ringOff(); });
   const end = () => {
     if (!cur) return;
     px.clearRect(0, 0, innerWidth, innerHeight);
     tail(cx, cur);
+    readout();
     if (tidy && !cur.e && performance.now() - lastMove >= 400) { tidyUp(cur); if (cur.t) redraw(); }   // held still at the end: tidy
-    cur = null; save();
+    cur = null; strokeBox = null; logCur = null; save();
   };
   sheet.addEventListener('pointerup', end); sheet.addEventListener('pointercancel', end); sheet.addEventListener('lostpointercapture', end);
   ['touchstart', 'touchmove', 'mousedown', 'wheel'].forEach(ev => sheet.addEventListener(ev, e => { if (on) e.stopPropagation(); }, { passive: true }));
@@ -151,6 +222,7 @@
     bar.querySelectorAll('[data-w]').forEach(b => b.classList.toggle('on', b.dataset.w === width));
     bar.querySelector('[data-a="erase"]').classList.toggle('on', erasing);
     bar.querySelector('[data-a="tidy"]').classList.toggle('on', tidy);
+    if (!on || !erasing) ringOff();
   }
   btn.onclick = () => { on = !on; btn.blur(); marks(); };
   bar.querySelectorAll('[data-c]').forEach(b => b.onclick = () => { colour = b.dataset.c; erasing = false; b.blur(); marks(); });
@@ -161,6 +233,7 @@
     if (a === 'tidy') tidy = !tidy;
     if (a === 'undo') { strokes().pop(); save(); redraw(); }
     if (a === 'clear') { store[slideKey()] = []; save(); redraw(); }
+    if (a === 'data') saveData();
     marks();
   });
   ['pointerdown', 'mousedown', 'touchstart'].forEach(ev => [btn, bar].forEach(x => x.addEventListener(ev, e => e.stopPropagation(), { passive: true })));
@@ -171,6 +244,6 @@
     size();
   }
   window.addEventListener('resize', size);
-  marks(); hook();
+  marks(); hook(); readout();
   window.MicroInk = { redraw: redraw, clearAll: () => { store = {}; save(); redraw(); } };
 })();
