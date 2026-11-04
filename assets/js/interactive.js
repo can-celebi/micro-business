@@ -625,7 +625,7 @@
     // a button that saves a picture of the whole screen (snap.js, Can 04.11): every deck, teacher mode only
     const LOCALSNAP = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname) && /[?&]snaptest\b/.test(location.search);
     if (document.querySelector('.reveal') && (TEACHER || LOCALSNAP) && me && !document.getElementById('snap-js')) {
-      const s = document.createElement('script'); s.id = 'snap-js'; s.src = me.src.replace(/interactive\.js(\?.*)?$/, 'snap.js?v=20261104a'); document.body.appendChild(s);
+      const s = document.createElement('script'); s.id = 'snap-js'; s.src = me.src.replace(/interactive\.js(\?.*)?$/, 'snap.js?v=20261104b'); document.body.appendChild(s);
     }
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
