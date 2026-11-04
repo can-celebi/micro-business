@@ -40,7 +40,8 @@
   .ink-bar .dot { display: inline-block; width: 12px; height: 12px; border-radius: 50%; vertical-align: -1px; }
   .ink-bar .sep { width: 1px; height: 18px; background: #ddd; margin: 0 2px; }
   .ink-eraser { position: fixed; z-index: 61; display: none; box-sizing: border-box; border-radius: 50%; border: 1.5px solid #222; box-shadow: inset 0 0 0 1px #fff; pointer-events: none; }
-  .ink-read { color: #555; font-size: 12px; white-space: nowrap; padding: 0 3px; }
+  .ink-read { position: absolute; right: 0; bottom: 100%; margin-bottom: 3px; background: rgba(255,255,255,.94); color: #555; font-size: 12px; white-space: nowrap; padding: 1px 5px; border-radius: 3px; }
+  .ink-read:empty { display: none; }
   html.l06-dark .ink-btn, html.l06-dark .ink-bar { display: none !important; }
   @media (max-width: 760px) { .ink-btn { left: 8px; bottom: 8px; } .ink-bar { left: 8px; right: 8px; bottom: 44px; flex-wrap: wrap; } }`;
   document.head.appendChild(css);
