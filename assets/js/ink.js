@@ -33,7 +33,7 @@
   .ink-sheet.on { pointer-events: auto; touch-action: none; cursor: crosshair; }
   .ink-btn { position: fixed; left: 104px; bottom: 10px; z-index: 62; font: 13px "IBM Plex Mono", ui-monospace, monospace; background: #fff; color: #333; border: 1px solid #c9cfd8; border-radius: 4px; padding: 3px 10px; cursor: pointer; }
   .ink-btn.on { background: #FFF9D0; border-color: #222; }
-  .ink-bar { position: fixed; left: 214px; bottom: 8px; z-index: 62; display: none; gap: 5px; align-items: center; font: 13px "IBM Plex Mono", ui-monospace, monospace; background: rgba(255,255,255,.94); padding: 3px 5px; border: 1px solid #d9dde3; border-radius: 6px; }
+  .ink-bar { position: fixed; left: 226px; bottom: 8px; z-index: 62; display: none; gap: 5px; align-items: center; font: 13px "IBM Plex Mono", ui-monospace, monospace; background: rgba(255,255,255,.94); padding: 3px 5px; border: 1px solid #d9dde3; border-radius: 6px; }
   .ink-bar.on { display: flex; }
   .ink-bar button { font: inherit; background: #fff; color: #333; border: 1px solid #c9cfd8; border-radius: 4px; padding: 2px 8px; cursor: pointer; }
   .ink-bar button.on { border-color: #222; background: #FFF9D0; }
@@ -97,7 +97,7 @@
     const a = document.createElement('a'); a.href = url; a.download = LEC + '-pen-data-' + when + '.json'; a.style.display = 'none';
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 60000);
-    readEl.textContent = 'saved to Downloads: ' + a.download;
+    readEl.textContent = 'Saved to Downloads: ' + a.download;
   }
   function readout() {
     const pct = Math.round((window.devicePixelRatio || 1) * 100) + '%';
