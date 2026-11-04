@@ -345,8 +345,23 @@
     cd: { name: 'Cobb-Douglas', eq: '<i>u</i> = <i>x</i> · <i>y</i>', note: 'more of both is better, a bit of each is best',
       U: (x, y) => x * y, curve: u => { const p = []; for (let i = 1; i <= 240; i++) { const x = 0.4 * i; p.push([x, u / x]); } return p; }, how: 'the curve just touches the line' },
     ql: { name: 'quasi-linear', eq: '<i>u</i> = <i>x</i> + 2√<i>y</i>', note: 'x always counts the same, y less and less',
-      U: (x, y) => x + 2 * Math.sqrt(y), curve: u => { const p = [], ye = Math.pow(u / 2, 2); for (let i = 0; i <= 240; i++) { const y = Math.min(ye, 0.3 * i); p.push([u - 2 * Math.sqrt(y), y]); if (y >= ye) break; } return p; }, how: 'the curve just touches the line' }
+      U: (x, y) => x + 2 * Math.sqrt(y), curve: u => { const p = [], ye = Math.pow(u / 2, 2); for (let i = 0; i <= 240; i++) { const y = Math.min(ye, 0.3 * i); p.push([u - 2 * Math.sqrt(y), y]); if (y >= ye) break; } return p; }, how: 'the curve just touches the line' },
+    // Can 04.11: more cases per kind, budget 3x + y = 60. subs3 lies on the budget line: every point is best
+    subs4: { name: 'perfect substitutes', eq: '<i>u</i> = 4<i>x</i> + <i>y</i>', note: 'α = 4, β = 1: one x is as good as 4 y',
+      U: (x, y) => 4 * x + y, curve: u => [[0, u], [u / 4, 0]], how: 'a corner: only x (x costs 3 times y, but is worth 4 times y)' },
+    subs3: { name: 'perfect substitutes', eq: '<i>u</i> = 3<i>x</i> + <i>y</i>', note: 'α = 3, β = 1: one x is as good as 3 y', every: true,
+      U: (x, y) => 3 * x + y, curve: u => [[0, u], [u / 3, 0]], how: 'x costs 3 times y and is worth 3 times y' },
+    comp31: { name: 'perfect complements (Leontief)', eq: '<i>u</i> = min{3<i>x</i>, <i>y</i>}', note: 'α = 3, β = 1: 3 y go with each x',
+      U: (x, y) => Math.min(3 * x, y), curve: u => [[u / 3, 999], [u / 3, u], [999, u]], how: 'the kink, where 3x = y' },
+    comp13: { name: 'perfect complements (Leontief)', eq: '<i>u</i> = min{<i>x</i>, 3<i>y</i>}', note: 'α = 1, β = 3: 3 x go with each y',
+      U: (x, y) => Math.min(x, 3 * y), curve: u => [[u, 999], [u, u / 3], [999, u / 3]], how: 'the kink, where x = 3y' },
+    cd31: { name: 'Cobb-Douglas', eq: '<i>u</i> = <i>x</i><sup>3/4</sup><i>y</i><sup>1/4</sup>', note: 'α = 3/4, β = 1/4: more weight on x',
+      U: (x, y) => Math.pow(x, 0.75) * Math.pow(y, 0.25), curve: u => { const p = []; for (let i = 1; i <= 240; i++) { const x = 0.4 * i; p.push([x, Math.pow(u / Math.pow(x, 0.75), 4)]); } return p; }, how: 'the curve just touches the line' },
+    cd13: { name: 'Cobb-Douglas', eq: '<i>u</i> = <i>x</i><sup>1/4</sup><i>y</i><sup>3/4</sup>', note: 'α = 1/4, β = 3/4: more weight on y',
+      U: (x, y) => Math.pow(x, 0.25) * Math.pow(y, 0.75), curve: u => { const p = []; for (let i = 1; i <= 240; i++) { const x = 0.4 * i; p.push([x, Math.pow(u / Math.pow(x, 0.25), 4 / 3)]); } return p; }, how: 'the curve just touches the line' }
   };
+  const FORM_BTN = { subs: '<i>x</i> + <i>y</i>', subs4: '4<i>x</i> + <i>y</i>', subs3: '3<i>x</i> + <i>y</i>', comp: 'min{<i>x</i>, <i>y</i>}', comp31: 'min{3<i>x</i>, <i>y</i>}', comp13: 'min{<i>x</i>, 3<i>y</i>}',
+    cd: '<i>x</i> · <i>y</i>', cd31: '<i>x</i><sup>3/4</sup><i>y</i><sup>1/4</sup>', cd13: '<i>x</i><sup>1/4</sup><i>y</i><sup>3/4</sup>', ql: '<i>x</i> + 2√<i>y</i>' };
   function bestOnLine(F, xi, yi) {   // scan the budget line: t = share of the way from the y-axis end to the x-axis end
     let bt = 0, bu = -1; for (let k = 0; k <= 2000; k++) { const t = k / 2000, u = F.U(t * xi, (1 - t) * yi); if (u > bu + 1e-9) { bu = u; bt = t; } }
     return { t: bt, u: bu };
@@ -368,7 +383,13 @@
       cd: [() => '<i>u</i> = <i>x</i>(' + yOfX() + ')', () => '<i>u</i> = ' + xOfY() + ' · <i>y</i>'],
       subs: [() => '<i>u</i> = <i>x</i> + (' + yOfX() + ')', () => '<i>u</i> = ' + xOfY() + ' + <i>y</i>'],
       comp: [() => '<i>u</i> = min{<i>x</i>, ' + yOfX() + '}', () => '<i>u</i> = min{' + xOfY() + ', <i>y</i>}'],
-      ql: [() => '<i>u</i> = <i>x</i> + 2√(' + yOfX() + ')', () => '<i>u</i> = ' + xOfY() + ' + 2√<i>y</i>']
+      ql: [() => '<i>u</i> = <i>x</i> + 2√(' + yOfX() + ')', () => '<i>u</i> = ' + xOfY() + ' + 2√<i>y</i>'],
+      subs4: [() => '<i>u</i> = 4<i>x</i> + (' + yOfX() + ')', () => '<i>u</i> = 4 · ' + xOfY() + ' + <i>y</i>'],
+      subs3: [() => '<i>u</i> = 3<i>x</i> + (' + yOfX() + ')', () => '<i>u</i> = 3 · ' + xOfY() + ' + <i>y</i>'],
+      comp31: [() => '<i>u</i> = min{3<i>x</i>, ' + yOfX() + '}', () => '<i>u</i> = min{3 · ' + xOfY() + ', <i>y</i>}'],
+      comp13: [() => '<i>u</i> = min{<i>x</i>, 3(' + yOfX() + ')}', () => '<i>u</i> = min{' + xOfY() + ', 3<i>y</i>}'],
+      cd31: [() => '<i>u</i> = <i>x</i><sup>3/4</sup>(' + yOfX() + ')<sup>1/4</sup>', () => '<i>u</i> = (' + xOfY() + ')<sup>3/4</sup><i>y</i><sup>1/4</sup>'],
+      cd13: [() => '<i>u</i> = <i>x</i><sup>1/4</sup>(' + yOfX() + ')<sup>3/4</sup>', () => '<i>u</i> = (' + xOfY() + ')<sup>1/4</sup><i>y</i><sup>3/4</sup>']
     };
     f.side.insertBefore(minis, f.ctl);
     // u along the budget line, drawn against x (k = 0) or against y (k = 1)
@@ -380,8 +401,8 @@
       const [xn, yn] = at(tNow), un = F.U(xn, yn), cb = coord(b.t), cn = coord(tNow);
       let g = '<line x1="' + ML + '" y1="' + MT + '" x2="' + ML + '" y2="' + (MT + hh) + '" stroke="#222"/><line x1="' + ML + '" y1="' + (MT + hh) + '" x2="' + (ML + w) + '" y2="' + (MT + hh) + '" stroke="#222"/>';
       g += '<polyline points="' + pts.join(' ') + '" fill="none" stroke="' + ALONG + '" stroke-width="2.5"/>';
-      g += '<line x1="' + PX_(cb) + '" y1="' + PY_(b.u) + '" x2="' + PX_(cb) + '" y2="' + (MT + hh) + '" stroke="' + GRAD + '" stroke-width="1.6" stroke-dasharray="4 4"/>';
-      g += label(PX_(cb), MT + hh + 24, r2(cb), GRAD, 'middle', 17) + label(ML - 6, PY_(b.u) + 6, r2(b.u), GRAD, 'end', 17);
+      if (!F.every) g += '<line x1="' + PX_(cb) + '" y1="' + PY_(b.u) + '" x2="' + PX_(cb) + '" y2="' + (MT + hh) + '" stroke="' + GRAD + '" stroke-width="1.6" stroke-dasharray="4 4"/>' + label(PX_(cb), MT + hh + 24, r2(cb), GRAD, 'middle', 17);
+      g += label(ML - 6, PY_(b.u) + 6, r2(b.u), GRAD, 'end', 17);
       g += dot(PX_(cn), PY_(un), 6) + label(ML - 8, MT + 12, it('u'), '#555', 'end', 18);   // the good's name is in the panel's coloured title (a label here would sit on the peak's tick)
       svgEl.innerHTML = g;
     }
@@ -390,7 +411,7 @@
       let h = defs(f.id) + clipOpen(f.id);
       // (2) the budget set, shaded, and the names on the graph
       h += '<polygon points="' + A.X(0) + ',' + A.Y(0) + ' ' + A.X(0) + ',' + A.Y(yi) + ' ' + A.X(xi) + ',' + A.Y(0) + '" fill="#FDE3CF" opacity="0.75"/>';
-      h += '<line x1="' + A.X(0) + '" y1="' + A.Y(yi) + '" x2="' + A.X(xi) + '" y2="' + A.Y(0) + '" stroke="' + BUDGET + '" stroke-width="3.5"/>';
+      h += '<line x1="' + A.X(0) + '" y1="' + A.Y(yi) + '" x2="' + A.X(xi) + '" y2="' + A.Y(0) + '" stroke="' + BUDGET + '" stroke-width="' + (F.every ? 8 : 3.5) + '"/>';
       [0.35, 0.7, 1.4].forEach(c => { h += poly(A, F.curve(b.u * c), IC, 1.8, ' opacity="0.35"'); });   // a few curves of the map
       if (shown) h += poly(A, F.curve(b.u), GRAD, 3);
       h += poly(A, F.curve(u), IC, 3);
@@ -402,23 +423,30 @@
       const dense = c => c.flatMap((pt, i) => i ? Array.from({ length: 20 }, (_, j) => [c[i - 1][0] + (pt[0] - c[i - 1][0]) * (j + 1) / 20, c[i - 1][1] + (pt[1] - c[i - 1][1]) * (j + 1) / 20]) : [pt]);
       const cand = dense(F.curve(b.u * 1.4).map(([a, c]) => [a, Math.min(c, A.ymax * 2)])).filter(([cx, cy]) => cx < A.xmax * 0.92 && cy < A.ymax * 0.9 && cy > A.ymax * 0.12);
       if (cand.length) { const [cx, cy] = cand.reduce((a, c) => c[0] > a[0] ? c : a); h += label(A.X(cx) - 6, A.Y(cy) - 10, 'indifference curves', IC, 'end', 18); }
-      if (shown) h += dot(A.X(bx), A.Y(by), 7, GRAD);
+      if (shown && !F.every) h += dot(A.X(bx), A.Y(by), 7, GRAD);
       h += dot(A.X(x), A.Y(y), 9);
       h += label(A.X(x) + 14, A.Y(y) - 12, it('u') + ' = ' + r2(u), '#222');
       f.svg.innerHTML = h;
       mini(mx, 0, F, b, t); mini(my, 1, F, b, t);
       const AF = ALONGF[key] || ALONGF.cd;
-      capX.innerHTML = '<div class="vp-formula small">' + AF[0]() + '</div><div class="vp-sub">peak at <b style="color:' + XC + '">' + m('<i>x</i> = ' + r2(bx)) + '</b>, ' + m('<i>u</i> = ' + r2(b.u)) + '</div>';
-      capY.innerHTML = '<div class="vp-formula small">' + AF[1]() + '</div><div class="vp-sub">peak at <b style="color:' + YC + '">' + m('<i>y</i> = ' + r2(by)) + '</b>, ' + m('<i>u</i> = ' + r2(b.u)) + '</div>';
+      const flat = '<div class="vp-sub">the same everywhere: ' + m('<i>u</i> = ' + r2(b.u)) + '</div>';
+      capX.innerHTML = '<div class="vp-formula small">' + AF[0]() + '</div>' + (F.every ? flat : '<div class="vp-sub">peak at <b style="color:' + XC + '">' + m('<i>x</i> = ' + r2(bx)) + '</b>, ' + m('<i>u</i> = ' + r2(b.u)) + '</div>');
+      capY.innerHTML = '<div class="vp-formula small">' + AF[1]() + '</div>' + (F.every ? flat : '<div class="vp-sub">peak at <b style="color:' + YC + '">' + m('<i>y</i> = ' + r2(by)) + '</b>, ' + m('<i>u</i> = ' + r2(b.u)) + '</div>');
       f.eq.innerHTML = '<div class="vp-disp">' + m(F.eq) + '</div><div class="vp-sub">' + F.name + ': ' + F.note + '</div><div class="vp-sub">budget ' + m(q.px + '<i>x</i> + <i>y</i> = ' + q.B) + '</div>';
       f.status.innerHTML = '<div>at ' + vec(x, y) + ': ' + m('<i>u</i> = ' + r2(u)) + '</div>' +
-        (shown ? '<div><b style="color:' + GRAD + '">best feasible bundle ' + vec(bx, by) + ', ' + m('<i>u</i> = ' + r2(b.u)) + '</b>: ' + F.how + '</div>' : '<div class="dim">drag the dot along the line: where is ' + m('<i>u</i>') + ' highest?</div>');
+        (shown ? '<div><b style="color:' + GRAD + '">' + (F.every ? 'every point on the line is best' : 'best feasible bundle ' + vec(bx, by)) + ', ' + m('<i>u</i> = ' + r2(b.u)) + '</b>: ' + F.how + '</div>' : '<div class="dim">drag the dot along the line: where is ' + m('<i>u</i>') + ' highest?</div>');
     }
     draggable(f, A, (x, y) => { stop(); t = Math.max(0, Math.min(1, (x * xi + (yi - y) * yi) / (xi * xi + yi * yi))); draw(); });
     const bs = {};
-    if (keys.length > 1) keys.forEach(k => { bs[k] = button(f.ctl, FORMS[k].name.replace(' (Leontief)', ''), () => { stop(); key = k; shown = false; mark(); draw(); }); });
+    // ten cases, one row per kind, under the graph: beside the small graphs they would overflow the slide (Can 04.11)
+    const col = el('div'), pick = el('div', 'vp-ctl'); box.insertBefore(col, f.svg); col.appendChild(f.svg); col.appendChild(pick);
+    pick.style.cssText = 'width:0;min-width:100%;margin:0;gap:.25em .5em';   // the graph sets the column's width, the rows wrap inside it
+    let fam = null;
+    if (keys.length > 1) keys.forEach(k => { const nm = FORMS[k].name.replace(' (Leontief)', '');
+      if (nm !== fam) { if (fam) pick.appendChild(el('div', 'vp-break')); pick.appendChild(el('span', null, nm + ':')); fam = nm; }
+      bs[k] = button(pick, FORM_BTN[k] || nm, () => { stop(); key = k; shown = false; mark(); draw(); }); });
     f.ctl.appendChild(el('div', 'vp-break'));
-    button(f.ctl, 'show the best', () => { shown = true; const b = bestOnLine(FORMS[key], xi, yi); stop = tween(() => t, v => { t = v; draw(); }, b.t); });
+    button(f.ctl, 'show the best', () => { shown = true; const b = bestOnLine(FORMS[key], xi, yi); if (FORMS[key].every) draw(); else stop = tween(() => t, v => { t = v; draw(); }, b.t); });
     button(f.ctl, 'reset', () => { stop(); key = keys[0]; t = 0.15; shown = false; mark(); draw(); });
     const mark = () => keys.forEach(k => bs[k] && bs[k].classList.toggle('on', k === key));
     mark(); draw();
@@ -946,7 +974,7 @@
     '.vp-side{font-size:1.15em}.vp-eq{line-height:1.5;margin-bottom:.3em}.vp-disp{font-size:1.25em}' +
     '.vp-m{font-family:"STIX Two Text","Cambria Math",Georgia,serif;font-size:1.12em;white-space:nowrap}.vp-m i{font-style:italic}.vp-m sub{font-size:.65em;vertical-align:-.25em}' +
     '.vp-fr{display:inline-flex;flex-direction:column;vertical-align:middle;text-align:center;margin:0 .12em;line-height:1.05;font-size:.9em}.vp-fr>span:first-child{border-bottom:1px solid currentColor;padding:0 .15em}' +
-    '.vp-ctl{display:flex;flex-wrap:wrap;gap:.5em;align-items:center;margin:.3em 0}.vp-break{flex-basis:100%;height:0}' +
+    '.vp-ctl{display:flex;flex-wrap:wrap;gap:.5em;align-items:center;margin:.3em 0}.vp-break{flex-basis:100%;height:0}.vp-ctl .btn i{font-style:italic}.vp-ctl .btn sup{font-size:.62em;vertical-align:super;line-height:0}' +
     '.vp-ctl label{display:grid;grid-template-columns:6.5em 1fr 3em;gap:.6em;align-items:center;min-width:22em}' +
     '.vp-ctl input[type=range]{accent-color:#0062C4;width:100%}.vp-ctl .btn.on{background:var(--p-green,#E3F2E6)}.vp-v{font-weight:600;text-align:right}.vp-hint{font-size:.95em}' +
     '.vp-status{line-height:1.55}.vp-status>div{margin:.15em 0}';
