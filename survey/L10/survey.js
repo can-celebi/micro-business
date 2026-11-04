@@ -7,6 +7,8 @@
   const C = { grad: lik('c-grad', 'How well do you know what a gradient is (calculus term)?'),
     lagr: lik('c-lagr', 'How well do you know the Lagrangian method?'),
     mrs: lik('c-mrs', 'How well do you understand the MRS?'),
+    inner: lik('c-int', 'How well do you know what an interior solution is?'),
+    bnd: lik('c-bnd', 'How well do you know what a boundary (corner) solution is?'),
     deriv: lik('c-deriv', 'How comfortable do you feel right now with taking derivatives?', 'not at all', 'very comfortable'),
     lin: lik('c-lin', 'Are you comfortable with linear utility functions?', 'not at all', 'very comfortable'),
     leo: lik('c-leo', 'Are you comfortable with Leontief utility functions?', 'not at all', 'very comfortable'),
@@ -18,9 +20,9 @@
       ...PS.flatMap(([n, t]) => [lik('p' + n + 'd', 'Problem ' + n + ' · ' + t + ': how hard was it?', 'very easy', 'very hard'), { id: 'p' + n + 'm', t: 'Problem ' + n + ' · ' + t + ': how many minutes did it take?', kind: 'num' }]),
       { id: 'ps-m', t: 'The whole problem set: how many minutes in total?', kind: 'num' },
       lik('ps-d', 'The whole problem set: how hard was it?', 'very easy', 'very hard'),
-      { head: 'today\'s concepts' }, C.grad, C.lagr, C.mrs, C.deriv, C.lin, C.leo, C.cd
+      { head: 'today\'s concepts' }, C.grad, C.lagr, C.mrs, C.inner, C.bnd, C.deriv, C.lin, C.leo, C.cd
     ] },
-    s2: { title: 'before you go', sub: 'anonymous · 6 taps · microeconomics · lecture 10', items: [C.grad, C.lagr, C.lin, C.leo, C.cd, C.deriv] }
+    s2: { title: 'before you go', sub: 'anonymous · 8 taps · microeconomics · lecture 10', items: [C.grad, C.lagr, C.inner, C.bnd, C.lin, C.leo, C.cd, C.deriv] }
   };
   const S = window.S09 || 's1', PG = PAGES[S], POLL = 'L10-' + S, ans = {}, txt = {};
   const app = document.getElementById('app');
