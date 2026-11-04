@@ -35,6 +35,7 @@
       '.lab-two svg text{font-family:"STIX Two Text","Cambria Math",Georgia,serif}.op-lab .lab-low{display:flex;flex-wrap:wrap;gap:.3em 1.4em;align-items:center;margin-top:.2em}' +
       '.op-lab .vp-ctl{margin:0;gap:.3em 1em}.op-lab .vp-ctl label{min-width:13em;grid-template-columns:2.6em 1fr 2.6em}.op-lab .vp-status{font-size:1.1em}.op-lab .lab-side{font-size:1.15em}.op-lab sub{vertical-align:-.25em;font-size:.7em}' +
       '.op-lab .lab-tr{position:absolute;top:0;right:0;display:block;font-size:.85em;background:rgba(255,255,255,.8)}.op-lab .lab-tr label{min-width:11em;grid-template-columns:4.6em 1fr 0;gap:.4em}.lab-tr .vp-v{display:none}' +
+      '#L10-S1r .bar-fill{background:#5F6368!important}#L10-F5s .svl-n,#L10-F5s .svl-n.teacher-only{position:static!important;display:inline!important;transform:none!important;margin:0!important;padding:0!important;background:none!important;border:0!important;box-shadow:none!important;font-size:inherit!important;white-space:normal!important}' +
       'html.mobile .lab-two{display:block}.lab-lam{margin-top:.1em;font-size:.6em;text-align:left}.lab-lam label{min-width:20em;display:grid;grid-template-columns:1.6em 1fr 2.6em;gap:.6em;align-items:center}.lab-lam input[type=range]{accent-color:#0062C4;width:100%}.lab-lam .vp-v{font-weight:600;text-align:right}.lab-lam sub{vertical-align:-.25em;font-size:.7em}';
     document.head.appendChild(st);
   }
@@ -314,7 +315,7 @@
       h += label(L - 8, T + 14, it('f'), '#555', 'end') + label(L + PW, T + PH + 34, it('x'), '#555', 'end');
       h += '<polyline points="' + pts.join(' ') + '" fill="none" stroke="' + IC + '" stroke-width="3.2"/>';
       h += '<line x1="' + X(a) + '" y1="' + Y(f(x) + s * (a - x)) + '" x2="' + X(b) + '" y2="' + Y(f(x) + s * (b - x)) + '" stroke="' + GREEN + '" stroke-width="3" stroke-dasharray="7 5"/>';
-      h += dot(sx, sy) + label(sx + (x > 5 ? 14 : -14), sy - 16, 'slope = ' + r2(s), GREEN, x > 5 ? 'start' : 'end', 20);
+      h += dot(sx, sy) + label(sx + 16, x > 5 ? sy - 16 : Math.min(sy + 28, T + PH - 8), 'slope = ' + r2(s), GREEN, 'start', 20);
       s2.innerHTML = h;
       status.innerHTML = mv("<i>f</i>′(<i>x</i>) = " + r2(s)) + (top ? ': the change stops' : '');
     }
@@ -346,7 +347,7 @@
       const s = up(x), xa = x - 3, xb = x + 3;
       let h = '<defs><clipPath id="' + id + 'c"><rect x="' + AL + '" y="6" width="' + AW + '" height="' + (H1 - 40) + '"/></clipPath></defs>' + axes(H1, 8, 'x', 'u', [100, 200, 300].map(v => '<text x="' + (AL - 7) + '" y="' + (Ay(v) + 5) + '" text-anchor="end" font-size="16" fill="#555">' + v + '</text>').join(''));
       h += '<g clip-path="url(#' + id + 'c)"><polyline points="' + pts.join(' ') + '" fill="none" stroke="' + GREEN + '" stroke-width="3.2"/><line x1="' + Ax(xa) + '" y1="' + Ay(u(x) + s * (xa - x)) + '" x2="' + Ax(xb) + '" y2="' + Ay(u(x) + s * (xb - x)) + '" stroke="#111" stroke-width="2.4" stroke-dasharray="7 5"/></g>';
-      h += dot(Ax(x), Ay(u(x))) + label(Ax(x) + (x > 10 ? 12 : -12), Ay(u(x)) - 12, it('u') + '′ = ' + r2(s), '#111', x > 10 ? 'start' : 'end', 19);
+      h += dot(Ax(x), Ay(u(x))) + label(Ax(x) + 16, x > 10 ? Ay(u(x)) - 12 : Math.min(Ay(u(x)) + 26, H1 - 42), it('u') + '′ = ' + r2(s), '#111', 'start', 19);
       a.innerHTML = h;
       const y = 60 - 3 * x, uu = x * y, c = []; for (let i = 0; i <= 160; i++) { const v = 0.4 + 23.6 * i / 160, w = uu / v; if (w <= 72) c.push(Ax(v).toFixed(1) + ',' + By(w).toFixed(1)); }
       let g = '<defs><clipPath id="' + id + 'd"><rect x="' + AL + '" y="6" width="' + AW + '" height="' + (H2 - 40) + '"/></clipPath></defs>' + axes(H2, 8, 'x', 'y', [30, 60].map(v => '<text x="' + (AL - 7) + '" y="' + (By(v) + 5) + '" text-anchor="end" font-size="16" fill="#555">' + v + '</text>').join(''));
