@@ -328,6 +328,43 @@
     button(ctl, 'reset', () => { cancelAnimationFrame(raf); x = X1; draw(); });
     draw();
   }
-  function init() { document.querySelectorAll('.op-lab').forEach(b => (b.dataset.mode === 'f' ? fun : lab)(b)); }
+  // one budget, two graphs: drag along u(x) on top; below, the same bundle on the budget line with its indifference curve. u = xy, 3x + y = 60
+  function twoG(box) {
+    css();
+    const id = 'lab' + (++NID), u = x => 60 * x - 3 * x * x, up = x => 60 - 6 * x, H1 = 300, H2 = 250;
+    let x = 3, raf = 0;
+    box.innerHTML = ''; box.setAttribute('data-prevent-swipe', '');
+    const a = document.createElementNS(NS, 'svg'), b = document.createElementNS(NS, 'svg'), low = el('div', 'lab-low'), ctl = el('div', 'vp-ctl'), status = el('div', 'vp-status'), col = el('div', 'lab-two');
+    col.style.gridTemplateColumns = 'minmax(0,1fr)'; col.style.gap = '.1em';
+    a.setAttribute('viewBox', '0 0 ' + W + ' ' + H1); a.setAttribute('class', 'lab-2d'); b.setAttribute('viewBox', '0 0 ' + W + ' ' + H2);
+    col.appendChild(a); col.appendChild(b); box.appendChild(col); box.appendChild(low); low.appendChild(ctl); low.appendChild(status);
+    const AL = 58, AW = 470, Ax = v => AL + v / 22 * AW, Ay = v => H1 - 34 - v / 340 * (H1 - 50), By = v => H2 - 34 - v / 66 * (H2 - 46);
+    const axes = (hh, top, xl, yl, ys) => '<line x1="' + AL + '" y1="' + top + '" x2="' + AL + '" y2="' + (hh - 34) + '" stroke="#222"/><line x1="' + AL + '" y1="' + (hh - 34) + '" x2="' + (AL + AW) + '" y2="' + (hh - 34) + '" stroke="#222"/>' +
+      [5, 10, 15, 20].map(v => '<text x="' + Ax(v) + '" y="' + (hh - 16) + '" text-anchor="middle" font-size="16" fill="#555">' + v + '</text>').join('') + ys + label(AL - 8, top + 14, it(yl), '#555', 'end', 18) + label(AL + AW, hh - 12, it(xl), '#555', 'end', 18);
+    function draw() {
+      const pts = []; for (let i = 0; i <= 120; i++) { const v = 20 * i / 120; pts.push(Ax(v).toFixed(1) + ',' + Ay(u(v)).toFixed(1)); }
+      const s = up(x), xa = x - 3, xb = x + 3;
+      let h = '<defs><clipPath id="' + id + 'c"><rect x="' + AL + '" y="6" width="' + AW + '" height="' + (H1 - 40) + '"/></clipPath></defs>' + axes(H1, 8, 'x', 'u', [100, 200, 300].map(v => '<text x="' + (AL - 7) + '" y="' + (Ay(v) + 5) + '" text-anchor="end" font-size="16" fill="#555">' + v + '</text>').join(''));
+      h += '<g clip-path="url(#' + id + 'c)"><polyline points="' + pts.join(' ') + '" fill="none" stroke="' + GREEN + '" stroke-width="3.2"/><line x1="' + Ax(xa) + '" y1="' + Ay(u(x) + s * (xa - x)) + '" x2="' + Ax(xb) + '" y2="' + Ay(u(x) + s * (xb - x)) + '" stroke="#111" stroke-width="2.4" stroke-dasharray="7 5"/></g>';
+      h += dot(Ax(x), Ay(u(x))) + label(Ax(x) + (x > 10 ? 12 : -12), Ay(u(x)) - 12, it('u') + '′ = ' + r2(s), '#111', x > 10 ? 'start' : 'end', 19);
+      a.innerHTML = h;
+      const y = 60 - 3 * x, uu = x * y, c = []; for (let i = 0; i <= 160; i++) { const v = 0.4 + 23.6 * i / 160, w = uu / v; if (w <= 66) c.push(Ax(v).toFixed(1) + ',' + By(w).toFixed(1)); }
+      let g = '<defs><clipPath id="' + id + 'd"><rect x="' + AL + '" y="6" width="' + AW + '" height="' + (H2 - 40) + '"/></clipPath></defs>' + axes(H2, 8, 'x', 'y', [30, 60].map(v => '<text x="' + (AL - 7) + '" y="' + (By(v) + 5) + '" text-anchor="end" font-size="16" fill="#555">' + v + '</text>').join(''));
+      g += '<g clip-path="url(#' + id + 'd)"><line x1="' + Ax(0) + '" y1="' + By(60) + '" x2="' + Ax(20) + '" y2="' + By(0) + '" stroke="' + BUDGET + '" stroke-width="3"/><polyline points="' + c.join(' ') + '" fill="none" stroke="' + IC + '" stroke-width="3"/></g>';
+      g += dot(Ax(x), By(y)) + label(Ax(x) + 12, By(y) - 10, vec2(x, y), '#111', null, 17);
+      b.innerHTML = g;
+      status.innerHTML = mv('<i>u</i>′(' + r2(x) + ') = 60 − 6 · ' + r2(x) + ' = ' + r2(s)) + ', ' + mv('<i>u</i> = ' + r2(u(x)));
+    }
+    const vec2 = (p, q) => '(' + r2(p) + ', ' + r2(q) + ')';
+    let d = false;
+    const at = ev => { const r = a.getBoundingClientRect(); x = Math.max(0.2, Math.min(19.8, ((ev.clientX - r.left) / r.width * W - AL) / AW * 22)); if (Math.abs(x - 10) < 0.12) x = 10; draw(); };
+    a.style.cursor = 'grab'; a.style.touchAction = 'none';
+    a.addEventListener('pointerdown', ev => { d = true; try { a.setPointerCapture(ev.pointerId); } catch (e) {} at(ev); ev.stopPropagation(); ev.preventDefault(); });
+    a.addEventListener('pointermove', ev => { if (d) at(ev); });
+    ['pointerup', 'pointercancel'].forEach(n => a.addEventListener(n, () => { d = false; }));
+    a.addEventListener('click', ev => ev.stopPropagation());
+    draw();
+  }
+  function init() { document.querySelectorAll('.op-lab').forEach(b => (b.dataset.mode === 'f' ? fun : b.dataset.mode === 'two' ? twoG : lab)(b)); }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 })();
