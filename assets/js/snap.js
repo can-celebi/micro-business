@@ -1,9 +1,10 @@
 // snap.js: one click saves one PNG of the whole screen (Can, 04.11: "the entire windows view so that it also captures what i
 // wrote digitially on the screen"). Lecturer only: students never load this file, and it does nothing if loaded anyway.
 // The browser's picker appears once per page load; after that the stream stays open and each click saves a picture without asking.
-// The picture goes to the browser's download folder first, always. Then, in the background, it is ENCRYPTED on this computer and stored in the
-// data repo (Can, 04.11). The repo's token is in public code, so anyone who digs it out can read that repo: without the encryption the
-// pictures, which can show chat or names, would be readable. The key comes from the lecturer code, so they open only in teacher mode.
+// The picture goes to the browser's download folder first, always. Then, in the background, it is stored in the data repo, with small pictures
+// per slide (Can's request, 04.11: "it should be pushed to the repo either at that point or later"). It is ENCRYPTED on this computer first
+// (Ali's addition, not Can's words): the repo's token is in public code, so anyone who digs it out can read that repo, and the pictures can show
+// chat or names. The key comes from the lecturer code, so they open only in teacher mode.
 // It can hide only its own button: the browser's "sharing" bar and the deck's other tools appear as they are on screen.
 (function () {
   const LOCALTEST = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname) && /[?&]snaptest\b/.test(location.search);
@@ -31,7 +32,7 @@
   #snap-btn { font: inherit; background: #fff; color: #333; border: 1.5px solid #bbb; border-radius: 4px; padding: 4px 9px; cursor: pointer; }
   #snap-btn:hover { border-color: #333; }
   #snap-say { position: absolute; left: 0; bottom: 32px; white-space: nowrap; background: #fff; color: #111; border: 1px solid #ddd; border-radius: 4px; padding: 3px 8px; }
-  #snap-thumbs { display: flex; gap: 4px; max-width: 34vw; overflow-x: auto; }
+  #snap-thumbs { display: flex; gap: 4px; max-width: 34vw; overflow-x: auto; scrollbar-width: thin; }
   #snap-thumbs:empty { display: none; }
   .snap-th { flex: none; width: 46px; height: 26px; padding: 0; background: #f4f4f1 center / cover no-repeat; color: #333; font: inherit; font-size: 11px; border: 1px solid #bbb; border-radius: 3px; cursor: pointer; }
   .snap-th:hover { border-color: #333; }
@@ -181,7 +182,7 @@
         setTimeout(() => { if (stateEl.textContent === 'stored') state(''); }, 5000);
       }, () => {
         draining = null;
-        state('not stored yet (' + memQ.size + '): will retry; the download is safe', true);
+        state(memQ.size + (memQ.size === 1 ? ' picture' : ' pictures') + ' not stored yet: will retry; the download is safe', true);
         retryTimer = setTimeout(kick, RETRY);
       });
       return draining;
