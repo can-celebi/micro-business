@@ -331,14 +331,14 @@
   // one budget, two graphs: drag along u(x) on top; below, the same bundle on the budget line with its indifference curve. u = xy, 3x + y = 60
   function twoG(box) {
     css();
-    const id = 'lab' + (++NID), u = x => 60 * x - 3 * x * x, up = x => 60 - 6 * x, H1 = 300, H2 = 250;
+    const id = 'lab' + (++NID), u = x => 60 * x - 3 * x * x, up = x => 60 - 6 * x, H1 = 255, H2 = 205;
     let x = 3, raf = 0;
     box.innerHTML = ''; box.setAttribute('data-prevent-swipe', '');
     const a = document.createElementNS(NS, 'svg'), b = document.createElementNS(NS, 'svg'), low = el('div', 'lab-low'), ctl = el('div', 'vp-ctl'), status = el('div', 'vp-status'), col = el('div', 'lab-two');
     col.style.gridTemplateColumns = 'minmax(0,1fr)'; col.style.gap = '.1em';
     a.setAttribute('viewBox', '0 0 ' + W + ' ' + H1); a.setAttribute('class', 'lab-2d'); b.setAttribute('viewBox', '0 0 ' + W + ' ' + H2);
     col.appendChild(a); col.appendChild(b); box.appendChild(col); box.appendChild(low); low.appendChild(ctl); low.appendChild(status);
-    const AL = 58, AW = 470, Ax = v => AL + v / 22 * AW, Ay = v => H1 - 34 - v / 340 * (H1 - 50), By = v => H2 - 34 - v / 66 * (H2 - 46);
+    const AL = 58, AW = 470, Ax = v => AL + v / 22 * AW, Ay = v => H1 - 34 - v / 340 * (H1 - 50), By = v => H2 - 34 - v / 72 * (H2 - 46);
     const axes = (hh, top, xl, yl, ys) => '<line x1="' + AL + '" y1="' + top + '" x2="' + AL + '" y2="' + (hh - 34) + '" stroke="#222"/><line x1="' + AL + '" y1="' + (hh - 34) + '" x2="' + (AL + AW) + '" y2="' + (hh - 34) + '" stroke="#222"/>' +
       [5, 10, 15, 20].map(v => '<text x="' + Ax(v) + '" y="' + (hh - 16) + '" text-anchor="middle" font-size="16" fill="#555">' + v + '</text>').join('') + ys + label(AL - 8, top + 14, it(yl), '#555', 'end', 18) + label(AL + AW, hh - 12, it(xl), '#555', 'end', 18);
     function draw() {
@@ -348,7 +348,7 @@
       h += '<g clip-path="url(#' + id + 'c)"><polyline points="' + pts.join(' ') + '" fill="none" stroke="' + GREEN + '" stroke-width="3.2"/><line x1="' + Ax(xa) + '" y1="' + Ay(u(x) + s * (xa - x)) + '" x2="' + Ax(xb) + '" y2="' + Ay(u(x) + s * (xb - x)) + '" stroke="#111" stroke-width="2.4" stroke-dasharray="7 5"/></g>';
       h += dot(Ax(x), Ay(u(x))) + label(Ax(x) + (x > 10 ? 12 : -12), Ay(u(x)) - 12, it('u') + '′ = ' + r2(s), '#111', x > 10 ? 'start' : 'end', 19);
       a.innerHTML = h;
-      const y = 60 - 3 * x, uu = x * y, c = []; for (let i = 0; i <= 160; i++) { const v = 0.4 + 23.6 * i / 160, w = uu / v; if (w <= 66) c.push(Ax(v).toFixed(1) + ',' + By(w).toFixed(1)); }
+      const y = 60 - 3 * x, uu = x * y, c = []; for (let i = 0; i <= 160; i++) { const v = 0.4 + 23.6 * i / 160, w = uu / v; if (w <= 72) c.push(Ax(v).toFixed(1) + ',' + By(w).toFixed(1)); }
       let g = '<defs><clipPath id="' + id + 'd"><rect x="' + AL + '" y="6" width="' + AW + '" height="' + (H2 - 40) + '"/></clipPath></defs>' + axes(H2, 8, 'x', 'y', [30, 60].map(v => '<text x="' + (AL - 7) + '" y="' + (By(v) + 5) + '" text-anchor="end" font-size="16" fill="#555">' + v + '</text>').join(''));
       g += '<g clip-path="url(#' + id + 'd)"><line x1="' + Ax(0) + '" y1="' + By(60) + '" x2="' + Ax(20) + '" y2="' + By(0) + '" stroke="' + BUDGET + '" stroke-width="3"/><polyline points="' + c.join(' ') + '" fill="none" stroke="' + IC + '" stroke-width="3"/></g>';
       g += dot(Ax(x), By(y)) + label(Ax(x) + 12, By(y) - 10, vec2(x, y), '#111', null, 17);
@@ -366,5 +366,19 @@
     draw();
   }
   function init() { document.querySelectorAll('.op-lab').forEach(b => (b.dataset.mode === 'f' ? fun : b.dataset.mode === 'two' ? twoG : lab)(b)); }
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
+  // the survey results slide: medians of the minutes answers, for the lecturer's screen (survey-live only averages 1–5 answers)
+  function minutes() {
+    const MP = window.MicroPoll, rv = document.querySelector('.reveal');
+    if (!MP || !MP.teacher || !rv) return;
+    const go = async sec => {
+      try {
+        const A = (await MP.textResults(sec.dataset.poll + '/')).filter(r => r.poll === sec.dataset.poll).map(r => r.answers || {});
+        sec.querySelectorAll('[data-min]').forEach(e => { const v = A.map(a => Number(a[e.dataset.min])).filter(x => Number.isFinite(x) && x >= 0 && x <= 600).sort((a, b) => a - b); e.textContent = v.length ? String(v.length % 2 ? v[(v.length - 1) / 2] : (v[v.length / 2 - 1] + v[v.length / 2]) / 2) : '–'; });
+      } catch (e) {}
+    };
+    document.querySelectorAll('section.sv-live').forEach(sec => { if (!sec.querySelector('[data-min]')) return; const b = sec.querySelector('.svl-refresh'); if (b) b.addEventListener('click', () => go(sec)); if (sec.classList.contains('present')) go(sec); });
+    rv.addEventListener('slidechanged', e => { const c = e.currentSlide; if (c && c.classList.contains('sv-live') && c.querySelector('[data-min]')) go(c); });
+  }
+  function start() { init(); minutes(); }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();
