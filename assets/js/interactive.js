@@ -616,6 +616,11 @@
     }
     document.querySelectorAll('.poll').forEach(initPoll);
     document.querySelectorAll('details.prompt').forEach(initPrompt);
+    // the lecturer's writing from class, for everyone, off until clicked (class-ink.js, Can 05.11); decks without an ink file show nothing
+    const meCI = [...document.scripts].find(s => /assets\/js\/interactive\.js/.test(s.src));
+    if (document.querySelector('.reveal') && meCI && !document.getElementById('class-ink-js')) {
+      const s = document.createElement('script'); s.id = 'class-ink-js'; s.src = meCI.src.replace(/interactive\.js(\?.*)?$/, 'class-ink.js?v=20261105a'); document.body.appendChild(s);
+    }
     // the lecturer's pen (ink.js, Can 29.10: "the drawing tool for the entire slides"): every deck, teacher mode only
     const LOCALINK = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname) && /[?&]ink\b/.test(location.search);
     const me = [...document.scripts].find(s => /assets\/js\/interactive\.js/.test(s.src));
