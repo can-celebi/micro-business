@@ -14,7 +14,8 @@
   const runM = MP.session === 'test' && location.search.match(/[?&]lockrun=([A-Za-z0-9]+)/);
   const POLL = LEC + '-unlock' + (runM ? '-' + runM[1] : '') + '-q';
   const PREFIX = 'heads/v/' + MP.session + '/' + POLL;
-  const EVERY = 4000, SLOW = 15000;
+  // All students share one token, and GitHub has a per-minute limit on it that a lockout would also take sign-in down with (Utku 05.11).
+  const STUDENT_EVERY = 12000, TEACHER_EVERY = 6000, LOCKOUT = 60000;
   const b64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
   const enc = s => new TextEncoder().encode(s), dec = b => new TextDecoder().decode(b);
   const hexToBytes = h => Uint8Array.from(h.match(/../g).map(x => parseInt(x, 16)));
@@ -22,12 +23,14 @@
   const aes = raw => crypto.subtle.importKey('raw', raw, 'AES-GCM', false, ['decrypt']);
   const open = async (key, box) => crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64(box.iv) }, key, b64(box.ct));
 
-  let data = null, teacherKey = null, etag = null, failures = 0;
+  let data = null, teacherKey = null, etag = null, failures = 0, pauseUntil = 0;
   const qs = [];   // per question: {n, section, teacher, keyHex}
   const unlocked = new Set([1]);   // questions confirmed open for students
 
   const css = document.createElement('style');
   css.textContent = `
+  /* only the slide on screen may paint: a question just added must not show over it (Can, 05.11) */
+  .reveal:not(.overview) .slides > section[data-q]:not(.present) { display: none !important; }
   .lq-parts { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5em 1.2em; margin-top: 0.5em; align-items: start; }
   .lq-part { margin: 0; padding: 0.3em 0.6em; border-left: 3px solid #bbb; font-size: 0.72em; line-height: 1.45; text-align: left; }
   .lq-n { font-weight: 600; font-size: 0.8em; color: #555; }
@@ -72,6 +75,7 @@
   function buildSection(q) {
     const sec = document.createElement('section');
     sec.id = LEC + '-q' + q.n; sec.dataset.sid = sec.id; sec.dataset.q = q.n;
+    sec.className = 'future'; sec.setAttribute('aria-hidden', 'true'); sec.hidden = false;
     const h = document.createElement('h2'); h.textContent = 'Question ' + q.n; sec.appendChild(h);
     const wrap = document.createElement('div'); wrap.className = 'lq-parts'; sec.appendChild(wrap);
     q.student.parts.forEach(p => {
@@ -81,7 +85,13 @@
     });
     return sec;
   }
-  function sync() { try { Reveal.sync(); } catch (e) {} }
+  // Add sections without moving anyone: the same slide and the same part afterwards.
+  function sync(cur, f) {
+    try {
+      Reveal.sync();
+      if (cur) { const i = Reveal.getIndices(cur); Reveal.slide(i.h, i.v || 0, f); }
+    } catch (e) {}
+  }
 
   async function reveal(n, keyBytes, quiet) {
     const q = qs[n - 1];
@@ -90,9 +100,10 @@
     try { text = dec(await open(await aes(keyBytes), data.questions[n - 1].student)); } catch (e) { return false; }   // a forged key: ignored
     q.student = JSON.parse(text); q.keyHex = bytesToHex(keyBytes);
     q.section = buildSection(q);
+    const cur = Reveal.getCurrentSlide(), f = Reveal.getIndices().f;
     place(q.section);
     if (teacherKey) addTeacherTools(q);
-    sync();
+    sync(cur, f);
     if (!quiet) say('Question ' + n + ' is open.');
     return true;
   }
@@ -154,6 +165,10 @@
     if (etag && !fresh) h['If-None-Match'] = etag;
     const r = await fetch(API + '/git/matching-refs/' + PREFIX, { headers: h, cache: 'no-store' });
     if (r.status === 304) return null;
+    if (r.status === 403 || r.status === 429) {   // over a limit: stop asking for a while
+      const wait = parseInt(r.headers.get('Retry-After'), 10);
+      pauseUntil = Date.now() + (wait > 0 ? wait * 1000 : LOCKOUT);
+    }
     if (!r.ok) throw new Error('GitHub answered ' + r.status);
     etag = r.headers.get('ETag');
     return r.json();
@@ -176,7 +191,7 @@
     paintNext();
   }
   async function tick(quiet) {
-    if (document.hidden && !quiet) return;
+    if ((document.hidden && !quiet) || Date.now() < pauseUntil) return;
     try {
       await applyRefs(await readRefs(false), quiet);
       if (failures >= 2) say('');
@@ -205,7 +220,7 @@
         const list = await readRefs(true);
         if (list && list.some(x => x.ref === name)) {
           unlocked.add(n); from.busy = false; paintNext();
-          from.nextSt.textContent = 'Unlocked: students get it within seconds.';
+          from.nextSt.textContent = 'Unlocked: students get it within about 15 seconds.';
           return;
         }
         await new Promise(r => setTimeout(r, 800));
@@ -244,10 +259,12 @@
     await tick(true);
     goToHash();
     paintNext();
-    setInterval(() => tick(false), failures > 3 ? SLOW : EVERY);
+    const every = teacherKey ? TEACHER_EVERY : STUDENT_EVERY;
+    const again = () => setTimeout(() => tick(false).finally(again), every + Math.random() * 2000);
+    setTimeout(() => tick(false).finally(again), Math.random() * every);   // a random start, so that a room of phones doesn't ask at the same moment
   }
   if (!TOKEN) { say('Polling is off on this page.', true, true); }
   const go = () => start().catch(e => say('The questions could not be loaded: ' + (e.message || e) + '. Please reload.', true, true));
   if (Reveal.isReady && Reveal.isReady()) go(); else Reveal.on('ready', go);
-  window.MicroQLock = { unlocked, version: 1 };
+  window.MicroQLock = { unlocked, version: 2 };
 })();
