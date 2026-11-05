@@ -84,17 +84,13 @@ def bake(strokes):
                 if any(seg_seg_dist(a, b, pe[k], pe[k + 1]) <= r for k in range(len(pe) - 1)):
                     return True
             return False
-        def line_hit(pts):
-            return any(gone(q) for q in pts) or any(gone_seg(pts[k], pts[k + 1]) for k in range(len(pts) - 1))
         if not later:
             out.append(st)
             continue
         if st.get("t"):
-            shape = [st["p"][0], st["p"][-1]] if st["t"] == "line" else (st.get("k") or [])
-            if line_hit(shape) or line_hit(st["p"]):   # the tidied shape as drawn and its raw points, points and the segments between them (Utku 05.11)
-                sys.exit("a tidied stroke under an eraser isn't supported yet: nothing written")
-            out.append(st)
-            continue
+            # A tidied stroke is drawn as a straight line or a smooth curve through k, so no point-and-segment test matches what was
+            # erased (Utku 05.11 found a curve that passed under an eraser between its points). Any later erasure on its slide stops the export.
+            sys.exit("a tidied stroke with a later erasure on its slide isn't supported yet: nothing written")
         piece = []
         for q in st["p"]:
             if gone(q):
