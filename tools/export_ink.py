@@ -69,7 +69,7 @@ def bake(strokes):
             out.append(st)
             continue
         if st.get("t"):
-            if any(gone(q) for q in (st.get("k") or st["p"])):
+            if any(gone(q) for q in (st.get("k") or []) + st["p"]):   # both the tidied shape and its raw points (Utku 05.11)
                 sys.exit("a tidied stroke under an eraser isn't supported yet: nothing written")
             out.append(st)
             continue
