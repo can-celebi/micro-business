@@ -1,6 +1,7 @@
 // Class ink (Can, 05.11: "impose the pen data into the slides and maybe have a button that toggles showing the pen data"):
 // the lecturer's writing from class, shown on its own slides for everyone, from a small published file ink/<Lxx>.json (tools/export_ink.py).
-// Off by default, so the clean slide stays the default. One button, only on slides that have class ink. No keys of its own.
+// Off by default (Celebi's spec; Gozde reads Can as wanting it on: one word below, ON_AT_START). One button, only on slides that have class ink.
+// While it's on, the slide shows all its steps (fragments), because Can wrote on the slide with its steps showing. No keys of its own.
 // It draws on its own layer, under the lecturer's live pen, so it never mixes with new drawing and never reads or writes this device's storage.
 // The drawing below matches assets/js/ink.js, so the ink looks and sits exactly as it did in class.
 (function () {
@@ -11,7 +12,8 @@
   const url = new URL('../../ink/' + m[1].replace(/[^A-Za-z0-9-]/g, '') + '.json', me || location.href);
   const COLS = { black: '#222', blue: '#0062C4', red: '#C92A2A', green: '#1B7F3B' };   // as in ink.js
   const WIDTH = { thin: 1.6, medium: 3.2 }, OLD_ERASER = 22;
-  let slides = null, on = false;
+  const ON_AT_START = false;
+  let slides = null, on = ON_AT_START;
 
   fetch(url, { cache: 'no-cache' }).then(r => r.ok ? r.json() : null).then(d => {
     if (!d || typeof d.slides !== 'object' || !d.slides) return;
@@ -28,12 +30,11 @@
     #class-ink-btn:hover { border-color: #333; }
     #class-ink-btn.on { background: #FFF9D0; border-color: #222; }
     html:has(.ink-btn) #class-ink-btn { left: 12px; bottom: 44px; }   /* the lecturer's pen button has this spot */
-    html.mobile #class-ink-btn { left: 8px; top: 8px; bottom: auto; }
     html.print-pdf #class-ink-btn, html.print-pdf .class-ink { display: none !important; }`;
     document.head.appendChild(css);
     sheet = document.createElement('canvas'); sheet.className = 'class-ink'; sheet.setAttribute('aria-hidden', 'true');
     btn = document.createElement('button'); btn.type = 'button'; btn.id = 'class-ink-btn';
-    btn.title = "The lecturer's writing from class on this slide";
+    btn.title = "What the lecturer wrote on this slide in class";
     ['pointerdown', 'mousedown', 'touchstart'].forEach(t => btn.addEventListener(t, e => e.stopPropagation(), { passive: true }));
     btn.addEventListener('click', e => { e.stopPropagation(); btn.blur(); on = !on; refresh(); });
     document.body.appendChild(sheet); document.body.appendChild(btn);
@@ -56,13 +57,25 @@
   const box = () => (document.querySelector('.reveal .slides') || document.body).getBoundingClientRect();
   function refresh() {
     const list = slides && slides[current()];
-    const has = !!(list && list.some(s => !s.e));
+    // On a phone the deck re-flows each slide into a tall column, so writing made on the 16:9 slide can't land on what it marked: not shown there.
+    const phone = document.documentElement.classList.contains('mobile');
+    const has = !phone && !!(list && list.some(s => !s.e));
     btn.style.display = has ? 'block' : 'none';
-    btn.textContent = on ? 'hide class ink' : 'show class ink';
+    btn.textContent = on ? 'hide class writing' : 'show class writing';
     btn.classList.toggle('on', on);
     const show = has && on && !(Reveal.isOverview && Reveal.isOverview());
     sheet.style.display = show ? 'block' : 'none';
-    if (show) draw(list);
+    if (show) { allSteps(); draw(list); }
+  }
+  // Show every step of this slide, so the writing lands on what it marked (it was written with the steps showing).
+  function allSteps() {
+    try {
+      const c = Reveal.getCurrentSlide(), i = Reveal.getIndices();
+      const f = [...c.querySelectorAll('.fragment')].map(x => +x.getAttribute('data-fragment-index')).filter(n => !isNaN(n));
+      if (!c.querySelector('.fragment')) return;
+      const last = f.length ? Math.max(...f) : c.querySelectorAll('.fragment').length - 1;
+      if ((i.f == null ? -1 : i.f) < last) Reveal.slide(i.h, i.v || 0, last);
+    } catch (e) {}
   }
 
   function draw(list) {
