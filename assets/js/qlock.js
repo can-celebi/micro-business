@@ -1,8 +1,8 @@
-// Questions the lecturer unlocks one by one (Can, 05.11: "unlock the next question when I am done with one question so that students cannot wonder off").
+// Questions the lecturer unlocks one by one (Can, 05.11: "each questions unlock button should be on their page and just say unlock and it should unlock that question").
 // lectures/Lxx/locked.json (tools/build_qlock.js) holds everything encrypted: each question under its own random key, and for the lecturer the
 // question keys, solutions and pictures under a key made from the lecturer code. The file is public, so nothing locked is readable from it.
-// Question 1's key is in the file. Unlocking question n writes a ref into the data repo whose value IS that question's key, so a forged ref
-// can't decrypt anything and is ignored. Every device reads those refs every few seconds with an ETag (a 304 is free).
+// Every question starts locked, in any order. Unlocking question n writes a ref into the data repo whose value IS that question's key, so a forged
+// ref can't decrypt anything and is ignored. Every device reads those refs every few seconds with an ETag (a 304 is free).
 (function () {
   const MP = window.MicroPoll, CFG = window.MICRO_CONFIG || {}, GH = CFG.github || {};
   if (!MP || !document.querySelector('.reveal') || /print-pdf/.test(location.search)) return;
@@ -23,9 +23,10 @@
   const aes = raw => crypto.subtle.importKey('raw', raw, 'AES-GCM', false, ['decrypt']);
   const open = async (key, box) => crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64(box.iv) }, key, b64(box.ct));
 
+  const startHash = location.hash;   // read now: Reveal resets a hash whose slide isn't there yet
   let data = null, teacherKey = null, etag = null, failures = 0, pauseUntil = 0;
   const qs = [];   // per question: {n, section, teacher, keyHex}
-  const unlocked = new Set([1]);   // questions confirmed open for students
+  const unlocked = new Set();   // questions confirmed open for students
 
   const css = document.createElement('style');
   css.textContent = `
@@ -39,9 +40,10 @@
   .lq-t { display: inline-flex; gap: 6px; margin-left: 0.8em; vertical-align: middle; }
   .lq-btn { font: 13px "Inter", system-ui, sans-serif; background: #fff; color: #333; border: 1.5px solid #bbb; border-radius: 4px; padding: 3px 9px; cursor: pointer; }
   .lq-btn:hover { border-color: #333; }
-  .lq-next { position: absolute; left: 34%; top: 0.3em; font-size: 15px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; z-index: 5; }
-  .lq-next .lq-btn { font-size: 15px; padding: 5px 12px; background: #FFF9D0; border-color: #333; }
-  .lq-next .lq-btn[disabled] { background: #eee; border-color: #ccc; color: #777; cursor: default; }
+  .lq-unlock { position: absolute; left: 34%; top: 0.3em; font-size: 15px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; z-index: 5; }
+  .lq-unlock .lq-btn { font-size: 16px; padding: 6px 16px; background: #FFF9D0; border-color: #333; }
+  .lq-unlock .lq-btn[disabled] { background: #eee; border-color: #ccc; color: #777; cursor: default; }
+  #lq-wait { margin-top: 1em; font: 18px "Inter", system-ui, sans-serif; color: #555; }
   .lq-st { font-family: "Inter", system-ui, sans-serif; color: #333; }
   .lq-st.bad { color: #B71C1C; font-weight: 600; }
   #lq-note { position: fixed; left: 50%; transform: translateX(-50%); bottom: 12px; z-index: 70; background: #FFF9D0; color: #111; border: 1.5px solid #333; border-radius: 5px; padding: 6px 14px; font: 15px "Inter", system-ui, sans-serif; display: none; max-width: 90vw; }
@@ -53,10 +55,30 @@
   #lq-close { position: sticky; top: 0; float: right; font: 15px "Inter", system-ui, sans-serif; background: #fff; color: #111; border: 1.5px solid #333; border-radius: 4px; padding: 3px 12px; cursor: pointer; z-index: 2; }
   .lq-part math, #lq-box math { font-family: "STIX Two Math", "Cambria Math", serif; }
   html.mobile .reveal .lq-part.fragment:not(.visible) { display: none !important; }   /* the phone layout shows all steps at once; parts come one at a time here too */
-  html.mobile .lq-parts { display: block; }
-  html.mobile .lq-part { font-size: 1em; margin-top: 0.5em; }
-  html.mobile .lq-next { position: static; margin: 0.4em 0; }
-  html.mobile .lq-t { display: flex; margin: 0.3em 0 0; }`;
+  /* phone (Can, 05.11): one part on screen at a time, so nothing runs off the bottom of a page that doesn't scroll; large math; the title clear of the tools */
+  html.mobile .reveal .lq-part.fragment.visible:not(.current-fragment) { display: none !important; }
+  html.mobile .reveal .slides > section[data-q] > h2, html.mobile .reveal .slides > section[id$="-signin"] > h2 { margin-top: 34px !important; }
+  html.mobile .reveal .slides > section[data-q] > h2 { display: inline-block; margin-bottom: 0.2em; }
+  html.mobile .lq-parts { display: block; margin-top: 0.8em; }
+  html.mobile .lq-parts::after { display: block; font: 19px "Inter", system-ui, sans-serif; color: #555; }
+  html.mobile section[data-q]:not(:has(.lq-part.visible)) .lq-parts::after { content: "tap → for Part 1"; }
+  html.mobile .lq-part { font-size: 1em; margin: 0; padding: 0.3em 0 0.3em 0.7em; border-left-width: 4px; }
+  html.mobile .lq-n { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 20px; font-weight: 700; color: #333; }
+  html.mobile .lq-t { display: flex; margin: 0; gap: 8px; }
+  html.mobile .lq-t .lq-btn { font-size: 16px; font-weight: 400; padding: 7px 14px; min-height: 40px; }
+  html.mobile .lq-u, html.mobile .lq-b { font-size: min(26px, 6.6vw); line-height: 1.5; margin: 0.35em 0; white-space: nowrap; }
+  html.mobile .lq-unlock { position: static; display: inline-flex; margin: 0 0 0.2em 14px; vertical-align: middle; }
+  html.mobile .lq-unlock .lq-btn { font-size: 18px; padding: 8px 22px; min-height: 44px; }
+  html.mobile .lq-unlock .lq-st { flex-basis: 100%; font-size: 16px; }
+  html.mobile #lq-box { padding: 12px 14px; font-size: 16px; }
+  html.mobile .ink-btn { bottom: 60px; }   /* off the menu button */
+  @media (max-height: 500px) {
+    html.mobile .reveal .slides > section[data-q] > h2, html.mobile .reveal .slides > section[id$="-signin"] > h2 { margin-top: 2px !important; }
+    html.mobile .lq-parts { margin-top: 0.3em; }
+    html.mobile .lq-u, html.mobile .lq-b { font-size: 21px; margin: 0.15em 0; }
+    html.mobile .ink-btn { left: 114px; bottom: 10px; }
+    html.mobile .qr-slide img { max-height: 58vh; width: auto; }   /* the whole code on a sideways phone */
+  }`;
   document.head.appendChild(css);
   const note = document.createElement('div'); note.id = 'lq-note'; document.body.appendChild(note);
   let noteT = null;
@@ -101,6 +123,7 @@
     q.student = JSON.parse(text); q.keyHex = bytesToHex(keyBytes);
     q.section = buildSection(q);
     const cur = Reveal.getCurrentSlide(), f = Reveal.getIndices().f;
+    const wait = document.getElementById('lq-wait'); if (wait) wait.remove();
     place(q.section);
     if (teacherKey) addTeacherTools(q);
     sync(cur, f);
@@ -135,27 +158,23 @@
       mk('image', () => view(p.picture + (p.picture_note ? '<p>' + p.picture_note + '</p>' : '')));
       d.querySelector('.lq-n').appendChild(t);
     });
-    const box = document.createElement('div'); box.className = 'lq-next';
-    if (q.n < qs.length) {
-      const b = document.createElement('button'); b.type = 'button'; b.className = 'lq-btn';
-      const st = document.createElement('span'); st.className = 'lq-st';
-      box.append(b, st);
-      q.nextBtn = b; q.nextSt = st;
-      ['pointerdown', 'mousedown', 'touchstart'].forEach(x => b.addEventListener(x, ev => ev.stopPropagation()));
-      b.addEventListener('click', e => { e.stopPropagation(); b.blur(); unlock(q.n + 1, q); });
-    } else {
-      const st = document.createElement('span'); st.className = 'lq-st'; st.textContent = 'Last question.'; box.append(st);
-    }
+    const box = document.createElement('div'); box.className = 'lq-unlock';
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'lq-btn';
+    const st = document.createElement('span'); st.className = 'lq-st';
+    box.append(b, st);
+    q.btn = b; q.st = st;
+    ['pointerdown', 'mousedown', 'touchstart'].forEach(x => b.addEventListener(x, ev => ev.stopPropagation()));
+    b.addEventListener('click', e => { e.stopPropagation(); b.blur(); unlock(q); });
     q.section.insertBefore(box, q.section.querySelector('.lq-parts'));
-    paintNext();
+    paintButtons();
   }
-  function paintNext() {
+  function paintButtons() {
     qs.forEach(q => {
-      if (!q.nextBtn) return;
-      const n = q.n + 1, done = unlocked.has(n);
-      if (q.busy) return;
-      q.nextBtn.disabled = done;
-      q.nextBtn.textContent = done ? 'Question ' + n + ' is unlocked' : 'unlock next question (' + n + ')';
+      if (!q.btn || q.busy) return;
+      const done = unlocked.has(q.n);
+      q.btn.disabled = done;
+      q.btn.textContent = done ? 'unlocked' : 'unlock';
+      if (done) { q.st.textContent = ''; q.st.className = 'lq-st'; }
     });
   }
 
@@ -181,14 +200,14 @@
       const m = item.ref.slice(pre.length).match(/^(\d+)\/.*--([0-9a-f]{32})$/);
       if (!m) continue;
       const n = +m[1];
-      if (n < 2 || n > qs.length || unlocked.has(n)) continue;
+      if (n < 1 || n > qs.length || unlocked.has(n)) continue;
       if (qs[n - 1].section && qs[n - 1].keyHex) {   // the lecturer knows the key: only the right key counts as unlocked
         if (qs[n - 1].keyHex === m[2]) unlocked.add(n);
         continue;
       }
       if (await reveal(n, hexToBytes(m[2]), quiet)) unlocked.add(n);
     }
-    paintNext();
+    paintButtons();
   }
   async function tick(quiet) {
     if ((document.hidden && !quiet) || Date.now() < pauseUntil) return;
@@ -202,25 +221,23 @@
     }
   }
 
-  async function unlock(n, from) {
-    const q = qs[n - 1];
-    if (!q || !q.keyHex) return;
-    from.busy = true; from.nextBtn.disabled = true; from.nextBtn.textContent = 'unlocking…';
-    from.nextSt.textContent = ''; from.nextSt.className = 'lq-st';
-    const fail = why => { from.busy = false; paintNext(); from.nextSt.textContent = 'NOT unlocked: ' + why + '. Press again.'; from.nextSt.className = 'lq-st bad'; };
+  async function unlock(q) {
+    if (!q.keyHex || q.busy) return;
+    q.busy = true; q.btn.disabled = true; q.btn.textContent = 'unlocking…';
+    q.st.textContent = ''; q.st.className = 'lq-st';
+    const fail = why => { q.busy = false; paintButtons(); q.st.textContent = 'NOT unlocked: ' + why + '. Press again.'; q.st.className = 'lq-st bad'; };
     try {
       const head = await fetch(API + '/git/ref/heads/main', { headers: heads(), cache: 'no-store' });
       if (!head.ok) return fail('GitHub answered ' + head.status);
       const sha = (await head.json()).object.sha;
-      const name = 'refs/' + PREFIX + n + '/' + Date.now() + '--t--' + q.keyHex;
+      const name = 'refs/' + PREFIX + q.n + '/' + Date.now() + '--t--' + q.keyHex;
       const w = await fetch(API + '/git/refs', { method: 'POST', headers: heads(), body: JSON.stringify({ ref: name, sha }) });
       if (!w.ok && w.status !== 422) return fail('GitHub answered ' + w.status);
       // read it back: a 422 can mean it worked or it didn't, and only what's really there counts
       for (let i = 0; i < 4; i++) {
         const list = await readRefs(true);
         if (list && list.some(x => x.ref === name)) {
-          unlocked.add(n); from.busy = false; paintNext();
-          from.nextSt.textContent = 'Unlocked: students get it within about 15 seconds.';
+          unlocked.add(q.n); q.busy = false; paintButtons();
           return;
         }
         await new Promise(r => setTimeout(r, 800));
@@ -230,8 +247,13 @@
   }
 
   function goToHash() {   // a reload lands on the slide it was on once the questions are in
-    const m = location.hash.match(/^#\/(\d+)/);
-    if (m) try { Reveal.slide(+m[1], 0); } catch (e) {}
+    const m = startHash.match(/^#\/([^/]+)/);
+    if (!m) return;
+    const sec = /^\d+$/.test(m[1]) ? null : document.getElementById(decodeURIComponent(m[1]));
+    try {
+      if (sec) Reveal.slide(Reveal.getIndices(sec).h, 0);
+      else if (/^\d+$/.test(m[1])) Reveal.slide(+m[1], 0);
+    } catch (e) {}
   }
 
   async function start() {
@@ -255,10 +277,13 @@
         say('Lecturer view: the solutions could not be opened with this code. Press T and enter the code again.', true, true);
       }
     }
-    if (!teacherKey) await reveal(1, b64(data.firstKey), true);
     await tick(true);
     goToHash();
-    paintNext();
+    paintButtons();
+    if (!teacherKey && !qs.some(q => q.section)) {   // nothing open yet: students wait on the sign-in slide
+      const si = document.getElementById(LEC + '-signin');
+      if (si) { const w = document.createElement('div'); w.id = 'lq-wait'; w.textContent = 'Waiting for the lecturer to unlock the first question.'; si.appendChild(w); }
+    }
     const every = teacherKey ? TEACHER_EVERY : STUDENT_EVERY;
     const again = () => setTimeout(() => tick(false).finally(again), every + Math.random() * 2000);
     setTimeout(() => tick(false).finally(again), Math.random() * every);   // a random start, so that a room of phones doesn't ask at the same moment
@@ -266,5 +291,5 @@
   if (!TOKEN) { say('Polling is off on this page.', true, true); }
   const go = () => start().catch(e => say('The questions could not be loaded: ' + (e.message || e) + '. Please reload.', true, true));
   if (Reveal.isReady && Reveal.isReady()) go(); else Reveal.on('ready', go);
-  window.MicroQLock = { unlocked, version: 2 };
+  window.MicroQLock = { unlocked, version: 3 };
 })();
