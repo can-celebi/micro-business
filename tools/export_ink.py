@@ -44,6 +44,16 @@ def seg_dist(px, py, ax, ay, bx, by):
     return math.hypot(px - (ax + t * dx), py - (ay + t * dy))
 
 
+def seg_seg_dist(a, b, c, d):
+    """The shortest distance between segments ab and cd (0 when they cross)."""
+    def cross(o, p, q):
+        return (p[0] - o[0]) * (q[1] - o[1]) - (p[1] - o[1]) * (q[0] - o[0])
+    d1, d2, d3, d4 = cross(c, d, a), cross(c, d, b), cross(a, b, c), cross(a, b, d)
+    if ((d1 > 0) != (d2 > 0)) and ((d3 > 0) != (d4 > 0)) and d1 and d2 and d3 and d4:
+        return 0.0
+    return min(seg_dist(*a, *c, *d), seg_dist(*b, *c, *d), seg_dist(*c, *a, *b), seg_dist(*d, *a, *b))
+
+
 def bake(strokes):
     """The visible result: ink strokes only, with every point a LATER erasure covered removed, split where it was erased.
     A point counts as erased when its whole ink disc lay inside the eraser's path: distance ≤ eraser radius − ink radius."""
@@ -53,23 +63,35 @@ def bake(strokes):
             continue
         later = [e for e in strokes[i + 1:] if e.get("e")]
         r_ink = INK_W[st["w"]] / 2
+        paths = []
+        for e in later:
+            r = (e.get("es") or OLD_ERASER) / 2 - r_ink
+            if r > 0:
+                paths.append((r, [(a * SLIDE_W, b * SLIDE_H) for a, b in e["p"]]))
         def gone(q):
             x, y = q[0] * SLIDE_W, q[1] * SLIDE_H
-            for e in later:
-                r = (e.get("es") or OLD_ERASER) / 2 - r_ink
-                if r <= 0:
-                    continue
-                pe = [(a * SLIDE_W, b * SLIDE_H) for a, b in e["p"]]
+            for r, pe in paths:
                 if len(pe) == 1 and math.hypot(x - pe[0][0], y - pe[0][1]) <= r:
                     return True
                 if any(seg_dist(x, y, *pe[k], *pe[k + 1]) <= r for k in range(len(pe) - 1)):
                     return True
             return False
+        def gone_seg(q0, q1):   # the segment between two points passed under an eraser, even if both ends are clear (Utku 05.11)
+            a, b = (q0[0] * SLIDE_W, q0[1] * SLIDE_H), (q1[0] * SLIDE_W, q1[1] * SLIDE_H)
+            for r, pe in paths:
+                if len(pe) == 1 and seg_dist(pe[0][0], pe[0][1], *a, *b) <= r:
+                    return True
+                if any(seg_seg_dist(a, b, pe[k], pe[k + 1]) <= r for k in range(len(pe) - 1)):
+                    return True
+            return False
+        def line_hit(pts):
+            return any(gone(q) for q in pts) or any(gone_seg(pts[k], pts[k + 1]) for k in range(len(pts) - 1))
         if not later:
             out.append(st)
             continue
         if st.get("t"):
-            if any(gone(q) for q in (st.get("k") or []) + st["p"]):   # both the tidied shape and its raw points (Utku 05.11)
+            shape = [st["p"][0], st["p"][-1]] if st["t"] == "line" else (st.get("k") or [])
+            if line_hit(shape) or line_hit(st["p"]):   # the tidied shape as drawn and its raw points, points and the segments between them (Utku 05.11)
                 sys.exit("a tidied stroke under an eraser isn't supported yet: nothing written")
             out.append(st)
             continue
@@ -79,8 +101,11 @@ def bake(strokes):
                 if piece:
                     out.append({"c": st["c"], "w": st["w"], "p": piece})
                 piece = []
-            else:
-                piece.append(q)
+                continue
+            if piece and gone_seg(piece[-1], q):   # a long step whose middle was erased: split there too
+                out.append({"c": st["c"], "w": st["w"], "p": piece})
+                piece = []
+            piece.append(q)
         if piece:
             out.append({"c": st["c"], "w": st["w"], "p": piece})
     return out
