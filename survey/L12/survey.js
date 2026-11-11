@@ -11,7 +11,7 @@
         [['y', 'yes'], ['p', 'partly'], ['n', 'no, I worked another way']]),
       one('und', 'If you went over an LLM\'s solution of Problem 1: did you understand it?',
         [['y', 'yes, every step'], ['m', 'most of it'], ['l', 'only a little'], ['x', 'I did not use an LLM for Problem 1']]),
-      one('p2', 'Then Problem 2, without the LLM: were you able to solve it?',
+      one('p2', 'Then Problem 2: were you able to solve it?',
         [['own', 'yes, on my own'], ['back', 'yes, after going back to the solution of Problem 1'], ['llm', 'only with help from the LLM'], ['no', 'no, I could not solve it'], ['skip', 'I did not try Problem 2']]),
       { head: 'problem set 4 · how hard' },
       lik('p1d', 'Problem 1 · Kinked budget lines: how hard was it?', 'very easy', 'very hard'),
@@ -19,7 +19,7 @@
       lik('p3d', 'Problem 3 · From words to equations: how hard was it?', 'very easy', 'very hard'),
       { head: 'from words to equations' },
       lik('w-sub', 'Part 3A: from a story to the utility function of perfect substitutes (for example, two brands of pasta). How comfortable do you feel?'),
-      lik('w-leo', 'Part 3B: from a story to a Leontief utility function, with min (for example, hot dogs). How comfortable do you feel?'),
+      lik('w-leo', 'Part 3B: from a story to a utility function of perfect complements, Leontief, with min (for example, hot dogs). How comfortable do you feel?'),
       lik('w-bud', 'Part 3C: from a story to the budget line, kinked ones included (for example, gym visits). How comfortable do you feel?')
     ] }
   };
