@@ -5,7 +5,7 @@
   const lik = (id, t, lo, hi) => ({ id, t, kind: 'lik', lo: lo || 'not at all', hi: hi || 'very comfortable' });
   const one = (id, t, o) => ({ id, t, kind: 'one', col: true, o });
   const PAGES = {
-    s1: { title: 'before we start', sub: 'anonymous · about 3 minutes · microeconomics · lecture 12', items: [
+    s1: { title: 'Problem Set 4: How You Worked', sub: 'Anonymous · about 3 minutes · Microeconomics · Lecture 12', items: [
       { head: 'problem set 4 · how you worked' },
       one('way', 'The problem set suggested: Problem 1 with your LLM, then Problem 2 on your own. Did you work this way?',
         [['y', 'yes'], ['p', 'partly'], ['n', 'no, I worked another way']]),
@@ -28,14 +28,14 @@
     // survey 2 (Can 11.11, ~16:00): the three hardest non-calculation parts of the PS4 quiz again, a slight variation each. Answers a–e;
     // the key is not in this file (it sits encrypted under the teacher code in s2-key.json, read by the deck's results slide).
     // survey 3 (Can 11.11, Addition 7): every type of question so far (survey/L12/types.js); per type, understand 1–5 and want more practice yes/no
-    s3: { title: 'what to practise', sub: 'anonymous · about 6 minutes · microeconomics · lecture 12', items: [
+    s3: { title: 'Topics for Practice', sub: 'Anonymous · about 6 minutes · Microeconomics · Lecture 12', items: [
       { head: 'every type of question so far' },
       { note: 'For each line: how well do you understand it (1 not at all … 5 very well), and do you want more practice on it?' },
       ...(window.L12_TYPES || []).map(([id, , t]) => ({ id, t, kind: 'type' })),
       { head: 'anything else' },
       { id: 'more', t: 'Anything else you want to practise before the midterm?', kind: 'text' }
     ] },
-    s2: { title: 'did it stick?', sub: 'anonymous · 3 questions · microeconomics · lecture 12', items: [
+    s2: { title: 'Review of Problem Set 4', sub: 'Anonymous · 3 questions · Microeconomics · Lecture 12', items: [
       one('k1', 'A salad requires 4 tomatoes and 3 cucumbers, always in that ratio. Let <span class="m"><i>x</i></span> denote the number of tomatoes and <span class="m"><i>y</i></span> the number of cucumbers. The consumer cares only about the number of salads. Consider these utility functions.<br>I. <span class="m"><i>u</i> = min{4<i>x</i>, 3<i>y</i>}</span><br>II. <span class="m"><i>u</i> = min{<span class="fr"><span><i>x</i></span><span>4</span></span>, <span class="fr"><span><i>y</i></span><span>3</span></span>}</span><br>III. <span class="m"><i>u</i> = min{3<i>x</i>, 4<i>y</i>}</span><br>Which of the utility functions above represent these preferences?',
         [['a', 'only II'], ['b', 'only III'], ['c', 'I and II'], ['d', 'II and III'], ['e', 'I, II and III']]),
       one('k2', 'A consumer has the utility function <span class="m"><i>u</i>(<i>x</i>, <i>y</i>) = <i>x</i><sup>2</sup><i>y</i></span>. Both prices are €1 and the income is €8, so the budget line is <span class="m"><i>x</i> + <i>y</i> = 8</span>. Consider the bundles P = (2, 6) and Q = (4, 4). The MRS is different at P and at Q. Consider these statements.<br>I. The exponent 2 in the utility function is different at P and at Q.<br>II. The ratio <span class="m"><span class="fr"><span><i>y</i></span><span><i>x</i></span></span></span> is different at P and at Q.<br>III. The marginal utility of <span class="m"><i>x</i></span> depends on both <span class="m"><i>x</i></span> and <span class="m"><i>y</i></span>.<br>Which of the statements above give the reason?',
@@ -79,8 +79,8 @@
   }
   let lastCheck = 0, built = false;
   function waiting(msg) {
-    app.innerHTML = '<h1>&gt; ' + PG.title + '<span class="cursor"></span></h1><p class="s">' + PG.sub + '</p><div class="q"><p><b>not open yet.</b> The lecturer opens this survey in class.</p><p class="s">' + (msg || '') + '</p>' +
-      '<button class="go" id="chk" type="button">[ check if open ]</button><p class="s" style="margin-top:1.2rem">code on the board? <input id="code" inputmode="numeric" maxlength="4" size="5"> <button class="opt" id="codego" type="button">open</button></p></div>';
+    app.innerHTML = '<h1>' + PG.title + '</h1><p class="s">' + PG.sub + '</p><div class="q"><p><b>This survey is not open yet.</b> The lecturer will open it in class.</p><p class="s">' + (msg || '') + '</p>' +
+      '<button class="go" id="chk" type="button">Check again</button><p class="s" style="margin-top:1.2rem">Code on the board? <input id="code" inputmode="numeric" maxlength="4" size="5"> <button class="opt" id="codego" type="button">open</button></p></div>';
     $('chk').onclick = () => check(true);
     $('codego').onclick = async () => { if (await sha('micro-board:' + $('code').value.trim() + ':' + SALT + GQ) === BOARD[GK]) { SS('micro-l12-board-' + S, '1'); buildSurvey(); } else $('code').value = ''; };
   }
@@ -88,17 +88,17 @@
     if (built) return;
     if (LS('micro-l12-board-' + S) === '1') return buildSurvey();
     const now = Date.now();
-    if (now - lastCheck < 10000) { if (manual) { const x = document.querySelector('.q .s'); if (x) x.textContent = 'checked a few seconds ago: try again in a moment'; } return; }
+    if (now - lastCheck < 10000) { if (manual) { const x = document.querySelector('.q .s'); if (x) x.textContent = 'Checked a few seconds ago. Please try again in a moment.'; } return; }
     lastCheck = now;
-    try { const st = await gateState(); if (st === 'open') buildSurvey(); else waiting(st === 'closed' ? 'this survey is closed.' : 'checked just now: still closed.'); }
-    catch (e) { waiting('could not check (offline?). try again.'); }
+    try { const st = await gateState(); if (st === 'open') buildSurvey(); else waiting(st === 'closed' ? 'This survey is closed.' : 'Checked just now: still closed.'); }
+    catch (e) { waiting('Could not check (are you offline?). Please try again.'); }
   }
   async function teacher() {
     const code = LS('micro-teacher-code') || '';
     const tag = async v => (await sha('micro-gate:' + code.trim() + ':' + SALT + GQ + ':' + v)).slice(0, 8);
-    app.innerHTML = '<h1>&gt; ' + PG.title + ' · lecturer</h1><p class="s">state: <b id="st">…</b></p>' +
+    app.innerHTML = '<h1>' + PG.title + ' · lecturer</h1><p class="s">state: <b id="st">…</b></p>' +
       '<div class="opts"><button class="go" id="op" type="button">[ open ]</button> <button class="opt" id="cl" type="button">[ close ]</button> <button class="opt" id="rf" type="button">[ refresh ]</button></div><div id="res" class="msg"></div>';
-    const setState = async v => { $('st').textContent = 'saving…'; try { await P.submit(GATE, v + '-' + await tag(v)); $('st').textContent = v; } catch (e) { $('st').textContent = 'not saved, tap again'; } };
+    const setState = async v => { $('st').textContent = 'Saving…'; try { await P.submit(GATE, v + '-' + await tag(v)); $('st').textContent = v; } catch (e) { $('st').textContent = 'not saved, tap again'; } };
     $('op').onclick = () => setState('open');
     $('cl').onclick = () => { if ($('cl').dataset.sure) setState('closed'); else { $('cl').dataset.sure = 1; $('st').textContent = 'tap [ close ] again: closing is final for this survey'; } };
     async function refresh() {
@@ -110,7 +110,7 @@
   }
   function buildSurvey() {
     built = true;
-    app.innerHTML = '<h1>&gt; ' + PG.title + '<span class="cursor"></span></h1><p class="s">' + PG.sub + '</p><div id="f"></div><button class="go" id="go" type="button">[ submit ]</button><div class="msg" id="msg"></div>';
+    app.innerHTML = '<h1>' + PG.title + '</h1><p class="s">' + PG.sub + '</p><div id="f"></div><button class="go" id="go" type="button">Submit</button><div class="msg" id="msg"></div>';
     const f = document.getElementById('f');
     const pick = (box, b) => box.querySelectorAll('.opt').forEach(x => x.classList.toggle('on', x === b));
     PG.items.forEach(q => {
@@ -128,7 +128,7 @@
       }
       const d = document.createElement('div'); d.className = 'q' + (q.kind === 'lik' ? ' likert' : ''); d.id = 'q-' + q.id;
       d.innerHTML = '<div class="t">' + q.t + '</div>';
-      if (q.kind === 'text') { const t = document.createElement('textarea'); t.maxLength = 400; t.rows = 2; t.oninput = () => { txt[q.id] = t.value; }; d.insertAdjacentHTML('beforeend', '<div class="opt-note">optional</div>'); d.appendChild(t); f.appendChild(d); return; }
+      if (q.kind === 'text') { const t = document.createElement('textarea'); t.maxLength = 400; t.rows = 2; t.oninput = () => { txt[q.id] = t.value; }; d.insertAdjacentHTML('beforeend', '<div class="opt-note">Optional</div>'); d.appendChild(t); f.appendChild(d); return; }
       if (q.kind === 'num') { const n = document.createElement('input'); n.type = 'number'; n.min = 0; n.max = 600; n.step = 1; n.inputMode = 'numeric'; n.style.cssText = 'font:inherit;width:6em;padding:6px;border:1.5px solid #bbb;border-radius:2px'; n.oninput = () => { const v = Math.round(Number(n.value)); if (n.value !== '' && v >= 0 && v <= 600) ans[q.id] = String(v); else delete ans[q.id]; }; d.appendChild(n); d.insertAdjacentHTML('beforeend', ' <span class="opt-note">minutes</span>'); f.appendChild(d); return; }
       const box = document.createElement('div'); box.className = 'opts' + (q.col ? ' col' : '');
       const opts = q.kind === 'lik' ? ['1', '2', '3', '4', '5'].map(v => [v, v]) : q.letters ? q.o.map((l, k) => ['abcd'[k], l]) : q.o;
@@ -142,21 +142,21 @@
       const msg = document.getElementById('msg'), need = PG.items.filter(q => q.id && q.kind !== 'text').flatMap(q => q.kind === 'type' ? ['u-' + q.id, 'p-' + q.id] : [q.id]), missing = need.filter(id => !ans[id]);
       document.querySelectorAll('.q').forEach(d => d.classList.remove('missing'));
       missing.forEach(id => { const d = document.getElementById('q-' + id.replace(/^[up]-(t\d+)$/, '$1')); if (d) d.classList.add('missing'); });
-      if (missing.length) { msg.textContent = 'please answer every question (' + missing.length + ' missing, in red)' + ''; return; }
+      if (missing.length) { msg.textContent = 'Please answer every question (' + missing.length + ' missing, marked in red).' + ''; return; }
       const go = document.getElementById('go'); if (go.disabled) return; go.disabled = true;   // no double records from a double tap
-      msg.textContent = 'saving…';
+      msg.textContent = 'Saving…';
       const comments = {}; Object.keys(txt).forEach(k => { const v = (txt[k] || '').trim(); if (v) comments[k] = v; });
       try {
-        await window.MicroPoll.submitText(POLL, { answers: ans, comments: comments }, n => msg.textContent = 'busy, retry ' + n + '…');
-        msg.innerHTML = 'saved, thank you! <br><a href="../../../lectures/L12/index.html" target="_top">→ back to the slides</a>';
+        await window.MicroPoll.submitText(POLL, { answers: ans, comments: comments }, n => msg.textContent = 'Busy, retrying ' + n + '…');
+        msg.innerHTML = 'Thank you, your answers have been saved.<br><a href="../../../lectures/L12/index.html" target="_top">Back to the slides</a>';
         go.style.display = 'none';
-      } catch (e) { msg.textContent = 'not saved (offline?). please try again'; go.disabled = false; }
+      } catch (e) { msg.textContent = 'Not saved (are you offline?). Please try again.'; go.disabled = false; }
     }
     document.getElementById('go').onclick = submit;
   }
   // ?preview (Can 11.11): the full questions without the gate, nothing is ever sent (no gate read, no submit). Wins over teacher mode.
   const PREVIEW = /[?&]preview\b/.test(location.search);
-  if (PREVIEW) { buildSurvey(); const go = document.getElementById('go'); go.disabled = true; go.onclick = null; go.style.opacity = '.5'; go.style.cursor = 'default'; document.getElementById('msg').textContent = 'preview, nothing is sent'; }
+  if (PREVIEW) { buildSurvey(); const go = document.getElementById('go'); go.disabled = true; go.onclick = null; go.style.opacity = '.5'; go.style.cursor = 'default'; document.getElementById('msg').textContent = 'Preview: nothing is sent.'; }
   else if (P && P.teacher) teacher();
   else { waiting(''); check(false); window.addEventListener('focus', () => check(false)); document.addEventListener('visibilitychange', () => { if (!document.hidden) check(false); }); }
 })();
