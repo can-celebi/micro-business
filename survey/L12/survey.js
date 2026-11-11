@@ -146,16 +146,21 @@
     const secs = {}; let pgLeave = null;
     if (PG.paged) {
       const qs = [...f.querySelectorAll('.q')], go0 = document.getElementById('go');
-      let cur = 0, since = 0;
+      let cur = 0, since = 0, away = document.hidden;   // away: the page is not on screen (other tab, other app, phone locked): the clock stops
       const nav = document.createElement('div'); nav.className = 'opts'; nav.style.cssText = 'gap:10px;margin-top:.4rem';
       nav.innerHTML = '<button class="opt" id="pg-back" type="button">Back</button><button class="go" id="pg-next" type="button" style="margin-top:0">Next</button><span class="opt-note" id="pg-n" style="align-self:center"></span>';
       f.after(nav);
-      const leave = () => { const id = qs[cur].id.slice(2); secs[id] = Math.min(600, (secs[id] || 0) + (performance.now() - since) / 1000); since = performance.now(); };
+      const leave = () => { const id = qs[cur].id.slice(2); if (!away) secs[id] = Math.min(600, (secs[id] || 0) + (performance.now() - since) / 1000); since = performance.now(); };
+      // only time on screen counts (Ali 11.11): leaving the page books the time so far; coming back restarts the clock
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden && !away) { leave(); away = true; }
+        else if (!document.hidden && away) { away = false; since = performance.now(); }
+      });
       pgLeave = leave;
       const show = k => {
         cur = k; since = performance.now();
         qs.forEach((d, n) => { d.style.display = n === k ? '' : 'none'; });
-        document.getElementById('pg-back').style.visibility = k ? 'visible' : 'hidden';
+        document.getElementById('pg-back').style.display = k ? '' : 'none';   // Gozde: Next left-aligned on question 1
         document.getElementById('pg-next').style.display = k < qs.length - 1 ? '' : 'none';
         go0.style.display = k === qs.length - 1 ? '' : 'none';
         document.getElementById('pg-n').textContent = 'Question ' + (k + 1) + ' of ' + qs.length;
