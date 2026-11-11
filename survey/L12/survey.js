@@ -138,6 +138,7 @@
       f.appendChild(d);
     });
     async function submit() {
+      if (/[?&]preview\b/.test(location.search)) return;   // never sends in preview
       const msg = document.getElementById('msg'), need = PG.items.filter(q => q.id && q.kind !== 'text').flatMap(q => q.kind === 'type' ? ['u-' + q.id, 'p-' + q.id] : [q.id]), missing = need.filter(id => !ans[id]);
       document.querySelectorAll('.q').forEach(d => d.classList.remove('missing'));
       missing.forEach(id => { const d = document.getElementById('q-' + id.replace(/^[up]-(t\d+)$/, '$1')); if (d) d.classList.add('missing'); });
@@ -153,6 +154,9 @@
     }
     document.getElementById('go').onclick = submit;
   }
-  if (P && P.teacher) teacher();
+  // ?preview (Can 11.11): the full questions without the gate, nothing is ever sent (no gate read, no submit). Wins over teacher mode.
+  const PREVIEW = /[?&]preview\b/.test(location.search);
+  if (PREVIEW) { buildSurvey(); const go = document.getElementById('go'); go.disabled = true; go.onclick = null; go.style.opacity = '.5'; go.style.cursor = 'default'; document.getElementById('msg').textContent = 'preview, nothing is sent'; }
+  else if (P && P.teacher) teacher();
   else { waiting(''); check(false); window.addEventListener('focus', () => check(false)); document.addEventListener('visibilitychange', () => { if (!document.hidden) check(false); }); }
 })();
