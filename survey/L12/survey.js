@@ -35,17 +35,17 @@
       { head: 'Anything else' },
       { id: 'more', t: 'Anything else you want to practise before the midterm?', kind: 'text' }
     ] },
-    s2: { title: 'Review of Problem Set 4', sub: 'Anonymous · 5 questions · Microeconomics · Lecture 12', items: [
+    s2: { paged: true, title: 'Review of Problem Set 4', sub: 'Anonymous · 5 questions · Microeconomics · Lecture 12', items: [
       one('k1', 'A salad requires 4 tomatoes and 3 cucumbers, always in that ratio. Let <span class="m"><i>x</i></span> denote the number of tomatoes and <span class="m"><i>y</i></span> the number of cucumbers. The consumer cares only about the number of salads. Consider these utility functions.<br>I. <span class="m"><i>u</i> = min{4<i>x</i>, 3<i>y</i>}</span><br>II. <span class="m"><i>u</i> = min{<span class="fr"><span><i>x</i></span><span>4</span></span>, <span class="fr"><span><i>y</i></span><span>3</span></span>}</span><br>III. <span class="m"><i>u</i> = min{3<i>x</i>, 4<i>y</i>}</span><br>Which of the utility functions above represent these preferences?',
         [['a', 'Only II'], ['b', 'Only III'], ['c', 'I and II'], ['d', 'II and III'], ['e', 'I, II and III']]),
-      one('k2', 'A consumer has the utility function <span class="m"><i>u</i>(<i>x</i>, <i>y</i>) = <i>x</i><sup>2</sup><i>y</i></span>. Both prices are €1 and the income is €8, so the budget line is <span class="m"><i>x</i> + <i>y</i> = 8</span>. Consider the bundles P = (2, 6) and Q = (4, 4). The MRS is different at P and at Q. Consider these statements.<br>I. The exponent 2 in the utility function is different at P and at Q.<br>II. The ratio <span class="m"><span class="fr"><span><i>y</i></span><span><i>x</i></span></span></span> is different at P and at Q.<br>III. The marginal utility of <span class="m"><i>x</i></span> depends on both <span class="m"><i>x</i></span> and <span class="m"><i>y</i></span>.<br>Which of the statements above give the reason?',
-        [['a', 'Only I'], ['b', 'Only II'], ['c', 'I and II'], ['d', 'II and III'], ['e', 'I, II and III']]),
-      one('k3', 'A student has €30 a month. The first 4 washes in the dormitory laundry are free, and each further wash costs €3. The student can book at most 8 washes a month. All other goods cost €1 per unit. Let <span class="m"><i>x</i></span> denote the number of washes and <span class="m"><i>y</i></span> the quantity of all other goods. Which equations describe the student\'s budget line?',
-        [['a', '<span class="m">3<i>x</i> + <i>y</i> = 30</span> for <span class="m"><i>x</i> ≤ 8</span>'], ['b', '<span class="m"><i>y</i> = 30</span> for <span class="m"><i>x</i> ≤ 4</span>, and <span class="m">3<i>x</i> + <i>y</i> = 30</span> for <span class="m">4 ≤ <i>x</i> ≤ 8</span>'], ['c', '<span class="m"><i>y</i> = 30</span> for <span class="m"><i>x</i> ≤ 4</span>, and <span class="m">3<i>x</i> + <i>y</i> = 42</span> for <span class="m">4 ≤ <i>x</i> ≤ 8</span>'], ['d', '<span class="m"><i>y</i> = 30</span> for <span class="m"><i>x</i> ≤ 4</span>, and <span class="m">3<i>x</i> + <i>y</i> = 34</span> for <span class="m">4 ≤ <i>x</i> ≤ 8</span>'], ['e', '<span class="m"><i>y</i> = 30</span> for <span class="m"><i>x</i> ≤ 4</span>, and <span class="m">3<i>x</i> + <i>y</i> = 42</span> for <span class="m"><i>x</i> ≥ 4</span>, with no limit on the number of washes']]),
       one('k4', 'A pot of soup requires 3 carrots and 2 onions, always in that ratio. Let <span class="m"><i>x</i></span> denote the number of carrots and <span class="m"><i>y</i></span> the number of onions. The consumer cares only about the number of pots of soup. Consider these utility functions.<br>I. <span class="m"><i>u</i> = min{2<i>x</i>, 3<i>y</i>}</span><br>II. <span class="m"><i>u</i> = min{3<i>x</i>, 2<i>y</i>}</span><br>III. <span class="m"><i>u</i> = min{4<i>x</i>, 6<i>y</i>}</span><br>Which of the utility functions above represent these preferences?',
         [['a', 'Only I'], ['b', 'I and II'], ['c', 'I and III'], ['d', 'II and III'], ['e', 'I, II and III']]),
       one('k5', 'A smoothie requires 1 banana and 4 strawberries, always in that ratio. Let <span class="m"><i>x</i></span> denote the number of bananas and <span class="m"><i>y</i></span> the number of strawberries. The consumer cares only about the number of smoothies. Consider these utility functions.<br>I. <span class="m"><i>u</i> = min{<i>x</i>, 4<i>y</i>}</span><br>II. <span class="m"><i>u</i> = min{8<i>x</i>, 2<i>y</i>}</span><br>III. <span class="m"><i>u</i> = min{<span class="fr"><span><i>x</i></span><span>4</span></span>, <i>y</i>}</span><br>Which of the utility functions above represent these preferences?',
-        [['a', 'Only I'], ['b', 'Only II'], ['c', 'I and II'], ['d', 'II and III'], ['e', 'I, II and III']])
+        [['a', 'Only I'], ['b', 'Only II'], ['c', 'I and II'], ['d', 'II and III'], ['e', 'I, II and III']]),
+      one('k2', 'A consumer has the utility function <span class="m"><i>u</i>(<i>x</i>, <i>y</i>) = <i>x</i><sup>2</sup><i>y</i></span>. Both prices are €1 and the income is €8, so the budget line is <span class="m"><i>x</i> + <i>y</i> = 8</span>. Consider the bundles P = (2, 6) and Q = (4, 4). The MRS is different at P and at Q. Consider these statements.<br>I. The exponent 2 in the utility function is different at P and at Q.<br>II. The ratio <span class="m"><span class="fr"><span><i>y</i></span><span><i>x</i></span></span></span> is different at P and at Q.<br>III. The marginal utility of <span class="m"><i>x</i></span> depends on both <span class="m"><i>x</i></span> and <span class="m"><i>y</i></span>.<br>Which of the statements above give the reason?',
+        [['a', 'Only I'], ['b', 'Only II'], ['c', 'I and II'], ['d', 'II and III'], ['e', 'I, II and III']]),
+      one('k3', 'A student has €30 a month. The first 4 washes in the dormitory laundry are free, and each further wash costs €3. The student can book at most 8 washes a month. All other goods cost €1 per unit. Let <span class="m"><i>x</i></span> denote the number of washes and <span class="m"><i>y</i></span> the quantity of all other goods. Which equations describe the student\'s budget line?',
+        [['a', '<span class="m">3<i>x</i> + <i>y</i> = 30</span> for <span class="m"><i>x</i> ≤ 8</span>'], ['b', '<span class="m"><i>y</i> = 30</span> for <span class="m"><i>x</i> ≤ 4</span>, and <span class="m">3<i>x</i> + <i>y</i> = 30</span> for <span class="m">4 ≤ <i>x</i> ≤ 8</span>'], ['c', '<span class="m"><i>y</i> = 30</span> for <span class="m"><i>x</i> ≤ 4</span>, and <span class="m">3<i>x</i> + <i>y</i> = 42</span> for <span class="m">4 ≤ <i>x</i> ≤ 8</span>'], ['d', '<span class="m"><i>y</i> = 30</span> for <span class="m"><i>x</i> ≤ 4</span>, and <span class="m">3<i>x</i> + <i>y</i> = 34</span> for <span class="m">4 ≤ <i>x</i> ≤ 8</span>'], ['e', '<span class="m"><i>y</i> = 30</span> for <span class="m"><i>x</i> ≤ 4</span>, and <span class="m">3<i>x</i> + <i>y</i> = 42</span> for <span class="m"><i>x</i> ≥ 4</span>, with no limit on the number of washes']])
     ] }
   };
   const S = window.S09 || 's1', PG = PAGES[S], POLL = 'L12-' + S, ans = {}, txt = {};
@@ -141,6 +141,34 @@
       if (q.kind === 'lik') d.insertAdjacentHTML('beforeend', '<div class="scale"><span>1 · ' + q.lo + '</span><span>5 · ' + q.hi + '</span></div>');
       f.appendChild(d);
     });
+    // one question per screen with Next (Can 11.11, Addition 9): seconds on each question, from when it shows to when the student leaves it
+    // (Back and Next both count; capped at 600), stored as t-<id> in the same record
+    const secs = {}; let pgLeave = null;
+    if (PG.paged) {
+      const qs = [...f.querySelectorAll('.q')], go0 = document.getElementById('go');
+      let cur = 0, since = 0;
+      const nav = document.createElement('div'); nav.className = 'opts'; nav.style.cssText = 'gap:10px;margin-top:.4rem';
+      nav.innerHTML = '<button class="opt" id="pg-back" type="button">Back</button><button class="go" id="pg-next" type="button" style="margin-top:0">Next</button><span class="opt-note" id="pg-n" style="align-self:center"></span>';
+      f.after(nav);
+      const leave = () => { const id = qs[cur].id.slice(2); secs[id] = Math.min(600, (secs[id] || 0) + (performance.now() - since) / 1000); since = performance.now(); };
+      pgLeave = leave;
+      const show = k => {
+        cur = k; since = performance.now();
+        qs.forEach((d, n) => { d.style.display = n === k ? '' : 'none'; });
+        document.getElementById('pg-back').style.visibility = k ? 'visible' : 'hidden';
+        document.getElementById('pg-next').style.display = k < qs.length - 1 ? '' : 'none';
+        go0.style.display = k === qs.length - 1 ? '' : 'none';
+        document.getElementById('pg-n').textContent = 'Question ' + (k + 1) + ' of ' + qs.length;
+        document.getElementById('msg').textContent = '';
+      };
+      document.getElementById('pg-back').onclick = () => { leave(); show(cur - 1); };
+      document.getElementById('pg-next').onclick = () => {
+        const id = qs[cur].id.slice(2);
+        if (!ans[id]) { qs[cur].classList.add('missing'); document.getElementById('msg').textContent = 'Please choose an answer first.'; return; }
+        qs[cur].classList.remove('missing'); leave(); show(cur + 1);
+      };
+      show(0);
+    }
     async function submit() {
       if (/[?&]preview\b/.test(location.search)) return;   // never sends in preview
       const msg = document.getElementById('msg'), need = PG.items.filter(q => q.id && q.kind !== 'text').flatMap(q => q.kind === 'type' ? ['u-' + q.id, 'p-' + q.id] : [q.id]), missing = need.filter(id => !ans[id]);
@@ -151,6 +179,8 @@
       msg.textContent = 'Saving…';
       const comments = {}; Object.keys(txt).forEach(k => { const v = (txt[k] || '').trim(); if (v) comments[k] = v; });
       try {
+        if (pgLeave) pgLeave();   // the last question's time, up to the submit tap
+        Object.keys(secs).forEach(id => { ans['t-' + id] = String(Math.round(secs[id])); });
         await window.MicroPoll.submitText(POLL, { answers: ans, comments: comments }, n => msg.textContent = 'Busy, retrying ' + n + '…');
         msg.innerHTML = 'Thank you, your answers have been saved.<br><a href="../../../lectures/L12/index.html" target="_top">Back to the slides</a>';
         go.style.display = 'none';
