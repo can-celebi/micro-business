@@ -14,7 +14,6 @@
       one('p2', 'Then Problem 2: were you able to solve it?',
         [['own', 'yes, on my own'], ['back', 'yes, after going back to the solution of Problem 1'], ['llm', 'only with help from the LLM'], ['no', 'no, I could not solve it'], ['skip', 'I did not try Problem 2']]),
       { head: 'problem set 4 · how hard, how long' },
-      lik('p1d', 'Problem 1 · Kinked budget lines: how hard was it?', 'very easy', 'very hard'), { id: 'p1m', t: 'Problem 1 · Kinked budget lines: how many minutes did it take?', kind: 'num' },
       lik('p2d', 'Problem 2 · Kinked budget lines and a square root: how hard was it?', 'very easy', 'very hard'), { id: 'p2m', t: 'Problem 2 · Kinked budget lines and a square root: how many minutes did it take?', kind: 'num' },
       lik('p3d', 'Problem 3 · From words to equations: how hard was it?', 'very easy', 'very hard'), { id: 'p3m', t: 'Problem 3 · From words to equations: how many minutes did it take?', kind: 'num' },
       { id: 'ps-m', t: 'The whole problem set: how many minutes in total?', kind: 'num' },
