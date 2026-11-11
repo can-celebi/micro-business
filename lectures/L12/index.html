@@ -191,6 +191,9 @@ html:root { --mono: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif; }
 .reveal section .l09-hero { font-size: 32px; color: #111; margin: 0.5em 0 0.3em; }
 .reveal section .l09-cap { font-size: 22px; color: #222; margin: 0.2em 0; }
   /* PS4 slide on a phone: histogram above the list (Utku) */
+  /* the second sign-in gets the same phone title spacing as the first (qlock styles section[id$="-signin"]) (Utku) */
+  html.mobile .reveal .slides > section#L12-signin2 > h2 { margin-top: 34px !important; }
+  @media (max-height: 500px) { html.mobile .reveal .slides > section#L12-signin2 > h2 { margin-top: 2px !important; } }
   html.mobile #L12-PS4 .l09-pic { grid-template-columns: 1fr !important; }
   html.mobile #ps4-hist svg { overflow: visible; margin: 10px 0 14px; } html.mobile #ps4-hist svg text { font-size: 22px; } html.mobile #ps4-hist svg text[text-anchor="middle"] { transform: translateY(9px); }
   /* survey 2 results: share correct today next to the PS4 quiz */
@@ -316,7 +319,7 @@ html.mobile .reveal section .l06-quiz { grid-template-columns: 1fr; } html.mobil
 
 <section id="L12-S2" data-sid="L12-S2"><h2>survey 2 · did it stick?</h2><div class="qr-slide" style="height:auto;margin-top:1em"><img src="qr-s2.svg" alt="QR code to survey 2" style="width:300px;height:300px"><div class="qr-link">can-celebi.github.io/micro-business/S12b</div><div class="dim small">anonymous · 3 questions · <a href="../../survey/L12/s2/index.html" target="_blank">open the survey</a></div></div></section>
 
-<section id="L12-S2r" data-sid="L12-S2r"><h2>did it stick? share correct</h2><p class="sub"><span id="s2-n" class="dim">results on the lecturer's screen</span> <button class="btn ghost" id="s2-refresh">refresh</button></p><div class="s2-grid"><div class="s2-item"><div class="sv-t">1 · the salad: which min functions (PS4 3B (c), the cake)</div><div class="bar-row s2-row" data-key="k1"><span class="bar-label">today</span><span class="bar-track"><span class="bar-fill" style="width:0"></span></span><span class="bar-n">–</span></div><div class="bar-row s2-ps"><span class="bar-label">PS4 quiz</span><span class="bar-track"><span class="bar-fill" style="width:80%;background:#B8BDC4"></span></span><span class="bar-n">80%</span></div></div><div class="s2-item"><div class="sv-t">2 · <i>u</i> = <i>x</i>²<i>y</i>: why the MRS differs (PS4 2A (d))</div><div class="bar-row s2-row" data-key="k2"><span class="bar-label">today</span><span class="bar-track"><span class="bar-fill" style="width:0"></span></span><span class="bar-n">–</span></div><div class="bar-row s2-ps"><span class="bar-label">PS4 quiz</span><span class="bar-track"><span class="bar-fill" style="width:88%;background:#B8BDC4"></span></span><span class="bar-n">88%</span></div></div><div class="s2-item"><div class="sv-t">3 · the laundry: budget line from words (PS4 3C (c), bus rides)</div><div class="bar-row s2-row" data-key="k3"><span class="bar-label">today</span><span class="bar-track"><span class="bar-fill" style="width:0"></span></span><span class="bar-n">–</span></div><div class="bar-row s2-ps"><span class="bar-label">PS4 quiz</span><span class="bar-track"><span class="bar-fill" style="width:90%;background:#B8BDC4"></span></span><span class="bar-n">90%</span></div></div></div></section>
+<section id="L12-S2r" data-sid="L12-S2r"><h2>did it stick? share correct</h2><p class="sub"><span id="s2-n" class="dim">results on the lecturer's screen</span> <button class="btn ghost" id="s2-refresh">refresh</button></p><div class="s2-grid"><div class="s2-item"><div class="sv-t">1 · the salad: which min functions (PS4 3B (c), the cake)</div><div class="bar-row s2-row" data-key="k1"><span class="bar-label">today</span><span class="bar-track"><span class="bar-fill" style="width:0"></span></span><span class="bar-n">–</span></div><div class="bar-row s2-ps" data-part="3B (c)"><span class="bar-label">PS4 quiz</span><span class="bar-track"><span class="bar-fill" style="width:0;background:#B8BDC4"></span></span><span class="bar-n">–</span></div></div><div class="s2-item"><div class="sv-t">2 · <i>u</i> = <i>x</i>²<i>y</i>: why the MRS differs (PS4 2A (d))</div><div class="bar-row s2-row" data-key="k2"><span class="bar-label">today</span><span class="bar-track"><span class="bar-fill" style="width:0"></span></span><span class="bar-n">–</span></div><div class="bar-row s2-ps" data-part="2A (d)"><span class="bar-label">PS4 quiz</span><span class="bar-track"><span class="bar-fill" style="width:0;background:#B8BDC4"></span></span><span class="bar-n">–</span></div></div><div class="s2-item"><div class="sv-t">3 · the laundry: budget line from words (PS4 3C (c), bus rides)</div><div class="bar-row s2-row" data-key="k3"><span class="bar-label">today</span><span class="bar-track"><span class="bar-fill" style="width:0"></span></span><span class="bar-n">–</span></div><div class="bar-row s2-ps" data-part="3C (c)"><span class="bar-label">PS4 quiz</span><span class="bar-track"><span class="bar-fill" style="width:0;background:#B8BDC4"></span></span><span class="bar-n">–</span></div></div></div></section>
 </div></div>
 <script src="../../vendor/reveal/reveal.js"></script>
 <script src="../../vendor/reveal/plugin/notes/notes.js"></script>
@@ -340,6 +343,8 @@ html.mobile .reveal section .l06-quiz { grid-template-columns: 1fr; } html.mobil
 <script>
   // problem set 4 results (aggregates only, from 06_moodle/ps4/PS4_aggregates_*.md). The ONLY place with the numbers: swap them here after the final export.
   const PS4 = { asof: 'export 11.11, 15:15', n: 59, mean: 95.8, median: 100, bins: [0, 0, 0, 0, 0, 1, 0, 3, 3, 52],
+    // share fully right per part, for the survey 2 results slide (same export)
+    part: { '3B (c)': 80, '2A (d)': 88, '3C (c)': 90 },
     low: [['3B (c)', 'the cake: 3 eggs and 5 spoons of sugar', 80], ['2A (d)', 'why the MRS differs at P and at Q', 88], ['3C (c)', 'bus rides, the first 3 free', 90]] };
   (function () {
     const top = Math.max(60, Math.ceil(Math.max(...PS4.bins) / 20) * 20), X0 = 44, X1 = 574, Y0 = 185, Y1 = 8, w = (X1 - X0) / 10, y = v => Y0 - (Y0 - Y1) * v / top;
@@ -349,6 +354,7 @@ html.mobile .reveal section .l06-quiz { grid-template-columns: 1fr; } html.mobil
     [0, 20, 40, 60, 80, 100].forEach(t => { s += '<text x="' + (X0 + t / 10 * w) + '" y="206" text-anchor="middle" font-size="15" fill="#555">' + t + '</text>'; });
     document.getElementById('ps4-hist').innerHTML = s + '</svg>';
     document.getElementById('ps4-head').innerHTML = '<b>PS4</b> · <i>n</i> = ' + PS4.n + ' · mean ' + PS4.mean.toFixed(1) + ' · median ' + PS4.median.toFixed(1) + ' <span class="dim" style="font-size:15px">· ' + PS4.asof + '</span>';
+    document.querySelectorAll('.s2-ps[data-part]').forEach(r => { const v = PS4.part[r.dataset.part]; if (v == null) return; r.querySelector('.bar-fill').style.width = v + '%'; r.querySelector('.bar-n').textContent = v + '%'; });
     document.getElementById('ps4-low').innerHTML = PS4.low.map(([p, t, v]) => '<div style="margin:0 0 0.5em"><b>' + p + '</b> · ' + v + '%<br><span class="dim">' + t + '</span></div>').join('');
   })();
 </script>
