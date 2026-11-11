@@ -204,13 +204,13 @@ html:root { --mono: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif; }
   #L12-S2r .sub button { font-size: 0.8em; padding: 0.1em 0.6em; }
   html.mobile .s2-item .bar-row { font-size: 0.85em; }
   /* survey 3 results: one compact row per type, two columns */
-  .s3-list { columns: 2; column-gap: 2em; margin-top: 0.4em; font-size: 18px; }
+  .s3-list { display: grid; grid-template-columns: 1fr 1fr; gap: 0 2em; align-items: start; margin-top: 0.4em; font-size: 18px; }
   .s3-row { display: grid; grid-template-columns: minmax(0, 1fr) 70px 38px 70px 46px; gap: 0 6px; align-items: center; break-inside: avoid; margin: 0 0 6px; }
   .s3-row .lb { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .s3-row .tr { height: 9px; background: #EEEEEA; border-radius: 2px; overflow: hidden; } .s3-row .tr i { display: block; height: 9px; background: #3C4043; }
   .s3-row .tr.p i { background: #7A3DB8; } .s3-row .n { text-align: right; color: #333; }
   .s3-head { font-size: 13px; color: #666; }
-  html.mobile .s3-list { columns: 1; }
+  html.mobile .s3-list { grid-template-columns: 1fr; }
   /* survey results (from L10) */
   .svl-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.6em; align-items: start; margin-top: 0.5em; }
   .svl-grid .sv-box { margin-bottom: 0.9em; }
@@ -397,9 +397,11 @@ html.mobile .reveal section .l06-quiz { grid-template-columns: 1fr; } html.mobil
           const u = A.map(a => Number(a['u-' + id])).filter(v => v >= 1 && v <= 5), p = A.filter(a => a['p-' + id] === 'y' || a['p-' + id] === 'n');
           return { lab, m: u.length ? u.reduce((x, y) => x + y, 0) / u.length : null, s: p.length ? p.filter(a => a['p-' + id] === 'y').length / p.length : null };
         }).sort((a, b) => (b.s ?? -1) - (a.s ?? -1) || (a.m ?? 9) - (b.m ?? 9));
-        box.innerHTML = '<div class="s3-row s3-head"><span></span><span>understand</span><span></span><span>practice</span><span></span></div>' + rows.map(r =>
+        const head = '<div class="s3-row s3-head"><span></span><span>understand</span><span></span><span>practice</span><span></span></div>', half = Math.ceil(rows.length / 2);
+        const html = rows.map(r =>
           '<div class="s3-row"><span class="lb" title="' + esc(r.lab) + '">' + esc(r.lab) + '</span><span class="tr"><i style="width:' + (r.m == null ? 0 : 100 * r.m / 5) + '%"></i></span><span class="n">' + (r.m == null ? '–' : r.m.toFixed(1)) +
-          '</span><span class="tr p"><i style="width:' + (r.s == null ? 0 : 100 * r.s) + '%"></i></span><span class="n">' + (r.s == null ? '–' : Math.round(100 * r.s) + '%') + '</span></div>').join('');
+          '</span><span class="tr p"><i style="width:' + (r.s == null ? 0 : 100 * r.s) + '%"></i></span><span class="n">' + (r.s == null ? '–' : Math.round(100 * r.s) + '%') + '</span></div>');
+        box.innerHTML = '<div>' + head + html.slice(0, half).join('') + '</div><div>' + head + html.slice(half).join('') + '</div>';   // ranks 1–half down the left, the rest down the right
         st.textContent = 'n = ' + A.length + ' · ' + new Date().toLocaleTimeString('de-AT', { hour: '2-digit', minute: '2-digit' });
       } catch (e) { st.textContent = 'could not load: refresh'; }
     }
