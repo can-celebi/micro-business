@@ -164,7 +164,7 @@
         document.getElementById('pg-next').style.display = k < qs.length - 1 ? '' : 'none';
         go0.style.display = k === qs.length - 1 ? '' : 'none';
         document.getElementById('pg-n').textContent = 'Question ' + (k + 1) + ' of ' + qs.length;
-        document.getElementById('msg').textContent = '';
+        document.getElementById('msg').textContent = /[?&]preview\b/.test(location.search) ? 'Preview: nothing is sent.' : '';   // Utku: keep the preview line
       };
       document.getElementById('pg-back').onclick = () => { leave(); show(cur - 1); };
       document.getElementById('pg-next').onclick = () => {
