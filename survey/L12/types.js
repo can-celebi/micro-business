@@ -1,8 +1,35 @@
 // L12 survey 3 (Can 11.11, Addition 7): every type of question done so far, one line each. The ONLY place with the list:
 // read by survey/L12/s3 (the questions) and by the deck's results slide (the labels). Ids stay fixed once students answer.
-// Each line: [id, short label for the slide, the line students read (plain name + a tiny example)].
+// Each line: [id, short label for the slide, the line students read]. From Hande and Sinan, passed by Ulutin.
 window.L12_TYPES = [
-  ['t01', 'PLACEHOLDER 1', 'PLACEHOLDER 1: the list from Hande and Sinan comes here'],
-  ['t02', 'PLACEHOLDER 2', 'PLACEHOLDER 2'],
-  ['t03', 'PLACEHOLDER 3', 'PLACEHOLDER 3']
+  ["t01", "Opportunity cost", "Opportunity cost, e.g. a party instead of a €12-an-hour shift: what does the party cost?"],
+  ["t02", "Forgone interest", "Cost of money: forgone interest, e.g. €1,000 kept in cash instead of saved at 3%"],
+  ["t03", "Sunk cost", "Sunk cost, e.g. a non-refundable €30 ticket: does it matter whether you go?"],
+  ["t04", "Reservation price", "Cost-benefit and reservation price, e.g. the most you would pay for a used bike"],
+  ["t05", "Total, average, marginal", "Total, average and marginal, e.g. from the total cost of 1, 2, 3 pizzas: the average and the extra cost"],
+  ["t06", "One more unit? MB ≥ MC", "One more unit? MB ≥ MC, e.g. a 3rd coffee worth €2 to you that costs €2.50"],
+  ["t07", "Positive or normative", "Positive or normative, e.g. “rents rose 5%” vs “rents should be capped”"],
+  ["t08", "Perfect competition", "Perfect competition, barriers to entry, e.g. one water seller at a festival: which condition fails?"],
+  ["t09", "Demand, supply, inverse", "Demand and supply functions, inverse demand, e.g. Q = 60 − 3p written as p = 20 − Q/3"],
+  ["t10", "Equilibrium from equations", "Equilibrium from two equations, e.g. Qd = 30 − p, Qs = 2p: price and quantity"],
+  ["t11", "Shortage, surplus, caps", "Shortage or surplus at a given price; price cap, price floor, e.g. a price fixed below equilibrium: how many units short?"],
+  ["t12", "Shift or movement", "Shift of a curve or movement along it, e.g. coffee beans get dearer: which coffee curve moves, which way?"],
+  ["t13", "Both curves shift", "Both curves shift, e.g. more buyers and cheaper production: what is certain, what is not?"],
+  ["t14", "Substitutes, complements", "Substitutes and complements, e.g. tea gets dearer: what happens to the demand for coffee?"],
+  ["t15", "Per-unit tax", "Per-unit tax: buyer price, seller price, who bears it, e.g. a €1 tax on each sandwich"],
+  ["t16", "Budget line", "Budget line: end points and slope, e.g. p_x = 2, p_y = 5, income 20"],
+  ["t17", "Budget changes, taxes", "Budget changes: income, one price, both prices, a tax (per unit or ad valorem), e.g. the price of x doubles: which end of the line moves?"],
+  ["t18", "Kinked budget: fees", "Fees and discounts that kink the budget line, e.g. electricity: the first 100 kWh cost €0.20 each, every further kWh €0.30"],
+  ["t19", "Endowment budget", "Endowment instead of money income, e.g. you own 6 apples and 4 pears and can trade at market prices"],
+  ["t20", "Properties of relations", "Properties of relations (complete, transitive, …), e.g. if A ≿ B and B ≿ C, must A ≿ C?"],
+  ["t21", "Revealed preference", "Revealed preference: are the choices consistent?, e.g. chose A when B was affordable, later B when A was affordable"],
+  ["t22", "Indifference curves", "Indifference curves: more is better, no crossing, convex, e.g. can two indifference curves cross?"],
+  ["t23", "Ranking with utility", "Ranking bundles with a utility function; same ranking after a transformation, e.g. u = x + y and u = (x + y)²: same ranking?"],
+  ["t24", "MU and MRS at a bundle", "Marginal utility and MRS at a bundle (derivatives), e.g. u = xy³ at (2, 1)"],
+  ["t25", "Type of utility function", "Recognising the type: perfect substitutes, perfect complements, Cobb-Douglas, quasi-linear, e.g. min{x, y}, x + y, x·y, x + √y: which is which?"],
+  ["t26", "Optimum on one budget", "Optimum on one budget line: bang for the buck, MRS = price ratio, the Lagrangian, e.g. u = x³y, p_x = p_y = 1, income 8"],
+  ["t27", "Optimum after a change", "How the optimum moves when income or a price changes, e.g. income rises: where does the best bundle go?"],
+  ["t28", "Optimum on a kinked budget", "Kinked budget line: optimum on a piece or at the kink, e.g. two budget lines joined: which point is best?"],
+  ["t29", "Corners, ties, no waste", "Perfect substitutes: corners and ties; perfect complements: nothing wasted, e.g. u = x + y and x is cheaper: what do you buy?"],
+  ["t30", "Words to equations", "From words to equations: a utility or a budget from a story, e.g. “a sandwich always takes 2 slices of bread and 3 slices of cheese”; €40 for books at €8 and pens at €2"]
 ];
