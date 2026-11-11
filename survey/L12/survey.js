@@ -83,8 +83,8 @@
   }
   let lastCheck = 0, built = false;
   function waiting(msg) {
-    app.innerHTML = '<h1>&gt; ' + PG.title + '<span class="cursor"></span></h1><p class="s">' + PG.sub + '</p><div class="q"><p><b>This survey is not open yet.</b> The lecturer will open it in class.</p><p class="s">' + (msg || '') + '</p>' +
-      '<button class="go" id="chk" type="button">[ Check again ]</button><p class="s" style="margin-top:1.2rem">Code on the board? <input id="code" inputmode="numeric" maxlength="4" size="5"> <button class="opt" id="codego" type="button">open</button></p></div>';
+    app.innerHTML = '<h1>' + PG.title + '</h1><p class="s">' + PG.sub + '</p><div class="q"><p><b>This survey is not open yet.</b> The lecturer will open it in class.</p><p class="s">' + (msg || '') + '</p>' +
+      '<button class="go" id="chk" type="button">Check again</button><p class="s" style="margin-top:1.2rem">Code on the board? <input id="code" inputmode="numeric" maxlength="4" size="5"> <button class="opt" id="codego" type="button">open</button></p></div>';
     $('chk').onclick = () => check(true);
     $('codego').onclick = async () => { if (await sha('micro-board:' + $('code').value.trim() + ':' + SALT + GQ) === BOARD[GK]) { SS('micro-l12-board-' + S, '1'); buildSurvey(); } else $('code').value = ''; };
   }
@@ -100,11 +100,11 @@
   async function teacher() {
     const code = LS('micro-teacher-code') || '';
     const tag = async v => (await sha('micro-gate:' + code.trim() + ':' + SALT + GQ + ':' + v)).slice(0, 8);
-    app.innerHTML = '<h1>&gt; ' + PG.title + ' · lecturer</h1><p class="s">state: <b id="st">…</b></p>' +
-      '<div class="opts"><button class="go" id="op" type="button">[ Open ]</button> <button class="opt" id="cl" type="button">[ Close ]</button> <button class="opt" id="rf" type="button">[ Refresh ]</button></div><div id="res" class="msg"></div>';
+    app.innerHTML = '<h1>' + PG.title + ' · lecturer</h1><p class="s">state: <b id="st">…</b></p>' +
+      '<div class="opts"><button class="go" id="op" type="button">Open</button> <button class="opt" id="cl" type="button">Close</button> <button class="opt" id="rf" type="button">Refresh</button></div><div id="res" class="msg"></div>';
     const setState = async v => { $('st').textContent = 'Saving…'; try { await P.submit(GATE, v + '-' + await tag(v)); $('st').textContent = v; } catch (e) { $('st').textContent = 'not saved, tap again'; } };
     $('op').onclick = () => setState('open');
-    $('cl').onclick = () => { if ($('cl').dataset.sure) setState('closed'); else { $('cl').dataset.sure = 1; $('st').textContent = 'Tap [ Close ] again: closing is final for this survey.'; } };
+    $('cl').onclick = () => { if ($('cl').dataset.sure) setState('closed'); else { $('cl').dataset.sure = 1; $('st').textContent = 'tap Close again: closing is final for this survey'; } };
     async function refresh() {
       $('res').textContent = 'loading…';
       try { $('st').textContent = await gateState(); const r = await P.textResults(POLL).catch(() => []); const n = new Set((r || []).filter(x => x.poll === POLL).map(x => x.client)).size; $('res').innerHTML = '<b>' + n + ' answered</b> <span class="s">· the results are on the next slide</span>'; }
@@ -114,7 +114,7 @@
   }
   function buildSurvey() {
     built = true;
-    app.innerHTML = '<h1>&gt; ' + PG.title + '<span class="cursor"></span></h1><p class="s">' + PG.sub + '</p><div id="f"></div><button class="go" id="go" type="button">[ Submit ]</button><div class="msg" id="msg"></div>';
+    app.innerHTML = '<h1>' + PG.title + '</h1><p class="s">' + PG.sub + '</p><div id="f"></div><button class="go" id="go" type="button">Submit</button><div class="msg" id="msg"></div>';
     const f = document.getElementById('f');
     const pick = (box, b) => box.querySelectorAll('.opt').forEach(x => x.classList.toggle('on', x === b));
     PG.items.forEach(q => {
