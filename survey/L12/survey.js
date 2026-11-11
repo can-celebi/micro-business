@@ -22,7 +22,9 @@
       { head: 'from words to equations' },
       lik('w-sub', 'Problem 3, Part A: from a story to the utility function of perfect substitutes (for example, two brands of pasta). How comfortable do you feel?'),
       lik('w-leo', 'Problem 3, Part B: from a story to a utility function of perfect complements, Leontief, with min (for example, hot dogs). How comfortable do you feel?'),
-      lik('w-bud', 'Problem 3, Part C: from a story to the budget line, kinked ones included (for example, gym visits). How comfortable do you feel?')
+      lik('w-bud', 'Problem 3, Part C: from a story to the budget line, kinked ones included (for example, gym visits). How comfortable do you feel?'),
+      one('cake', 'In the quiz, the hardest part was Problem 3, Part B (c): the cake with 3 eggs and 5 spoons of sugar. What made it hard for you?',
+        [['ok', 'nothing, I got it right'], ['num', 'which number goes with which good'], ['two', 'that two different functions can describe the same preferences'], ['g', 'I was not sure and guessed']])
     ] }
   };
   const S = window.S09 || 's1', PG = PAGES[S], POLL = 'L12-' + S, ans = {}, txt = {};
