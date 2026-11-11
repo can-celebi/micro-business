@@ -28,7 +28,7 @@
     // survey 2 (Can 11.11, ~16:00): the three hardest non-calculation parts of the PS4 quiz again, a slight variation each. Answers a–e;
     // the key is not in this file (it sits encrypted under the teacher code in s2-key.json, read by the deck's results slide).
     // survey 3 (Can 11.11, Addition 7): every type of question so far (survey/L12/types.js); per type, understand 1–5 and want more practice yes/no
-    s3: { title: 'what to practise', sub: 'anonymous · about 5 minutes · microeconomics · lecture 12', items: [
+    s3: { title: 'what to practise', sub: 'anonymous · about 6 minutes · microeconomics · lecture 12', items: [
       { head: 'every type of question so far' },
       { note: 'For each line: how well do you understand it (1 not at all … 5 very well), and do you want more practice on it?' },
       ...(window.L12_TYPES || []).map(([id, , t]) => ({ id, t, kind: 'type' })),
