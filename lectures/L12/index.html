@@ -192,6 +192,13 @@ html:root { --mono: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif; }
 .reveal section .l09-cap { font-size: 22px; color: #222; margin: 0.2em 0; }
   /* PS4 slide on a phone: histogram above the list (Utku) */
   html.mobile #L12-PS4 .l09-pic { grid-template-columns: 1fr !important; }
+  /* survey 2 results: share correct today next to the PS4 quiz */
+  .s2-grid { margin-top: 0.6em; max-width: 900px; }
+  .s2-item { margin-bottom: 1.1em; }
+  .s2-item .bar-row { font-size: 0.7em; grid-template-columns: 8em 1fr 6em; margin: 0.2em 0; }
+  .s2-item .sv-t { font-size: 0.8em; color: var(--ink); }
+  #L12-S2r .sub button { font-size: 0.8em; padding: 0.1em 0.6em; }
+  html.mobile .s2-item .bar-row { font-size: 0.85em; }
   /* survey results (from L10) */
   .svl-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.6em; align-items: start; margin-top: 0.5em; }
   .svl-grid .sv-box { margin-bottom: 0.9em; }
@@ -303,6 +310,12 @@ html.mobile .reveal section .l06-quiz { grid-template-columns: 1fr; } html.mobil
 <section id="L12-S1" data-sid="L12-S1"><h2>survey · before we start</h2><div class="qr-slide" style="height:auto;margin-top:1em"><img src="qr-s1.svg" alt="QR code to the survey" style="width:300px;height:300px"><div class="qr-link">can-celebi.github.io/micro-business/S12</div><div class="dim small">anonymous · about 3 minutes · <a href="../../survey/L12/s1/index.html" target="_blank">open the survey</a></div></div></section>
 
 <section id="L12-S1r" data-sid="L12-S1r" class="sv-live" data-poll="L12-s1"><h2>your answers: problem set 4</h2><p class="sub"><span class="svl-n"></span> <button class="btn ghost svl-refresh">refresh</button></p><div class="svl-grid"><div><div class="sv-box"><div class="sv-t">Problem 1 with the LLM, then Problem 2 alone?</div><div class="svl-scale dim">share of answers</div><div class="bar-row" data-share="way" data-v="y"><span class="bar-label">yes</span><span class="bar-track"><span class="bar-fill" style="width:0"></span></span><span class="bar-n">–</span></div><div class="bar-row" data-share="way" data-v="p"><span class="bar-label">partly</span><span class="bar-track"><span class="bar-fill" style="width:0"></span></span><span class="bar-n">–</span></div><div class="bar-row" data-share="way" data-v="n"><span class="bar-label">no, another way</span><span class="bar-track"><span class="bar-fill" style="width:0"></span></span><span class="bar-n">–</span></div></div><div class="sv-box"><div class="sv-t">understood the LLM's solution of Problem 1?</div><div class="bar-row" data-share="und" data-v="y"><span class="bar-label">yes, every step</span><span class="bar-track"><span class="bar-fill" style="width:0"></span></span><span class="bar-n">–</span></div><div class="bar-row" data-share="und" data-v="m"><span class="bar-label">most of it</span><span class="bar-track"><span class="bar-fill" style="width:0"></span></span><span class="bar-n">–</span></div><div class="bar-row" data-share="und" data-v="l"><span class="bar-label">only a little</span><span class="bar-track"><span class="bar-fill" style="width:0"></span></span><span class="bar-n">–</span></div><div class="bar-row" data-share="und" data-v="x"><span class="bar-label">no LLM for Problem 1</span><span class="bar-track"><span class="bar-fill" style="width:0"></span></span><span class="bar-n">–</span></div></div><div class="sv-box"><div class="sv-t">then Problem 2?</div><div class="bar-row" data-share="p2" data-v="own"><span class="bar-label">yes, on my own</span><span class="bar-track"><span class="bar-fill" style="width:0"></span></span><span class="bar-n">–</span></div><div class="bar-row" data-share="p2" data-v="back"><span class="bar-label">yes, via Problem 1</span><span class="bar-track"><span class="bar-fill" style="width:0"></span></span><span class="bar-n">–</span></div><div class="bar-row" data-share="p2" data-v="llm"><span class="bar-label">only with the LLM</span><span class="bar-track"><span class="bar-fill" style="width:0"></span></span><span class="bar-n">–</span></div><div class="bar-row" data-share="p2" data-v="no"><span class="bar-label">could not solve it</span><span class="bar-track"><span class="bar-fill" style="width:0"></span></span><span class="bar-n">–</span></div><div class="bar-row" data-share="p2" data-v="skip"><span class="bar-label">did not try</span><span class="bar-track"><span class="bar-fill" style="width:0"></span></span><span class="bar-n">–</span></div></div></div><div><div class="sv-box"><div class="sv-t">problem set 4: how hard</div><div class="svl-scale dim">average · 1 very easy … 5 very hard</div><div class="bar-row" data-mean="p2d"><span class="bar-label">2 with a square root</span><span class="bar-track"><span class="bar-fill" style="width:0"></span></span><span class="bar-n">–</span></div><div class="bar-row" data-mean="p3d"><span class="bar-label">3 words to equations</span><span class="bar-track"><span class="bar-fill" style="width:0"></span></span><span class="bar-n">–</span></div><div class="bar-row" data-mean="ps-d"><span class="bar-label">the whole set</span><span class="bar-track"><span class="bar-fill" style="width:0"></span></span><span class="bar-n">–</span></div><div class="sv-t" style="margin-top:0.5em">minutes, median</div><div style="font-size:20px;color:#222">2 <b data-min="p2m">–</b> · 3 <b data-min="p3m">–</b> · all <b data-min="ps-m">–</b></div></div><div class="sv-box"><div class="sv-t">from words to equations</div><div class="svl-scale dim">average · 1 not at all … 5 very comfortable</div><div class="bar-row" data-mean="w-sub"><span class="bar-label">3A perfect substitutes</span><span class="bar-track"><span class="bar-fill" style="width:0"></span></span><span class="bar-n">–</span></div><div class="bar-row" data-mean="w-leo"><span class="bar-label">3B perfect complements</span><span class="bar-track"><span class="bar-fill" style="width:0"></span></span><span class="bar-n">–</span></div><div class="bar-row" data-mean="w-bud"><span class="bar-label">3C budget lines</span><span class="bar-track"><span class="bar-fill" style="width:0"></span></span><span class="bar-n">–</span></div></div><div class="sv-box"><div class="sv-t">3B (c), the cake: what was hard?</div><div class="bar-row" data-share="cake" data-v="ok"><span class="bar-label">got it right</span><span class="bar-track"><span class="bar-fill" style="width:0"></span></span><span class="bar-n">–</span></div><div class="bar-row" data-share="cake" data-v="num"><span class="bar-label">which number where</span><span class="bar-track"><span class="bar-fill" style="width:0"></span></span><span class="bar-n">–</span></div><div class="bar-row" data-share="cake" data-v="two"><span class="bar-label">two ways to write it</span><span class="bar-track"><span class="bar-fill" style="width:0"></span></span><span class="bar-n">–</span></div><div class="bar-row" data-share="cake" data-v="g"><span class="bar-label">guessed</span><span class="bar-track"><span class="bar-fill" style="width:0"></span></span><span class="bar-n">–</span></div></div></div></div></section>
+
+<section id="L12-signin2" data-sid="L12-signin2"><h2>sign in</h2><div class="rows "><div class="k fragment" data-fragment-index="1"></div><div class="v fragment" data-fragment-index="1">Tap 👤: name, nickname, class or online.</div></div></section>
+
+<section id="L12-S2" data-sid="L12-S2"><h2>survey 2 · did it stick?</h2><div class="qr-slide" style="height:auto;margin-top:1em"><img src="qr-s2.svg" alt="QR code to survey 2" style="width:300px;height:300px"><div class="qr-link">can-celebi.github.io/micro-business/S12b</div><div class="dim small">anonymous · 3 questions · <a href="../../survey/L12/s2/index.html" target="_blank">open the survey</a></div></div></section>
+
+<section id="L12-S2r" data-sid="L12-S2r"><h2>did it stick? share correct</h2><p class="sub"><span id="s2-n" class="dim">results on the lecturer's screen</span> <button class="btn ghost" id="s2-refresh">refresh</button></p><div class="s2-grid"><div class="s2-item"><div class="sv-t">1 · the salad: which min functions (PS4 3B (c), the cake)</div><div class="bar-row s2-row" data-key="k1"><span class="bar-label">today</span><span class="bar-track"><span class="bar-fill" style="width:0"></span></span><span class="bar-n">–</span></div><div class="bar-row s2-ps"><span class="bar-label">PS4 quiz</span><span class="bar-track"><span class="bar-fill" style="width:80%;background:#B8BDC4"></span></span><span class="bar-n">80%</span></div></div><div class="s2-item"><div class="sv-t">2 · <i>u</i> = <i>x</i>²<i>y</i>: why the MRS differs (PS4 2A (d))</div><div class="bar-row s2-row" data-key="k2"><span class="bar-label">today</span><span class="bar-track"><span class="bar-fill" style="width:0"></span></span><span class="bar-n">–</span></div><div class="bar-row s2-ps"><span class="bar-label">PS4 quiz</span><span class="bar-track"><span class="bar-fill" style="width:88%;background:#B8BDC4"></span></span><span class="bar-n">88%</span></div></div><div class="s2-item"><div class="sv-t">3 · the laundry: budget line from words (PS4 3C (c), bus rides)</div><div class="bar-row s2-row" data-key="k3"><span class="bar-label">today</span><span class="bar-track"><span class="bar-fill" style="width:0"></span></span><span class="bar-n">–</span></div><div class="bar-row s2-ps"><span class="bar-label">PS4 quiz</span><span class="bar-track"><span class="bar-fill" style="width:90%;background:#B8BDC4"></span></span><span class="bar-n">90%</span></div></div></div></section>
 </div></div>
 <script src="../../vendor/reveal/reveal.js"></script>
 <script src="../../vendor/reveal/plugin/notes/notes.js"></script>
@@ -348,6 +361,38 @@ html.mobile .reveal section .l06-quiz { grid-template-columns: 1fr; } html.mobil
     } catch (e) {} };
     document.querySelectorAll('section.sv-live').forEach(sec => { if (!sec.querySelector('[data-min]')) return; const b = sec.querySelector('.svl-refresh'); if (b) b.addEventListener('click', () => go(sec)); if (sec.classList.contains('present')) go(sec); });
     Reveal.on('slidechanged', e => { const c = e.currentSlide; if (c && c.classList.contains('sv-live') && c.querySelector('[data-min]')) go(c); });
+  })();
+</script>
+<script>
+  // survey 2 results (lecturer's screen only): share correct per item. The key is in survey/L12/s2-key.json, sealed under the teacher code.
+  (function () {
+    const MP = window.MicroPoll, sec = document.getElementById('L12-S2r'); if (!MP || !MP.teacher || !sec) return;
+    const b64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0)); let KEY = null;
+    async function key() {
+      if (KEY) return KEY;
+      let code = ''; try { code = (localStorage.getItem('micro-teacher-code') || '').trim(); } catch (e) {}
+      const d = await (await fetch('../../survey/L12/s2-key.json?v=20261111b', { cache: 'no-store' })).json();
+      const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(code), 'PBKDF2', false, ['deriveKey']);
+      const k = await crypto.subtle.deriveKey({ name: 'PBKDF2', salt: b64(d.salt), iterations: d.iterations, hash: 'SHA-256' }, base, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
+      KEY = JSON.parse(new TextDecoder().decode(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64(d.iv) }, k, b64(d.ct)))); return KEY;
+    }
+    const st = document.getElementById('s2-n');
+    async function go() {
+      st.textContent = 'loading…';
+      try {
+        const K = await key();
+        const A = (await MP.textResults('L12-s2/')).filter(r => r.poll === 'L12-s2').map(r => r.answers || {});
+        sec.querySelectorAll('.s2-row').forEach(row => {
+          const id = row.dataset.key, got = A.filter(a => a[id]), c = got.filter(a => a[id] === K[id]).length, pct = got.length ? 100 * c / got.length : 0;
+          row.querySelector('.bar-fill').style.width = pct + '%';
+          row.querySelector('.bar-n').textContent = got.length ? Math.round(pct) + '% (' + c + '/' + got.length + ')' : '–';
+        });
+        st.textContent = 'n = ' + A.length + ' · ' + new Date().toLocaleTimeString('de-AT', { hour: '2-digit', minute: '2-digit' });
+      } catch (e) { st.textContent = 'could not load: refresh'; }
+    }
+    document.getElementById('s2-refresh').addEventListener('click', e => { e.stopPropagation(); go(); });
+    Reveal.on('slidechanged', e => { if (e.currentSlide === sec) go(); });
+    if (sec.classList.contains('present')) go();
   })();
 </script>
 <script src="../../assets/js/qlock.js?v=20261111a"></script>

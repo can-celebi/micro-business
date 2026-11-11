@@ -24,6 +24,16 @@
       lik('w-bud', 'Problem 3, Part C: from a story to the budget line, kinked ones included (for example, gym visits). How comfortable do you feel?'),
       one('cake', 'In the quiz, the hardest part was Problem 3, Part B (c): the cake with 3 eggs and 5 spoons of sugar. What made it hard for you?',
         [['ok', 'nothing, I got it right'], ['num', 'which number goes with which good'], ['two', 'that two different functions can describe the same preferences'], ['g', 'I was not sure and guessed']])
+    ] },
+    // survey 2 (Can 11.11, ~16:00): the three hardest non-calculation parts of the PS4 quiz again, a slight variation each. Answers a–e;
+    // the key is not in this file (it sits encrypted under the teacher code in s2-key.json, read by the deck's results slide).
+    s2: { title: 'did it stick?', sub: 'anonymous · 3 questions · microeconomics · lecture 12', items: [
+      one('k1', 'A salad requires 4 tomatoes and 3 cucumbers, always in that ratio. Let <span class="m"><i>x</i></span> denote the number of tomatoes and <span class="m"><i>y</i></span> the number of cucumbers. The consumer cares only about the number of salads. Consider these utility functions.<br>I. <span class="m"><i>u</i> = min{4<i>x</i>, 3<i>y</i>}</span><br>II. <span class="m"><i>u</i> = min{<span class="fr"><span><i>x</i></span><span>4</span></span>, <span class="fr"><span><i>y</i></span><span>3</span></span>}</span><br>III. <span class="m"><i>u</i> = min{3<i>x</i>, 4<i>y</i>}</span><br>Which of the utility functions above represent these preferences?',
+        [['a', 'only II'], ['b', 'only III'], ['c', 'I and II'], ['d', 'II and III'], ['e', 'I, II and III']]),
+      one('k2', 'A consumer has the utility function <span class="m"><i>u</i>(<i>x</i>, <i>y</i>) = <i>x</i><sup>2</sup><i>y</i></span>. Both prices are €1 and the income is €8, so the budget line is <span class="m"><i>x</i> + <i>y</i> = 8</span>. Consider the bundles P = (2, 6) and Q = (4, 4). The MRS is different at P and at Q. Consider these statements.<br>I. The exponent 2 in the utility function is different at P and at Q.<br>II. The ratio <span class="m"><span class="fr"><span><i>y</i></span><span><i>x</i></span></span></span> is different at P and at Q.<br>III. The marginal utility of <span class="m"><i>x</i></span> depends on both <span class="m"><i>x</i></span> and <span class="m"><i>y</i></span>.<br>Which of the statements above give the reason?',
+        [['a', 'only I'], ['b', 'only II'], ['c', 'I and II'], ['d', 'II and III'], ['e', 'I, II and III']]),
+      one('k3', 'A student has €30 a month. The first 4 washes in the dormitory laundry are free, and each further wash costs €3. The student can book at most 8 washes a month. All other goods cost €1 per unit. Let <span class="m"><i>x</i></span> denote the number of washes and <span class="m"><i>y</i></span> the quantity of all other goods. Which equations describe the student\'s budget line?',
+        [['a', 'A. <span class="m">3<i>x</i> + <i>y</i> = 30</span> for <span class="m"><i>x</i> ≤ 8</span>'], ['b', 'B. <span class="m"><i>y</i> = 30</span> for <span class="m"><i>x</i> ≤ 4</span>, and <span class="m">3<i>x</i> + <i>y</i> = 30</span> for <span class="m">4 ≤ <i>x</i> ≤ 8</span>'], ['c', 'C. <span class="m"><i>y</i> = 30</span> for <span class="m"><i>x</i> ≤ 4</span>, and <span class="m">3<i>x</i> + <i>y</i> = 42</span> for <span class="m">4 ≤ <i>x</i> ≤ 8</span>'], ['d', 'D. <span class="m"><i>y</i> = 30</span> for <span class="m"><i>x</i> ≤ 4</span>, and <span class="m">3<i>x</i> + <i>y</i> = 34</span> for <span class="m">4 ≤ <i>x</i> ≤ 8</span>'], ['e', 'E. <span class="m"><i>y</i> = 30</span> for <span class="m"><i>x</i> ≤ 4</span>, and <span class="m">3<i>x</i> + <i>y</i> = 42</span> for <span class="m"><i>x</i> ≥ 4</span>, with no limit on the number of washes']])
     ] }
   };
   const S = window.S09 || 's1', PG = PAGES[S], POLL = 'L12-' + S, ans = {}, txt = {};
@@ -36,13 +46,16 @@
   const GATE_CHECK = {
     q1: { open: 'c1adb4e2fc1bb14cc6fb655548af8b6add7e529765a0b8691594bcf978e1c85a', closed: 'ac14ca852cc74f21d84829e01f3ebcef5c0816553e5bff5b37e9a5852f6a8221' },
     q2: { open: '763380a8a8e07e1041733f48d55aab47494669d546cab64738eaad9fdacf7de6', closed: 'a0152530b95bd78a917eed74c191d98136de61fb6b381db90b279bee27f4f55b' },
-    q3: { open: '3ea429423ae401b4aee584b3343d3acacd0ba9726c000537001b044222e38c5e', closed: '861bafe4207838fea0354aae6cacb7d1c79be6c88059149a0ad8f0a6a86bca12' } };
+    q3: { open: '3ea429423ae401b4aee584b3343d3acacd0ba9726c000537001b044222e38c5e', closed: '861bafe4207838fea0354aae6cacb7d1c79be6c88059149a0ad8f0a6a86bca12'  },
+    'L12-q2': { open: '6a7ae4e3dee5411a46025cf95d284d7ea46a89f343b8ef22e9212aad2c9713c9', closed: '042fb3c9c3e824509247854a35fe05a6e187d0d10e8c065b6d1d0eeb94641ea1' } };
   const BOARD = {
     q1: 'e0bc31c0f8e0c165692593335439f23a8e571b0e23ac01510ebb4e0c725bf0de',
     q2: '5cb10a0574d2ea62bc7a24939cd52b3de8c9cd837fed3f2628d350bb9fc130d9',
-    q3: '9fc88bd2049362329b1d2dbff5fa70fdd99f841705df64577f63c0e227b2a04d' };
+    q3: '9fc88bd2049362329b1d2dbff5fa70fdd99f841705df64577f63c0e227b2a04d',
+    'L12-q2': '092991596ea53f7c634f511877f914be168317acd63f7d902c9424c551a08334' };
 
-  const P = window.MicroPoll, SALT = 'L06-', GQ = { s1: 'q1', s2: 'q2', s3: 'q3' }[S], GATE = 'L12-gate-' + S;
+  // s2 has its own salt (L12-), so no open/closed tag from an earlier survey can be replayed on it (Utku); its board code is the quiz-2 code.
+  const P = window.MicroPoll, SALT = S === 's2' ? 'L12-' : 'L06-', GQ = { s1: 'q1', s2: 'q2', s3: 'q3' }[S], GK = S === 's2' ? 'L12-q2' : GQ, GATE = 'L12-gate-' + S;
   const $ = id => document.getElementById(id);
   async function sha(x) { const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(x)); return [...new Uint8Array(b)].map(v => v.toString(16).padStart(2, '0')).join(''); }
   const LS = k => { try { return localStorage.getItem(k); } catch (e) { return null; } }, SS = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
@@ -50,7 +63,7 @@
     const r = await P.results(GATE); let open = false, closed = false;
     for (const x of r.responses) {
       const mm = /^(open|closed)-([0-9a-f]{8})$/.exec(String(x.value));
-      if (mm && await sha('micro-gate-check:' + mm[2]) === GATE_CHECK[GQ][mm[1]]) { if (mm[1] === 'open') open = true; else closed = true; }
+      if (mm && await sha('micro-gate-check:' + mm[2]) === GATE_CHECK[GK][mm[1]]) { if (mm[1] === 'open') open = true; else closed = true; }
     }
     return closed ? 'closed' : open ? 'open' : 'locked';
   }
@@ -59,7 +72,7 @@
     app.innerHTML = '<h1>&gt; ' + PG.title + '<span class="cursor"></span></h1><p class="s">' + PG.sub + '</p><div class="q"><p><b>not open yet.</b> The lecturer opens this survey in class.</p><p class="s">' + (msg || '') + '</p>' +
       '<button class="go" id="chk" type="button">[ check if open ]</button><p class="s" style="margin-top:1.2rem">code on the board? <input id="code" inputmode="numeric" maxlength="4" size="5"> <button class="opt" id="codego" type="button">open</button></p></div>';
     $('chk').onclick = () => check(true);
-    $('codego').onclick = async () => { if (await sha('micro-board:' + $('code').value.trim() + ':' + SALT + GQ) === BOARD[GQ]) { SS('micro-l12-board-' + S, '1'); buildSurvey(); } else $('code').value = ''; };
+    $('codego').onclick = async () => { if (await sha('micro-board:' + $('code').value.trim() + ':' + SALT + GQ) === BOARD[GK]) { SS('micro-l12-board-' + S, '1'); buildSurvey(); } else $('code').value = ''; };
   }
   async function check(manual) {
     if (built) return;
