@@ -3,10 +3,14 @@
 // question keys, solutions and pictures under a key made from the lecturer code. The file is public, so nothing locked is readable from it.
 // Every question starts locked, in any order. Unlocking question n writes a ref into the data repo whose value IS that question's key, so a forged
 // ref can't decrypt anything and is ignored. Every device reads those refs every few seconds with an ETag (a 304 is free).
+// Open mode (Can, 11.11, for L11: "kill the lecturer unlock and make sure that solution and image are available for the students"): a page whose
+// body has data-qfile="open.json" reads that plain public file instead. Every question is there, everyone gets the solution and image buttons,
+// and there is no unlock button, no lecturer code and no polling.
 (function () {
   const MP = window.MicroPoll, CFG = window.MICRO_CONFIG || {}, GH = CFG.github || {};
   if (!MP || !document.querySelector('.reveal') || /print-pdf/.test(location.search)) return;
   const LEC = document.body.dataset.lecture;
+  const OPEN_FILE = /^[a-z0-9-]+\.json$/.test(document.body.dataset.qfile || '') ? document.body.dataset.qfile : '';
   const TOKEN = (GH.tokenParts || []).length ? atob(GH.tokenParts.join('')) : '';
   const API = 'https://api.github.com/repos/' + GH.owner + '/' + GH.repo;
   const LOCAL = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
@@ -149,7 +153,7 @@
     if (/^(Arrow|Page|Home$|End$| $)/.test(e.key)) { e.preventDefault(); e.stopPropagation(); }
   }
 
-  function addTeacherTools(q) {
+  function addTeacherTools(q, noUnlock) {
     q.section.querySelectorAll('.lq-part').forEach(d => {
       const p = q.teacher.parts.find(x => x.n === +d.dataset.part);
       const t = document.createElement('span'); t.className = 'lq-t';
@@ -158,6 +162,7 @@
       mk('image', () => view(p.picture + (p.picture_note ? '<p>' + p.picture_note + '</p>' : '')));
       d.querySelector('.lq-n').appendChild(t);
     });
+    if (noUnlock) return;
     const box = document.createElement('div'); box.className = 'lq-unlock';
     const b = document.createElement('button'); b.type = 'button'; b.className = 'lq-btn';
     const st = document.createElement('span'); st.className = 'lq-st';
@@ -246,20 +251,39 @@
     } catch (e) { fail(e.message || 'no connection'); }
   }
 
-  function goToHash() {   // a reload lands on the slide it was on once the questions are in
+  // A reload lands on the slide it was on once the questions are in. Reveal resets a hash whose slide isn't there yet before this file runs,
+  // so the slide is also kept in sessionStorage (this tab only) and used after a reload (11.11: the reload test showed the hash alone fails).
+  const AT = 'lq-at-' + LEC;
+  let reloaded = false;
+  try { reloaded = (performance.getEntriesByType('navigation')[0] || {}).type === 'reload'; } catch (e) {}
+  Reveal.on('slidechanged', e => { try { if (e.currentSlide && e.currentSlide.id) sessionStorage.setItem(AT, e.currentSlide.id); } catch (x) {} });
+  function goToHash() {
     const m = startHash.match(/^#\/([^/]+)/);
-    if (!m) return;
-    const sec = /^\d+$/.test(m[1]) ? null : document.getElementById(decodeURIComponent(m[1]));
+    let sec = m && !/^\d+$/.test(m[1]) ? document.getElementById(decodeURIComponent(m[1])) : null;
+    if (sec && Reveal.getIndices(sec).h === 0) sec = null;
+    if (!sec && reloaded) { let id = null; try { id = sessionStorage.getItem(AT); } catch (e) {} if (id) sec = document.getElementById(id); }
     try {
       if (sec) Reveal.slide(Reveal.getIndices(sec).h, 0);
-      else if (/^\d+$/.test(m[1])) Reveal.slide(+m[1], 0);
+      else if (m && /^\d+$/.test(m[1]) && +m[1] > 0) Reveal.slide(+m[1], 0);
     } catch (e) {}
   }
 
   async function start() {
-    const r = await fetch('locked.json', { cache: 'no-cache' });
+    const r = await fetch(OPEN_FILE || 'locked.json', { cache: 'no-cache' });
     if (!r.ok) { say('The questions could not be loaded (' + r.status + '). Please reload.', true, true); return; }
     data = await r.json();
+    if (OPEN_FILE) {   // open mode: everything public, nothing to unlock
+      if (!Array.isArray(data.open)) { say('The questions could not be loaded. Please reload.', true, true); return; }
+      const cur = Reveal.getCurrentSlide(), f = Reveal.getIndices().f;
+      data.open.forEach((o, i) => {
+        const q = { n: i + 1, student: o.student, teacher: o.teacher };
+        q.section = buildSection(q); qs.push(q);
+        place(q.section); addTeacherTools(q, true);
+      });
+      sync(cur, f);
+      goToHash();
+      return;
+    }
     data.questions.forEach((_, i) => qs.push({ n: i + 1, section: null }));
     if (MP.teacher) {
       let code = null; try { code = localStorage.getItem('micro-teacher-code'); } catch (e) {}
@@ -288,7 +312,7 @@
     const again = () => setTimeout(() => tick(false).finally(again), every + Math.random() * 2000);
     setTimeout(() => tick(false).finally(again), Math.random() * every);   // a random start, so that a room of phones doesn't ask at the same moment
   }
-  if (!TOKEN) { say('Polling is off on this page.', true, true); }
+  if (!TOKEN && !OPEN_FILE) { say('Polling is off on this page.', true, true); }
   const go = () => start().catch(e => say('The questions could not be loaded: ' + (e.message || e) + '. Please reload.', true, true));
   if (Reveal.isReady && Reveal.isReady()) go(); else Reveal.on('ready', go);
   window.MicroQLock = { unlocked, version: 3 };
