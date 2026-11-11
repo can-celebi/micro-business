@@ -27,6 +27,14 @@
     ] },
     // survey 2 (Can 11.11, ~16:00): the three hardest non-calculation parts of the PS4 quiz again, a slight variation each. Answers a–e;
     // the key is not in this file (it sits encrypted under the teacher code in s2-key.json, read by the deck's results slide).
+    // survey 3 (Can 11.11, Addition 7): every type of question so far (survey/L12/types.js); per type, understand 1–5 and want more practice yes/no
+    s3: { title: 'what to practise', sub: 'anonymous · about 5 minutes · microeconomics · lecture 12', items: [
+      { head: 'every type of question so far' },
+      { note: 'For each line: how well do you understand it (1 not at all … 5 very well), and do you want more practice on it?' },
+      ...(window.L12_TYPES || []).map(([id, , t]) => ({ id, t, kind: 'type' })),
+      { head: 'anything else' },
+      { id: 'more', t: 'Anything else you want to practise before the midterm?', kind: 'text' }
+    ] },
     s2: { title: 'did it stick?', sub: 'anonymous · 3 questions · microeconomics · lecture 12', items: [
       one('k1', 'A salad requires 4 tomatoes and 3 cucumbers, always in that ratio. Let <span class="m"><i>x</i></span> denote the number of tomatoes and <span class="m"><i>y</i></span> the number of cucumbers. The consumer cares only about the number of salads. Consider these utility functions.<br>I. <span class="m"><i>u</i> = min{4<i>x</i>, 3<i>y</i>}</span><br>II. <span class="m"><i>u</i> = min{<span class="fr"><span><i>x</i></span><span>4</span></span>, <span class="fr"><span><i>y</i></span><span>3</span></span>}</span><br>III. <span class="m"><i>u</i> = min{3<i>x</i>, 4<i>y</i>}</span><br>Which of the utility functions above represent these preferences?',
         [['a', 'only II'], ['b', 'only III'], ['c', 'I and II'], ['d', 'II and III'], ['e', 'I, II and III']]),
@@ -47,15 +55,17 @@
     q1: { open: 'c1adb4e2fc1bb14cc6fb655548af8b6add7e529765a0b8691594bcf978e1c85a', closed: 'ac14ca852cc74f21d84829e01f3ebcef5c0816553e5bff5b37e9a5852f6a8221' },
     q2: { open: '763380a8a8e07e1041733f48d55aab47494669d546cab64738eaad9fdacf7de6', closed: 'a0152530b95bd78a917eed74c191d98136de61fb6b381db90b279bee27f4f55b' },
     q3: { open: '3ea429423ae401b4aee584b3343d3acacd0ba9726c000537001b044222e38c5e', closed: '861bafe4207838fea0354aae6cacb7d1c79be6c88059149a0ad8f0a6a86bca12'  },
-    'L12-q2': { open: '6a7ae4e3dee5411a46025cf95d284d7ea46a89f343b8ef22e9212aad2c9713c9', closed: '042fb3c9c3e824509247854a35fe05a6e187d0d10e8c065b6d1d0eeb94641ea1' } };
+    'L12-q2': { open: '6a7ae4e3dee5411a46025cf95d284d7ea46a89f343b8ef22e9212aad2c9713c9', closed: '042fb3c9c3e824509247854a35fe05a6e187d0d10e8c065b6d1d0eeb94641ea1' },
+    'L12-q3': { open: 'ee1a8ba52aa92e336d6e16c9ad46af8823b4b4195ae9ca3a5d5e3285df13f54c', closed: 'f2c7d9d4de9b31a2c1fc7f78dd3249d2308eef51f9f439b597a2f9bd511c9e8e' } };
   const BOARD = {
     q1: 'e0bc31c0f8e0c165692593335439f23a8e571b0e23ac01510ebb4e0c725bf0de',
     q2: '5cb10a0574d2ea62bc7a24939cd52b3de8c9cd837fed3f2628d350bb9fc130d9',
     q3: '9fc88bd2049362329b1d2dbff5fa70fdd99f841705df64577f63c0e227b2a04d',
-    'L12-q2': '092991596ea53f7c634f511877f914be168317acd63f7d902c9424c551a08334' };
+    'L12-q2': '092991596ea53f7c634f511877f914be168317acd63f7d902c9424c551a08334',
+    'L12-q3': '54071965c96b8fba871aac7a3eb3ef24e94e614006766f0de98b7e08bd27a0bc' };
 
-  // s2 has its own salt (L12-), so no open/closed tag from an earlier survey can be replayed on it (Utku); its board code is the quiz-2 code.
-  const P = window.MicroPoll, SALT = S === 's2' ? 'L12-' : 'L06-', GQ = { s1: 'q1', s2: 'q2', s3: 'q3' }[S], GK = S === 's2' ? 'L12-q2' : GQ, GATE = 'L12-gate-' + S;
+  // s2 and s3 have their own salt (L12-), so no open/closed tag from an earlier survey can be replayed on it (Utku); their board codes are the quiz-2 and quiz-3 codes.
+  const P = window.MicroPoll, SALT = S === 's1' ? 'L06-' : 'L12-', GQ = { s1: 'q1', s2: 'q2', s3: 'q3' }[S], GK = S === 's1' ? GQ : 'L12-' + GQ, GATE = 'L12-gate-' + S;
   const $ = id => document.getElementById(id);
   async function sha(x) { const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(x)); return [...new Uint8Array(b)].map(v => v.toString(16).padStart(2, '0')).join(''); }
   const LS = k => { try { return localStorage.getItem(k); } catch (e) { return null; } }, SS = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
@@ -105,6 +115,17 @@
     const pick = (box, b) => box.querySelectorAll('.opt').forEach(x => x.classList.toggle('on', x === b));
     PG.items.forEach(q => {
       if (q.head) { f.insertAdjacentHTML('beforeend', '<h2>' + q.head + '</h2>'); return; }
+      if (q.note) { f.insertAdjacentHTML('beforeend', '<p class="s">' + q.note + '</p>'); return; }
+      if (q.kind === 'type') {   // one line, two answers: understand 1–5 (u-<id>) and more practice yes/no (p-<id>)
+        const d = document.createElement('div'); d.className = 'q likert typ'; d.id = 'q-' + q.id;
+        d.innerHTML = '<div class="t">' + q.t + '</div>';
+        const row = document.createElement('div'); row.className = 'opts';
+        const u = document.createElement('div'); u.className = 'opts'; const pr = document.createElement('div'); pr.className = 'opts';
+        ['1', '2', '3', '4', '5'].forEach(v => { const b = document.createElement('button'); b.type = 'button'; b.className = 'opt'; b.textContent = v; b.onclick = () => { ans['u-' + q.id] = v; pick(u, b); }; u.appendChild(b); });
+        [['y', 'more practice'], ['n', 'no']].forEach(([v, l]) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'opt'; b.textContent = l; b.onclick = () => { ans['p-' + q.id] = v; pick(pr, b); }; pr.appendChild(b); });
+        u.insertAdjacentHTML('afterbegin', '<span class="opt-note" style="align-self:center">understand</span>'); pr.insertAdjacentHTML('afterbegin', '<span class="opt-note" style="align-self:center">practice?</span>');
+        row.style.cssText = 'gap:14px;align-items:center'; row.appendChild(u); row.appendChild(pr); d.appendChild(row); f.appendChild(d); return;
+      }
       const d = document.createElement('div'); d.className = 'q' + (q.kind === 'lik' ? ' likert' : ''); d.id = 'q-' + q.id;
       d.innerHTML = '<div class="t">' + q.t + '</div>';
       if (q.kind === 'text') { const t = document.createElement('textarea'); t.maxLength = 400; t.rows = 2; t.oninput = () => { txt[q.id] = t.value; }; d.insertAdjacentHTML('beforeend', '<div class="opt-note">optional</div>'); d.appendChild(t); f.appendChild(d); return; }
@@ -117,9 +138,9 @@
       f.appendChild(d);
     });
     async function submit() {
-      const msg = document.getElementById('msg'), need = PG.items.filter(q => q.id && q.kind !== 'text').map(q => q.id), missing = need.filter(id => !ans[id]);
+      const msg = document.getElementById('msg'), need = PG.items.filter(q => q.id && q.kind !== 'text').flatMap(q => q.kind === 'type' ? ['u-' + q.id, 'p-' + q.id] : [q.id]), missing = need.filter(id => !ans[id]);
       document.querySelectorAll('.q').forEach(d => d.classList.remove('missing'));
-      missing.forEach(id => { const d = document.getElementById('q-' + id); if (d) d.classList.add('missing'); });
+      missing.forEach(id => { const d = document.getElementById('q-' + id.replace(/^[up]-(t\d+)$/, '$1')); if (d) d.classList.add('missing'); });
       if (missing.length) { msg.textContent = 'please answer every question (' + missing.length + ' missing, in red)' + ''; return; }
       const go = document.getElementById('go'); if (go.disabled) return; go.disabled = true;   // no double records from a double tap
       msg.textContent = 'saving…';

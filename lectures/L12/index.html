@@ -203,6 +203,14 @@ html:root { --mono: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif; }
   .s2-item .sv-t { font-size: 0.8em; color: var(--ink); }
   #L12-S2r .sub button { font-size: 0.8em; padding: 0.1em 0.6em; }
   html.mobile .s2-item .bar-row { font-size: 0.85em; }
+  /* survey 3 results: one compact row per type, two columns */
+  .s3-list { columns: 2; column-gap: 2em; margin-top: 0.4em; font-size: 15px; }
+  .s3-row { display: grid; grid-template-columns: minmax(0, 1fr) 70px 34px 70px 40px; gap: 0 6px; align-items: center; break-inside: avoid; margin: 0 0 4px; }
+  .s3-row .lb { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .s3-row .tr { height: 9px; background: #EEEEEA; border-radius: 2px; overflow: hidden; } .s3-row .tr i { display: block; height: 9px; background: #3C4043; }
+  .s3-row .tr.p i { background: #7A3DB8; } .s3-row .n { text-align: right; color: #333; }
+  .s3-head { font-size: 13px; color: #666; }
+  html.mobile .s3-list { columns: 1; }
   /* survey results (from L10) */
   .svl-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.6em; align-items: start; margin-top: 0.5em; }
   .svl-grid .sv-box { margin-bottom: 0.9em; }
@@ -309,6 +317,10 @@ html.mobile .reveal section .l06-quiz { grid-template-columns: 1fr; } html.mobil
 <section id="L12-01" data-sid="L12-01"><div class="qr-slide"><img src="qr.svg" alt="QR code to these slides"><div class="qr-link">can-celebi.github.io/micro-business/L12</div><div class="dim small">microeconomics · lecture 12 · open on your laptop or phone</div></div></section>
 <section id="L12-signin" data-sid="L12-signin"><h2>sign in</h2><div class="rows "><div class="k fragment" data-fragment-index="1"></div><div class="v fragment" data-fragment-index="1">Tap 👤: name, nickname, class or online.</div></div></section>
 
+<section id="L12-S3" data-sid="L12-S3"><h2>survey · what to practise</h2><div class="qr-slide" style="height:auto;margin-top:1em"><img src="qr-s3.svg" alt="QR code to the survey" style="width:300px;height:300px"><div class="qr-link">can-celebi.github.io/micro-business/S12c</div><div class="dim small">anonymous · about 5 minutes · <a href="../../survey/L12/s3/index.html" target="_blank">open the survey</a></div></div></section>
+
+<section id="L12-S3r" data-sid="L12-S3r"><h2>what to practise</h2><p class="sub"><span id="s3-n" class="dim">results on the lecturer's screen</span> <button class="btn ghost" id="s3-refresh">refresh</button> <span class="dim" style="font-size:0.6em">sorted by “more practice”, then by understanding (lowest first)</span></p><div id="s3-list" class="s3-list"></div></section>
+
 <section id="L12-PS4" data-sid="L12-PS4"><h2>problem set 4</h2><div class="l09-pic" style="display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:1.4em;align-items:start"><div><div style="font-size:20px;margin:0.1em 0 0.1em" id="ps4-head"></div><div id="ps4-hist"></div></div><div><div style="font-size:20px;margin:0.1em 0 0.4em"><b>the hardest parts</b> · share fully right</div><div id="ps4-low" style="font-size:19px;line-height:1.35"></div></div></div></section>
 
 <section id="L12-S1" data-sid="L12-S1"><h2>survey · before we start</h2><div class="qr-slide" style="height:auto;margin-top:1em"><img src="qr-s1.svg" alt="QR code to the survey" style="width:300px;height:300px"><div class="qr-link">can-celebi.github.io/micro-business/S12</div><div class="dim small">anonymous · about 3 minutes · <a href="../../survey/L12/s1/index.html" target="_blank">open the survey</a></div></div></section>
@@ -321,6 +333,7 @@ html.mobile .reveal section .l06-quiz { grid-template-columns: 1fr; } html.mobil
 
 <section id="L12-S2r" data-sid="L12-S2r"><h2>did it stick? share correct</h2><p class="sub"><span id="s2-n" class="dim">results on the lecturer's screen</span> <button class="btn ghost" id="s2-refresh">refresh</button></p><div class="s2-grid"><div class="s2-item"><div class="sv-t">1 · the salad: which min functions (PS4 3B (c), the cake)</div><div class="bar-row s2-row" data-key="k1"><span class="bar-label">today</span><span class="bar-track"><span class="bar-fill" style="width:0"></span></span><span class="bar-n">–</span></div><div class="bar-row s2-ps" data-part="3B (c)"><span class="bar-label">PS4 quiz</span><span class="bar-track"><span class="bar-fill" style="width:0;background:#B8BDC4"></span></span><span class="bar-n">–</span></div></div><div class="s2-item"><div class="sv-t">2 · <i>u</i> = <i>x</i>²<i>y</i>: why the MRS differs (PS4 2A (d))</div><div class="bar-row s2-row" data-key="k2"><span class="bar-label">today</span><span class="bar-track"><span class="bar-fill" style="width:0"></span></span><span class="bar-n">–</span></div><div class="bar-row s2-ps" data-part="2A (d)"><span class="bar-label">PS4 quiz</span><span class="bar-track"><span class="bar-fill" style="width:0;background:#B8BDC4"></span></span><span class="bar-n">–</span></div></div><div class="s2-item"><div class="sv-t">3 · the laundry: budget line from words (PS4 3C (c), bus rides)</div><div class="bar-row s2-row" data-key="k3"><span class="bar-label">today</span><span class="bar-track"><span class="bar-fill" style="width:0"></span></span><span class="bar-n">–</span></div><div class="bar-row s2-ps" data-part="3C (c)"><span class="bar-label">PS4 quiz</span><span class="bar-track"><span class="bar-fill" style="width:0;background:#B8BDC4"></span></span><span class="bar-n">–</span></div></div></div></section>
 </div></div>
+<script src="../../survey/L12/types.js?v=20261111a"></script>
 <script src="../../vendor/reveal/reveal.js"></script>
 <script src="../../vendor/reveal/plugin/notes/notes.js"></script>
 <script src="../../assets/js/config.js?v=20261014a"></script>
@@ -368,6 +381,31 @@ html.mobile .reveal section .l06-quiz { grid-template-columns: 1fr; } html.mobil
     } catch (e) {} };
     document.querySelectorAll('section.sv-live').forEach(sec => { if (!sec.querySelector('[data-min]')) return; const b = sec.querySelector('.svl-refresh'); if (b) b.addEventListener('click', () => go(sec)); if (sec.classList.contains('present')) go(sec); });
     Reveal.on('slidechanged', e => { const c = e.currentSlide; if (c && c.classList.contains('sv-live') && c.querySelector('[data-min]')) go(c); });
+  })();
+</script>
+<script>
+  // survey 3 results (lecturer's screen only): per type, average understanding (1–5) and share wanting more practice; labels from survey/L12/types.js
+  (function () {
+    const MP = window.MicroPoll, sec = document.getElementById('L12-S3r'); if (!MP || !MP.teacher || !sec) return;
+    const T = window.L12_TYPES || [], st = document.getElementById('s3-n'), box = document.getElementById('s3-list');
+    const esc = x => String(x).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    async function go() {
+      st.textContent = 'loading…';
+      try {
+        const A = (await MP.textResults('L12-s3/')).filter(r => r.poll === 'L12-s3').map(r => r.answers || {});
+        const rows = T.map(([id, lab]) => {
+          const u = A.map(a => Number(a['u-' + id])).filter(v => v >= 1 && v <= 5), p = A.filter(a => a['p-' + id] === 'y' || a['p-' + id] === 'n');
+          return { lab, m: u.length ? u.reduce((x, y) => x + y, 0) / u.length : null, s: p.length ? p.filter(a => a['p-' + id] === 'y').length / p.length : null };
+        }).sort((a, b) => (b.s ?? -1) - (a.s ?? -1) || (a.m ?? 9) - (b.m ?? 9));
+        box.innerHTML = '<div class="s3-row s3-head"><span></span><span>understand</span><span></span><span>practice</span><span></span></div>' + rows.map(r =>
+          '<div class="s3-row"><span class="lb" title="' + esc(r.lab) + '">' + esc(r.lab) + '</span><span class="tr"><i style="width:' + (r.m == null ? 0 : 100 * r.m / 5) + '%"></i></span><span class="n">' + (r.m == null ? '–' : r.m.toFixed(1)) +
+          '</span><span class="tr p"><i style="width:' + (r.s == null ? 0 : 100 * r.s) + '%"></i></span><span class="n">' + (r.s == null ? '–' : Math.round(100 * r.s) + '%') + '</span></div>').join('');
+        st.textContent = 'n = ' + A.length + ' · ' + new Date().toLocaleTimeString('de-AT', { hour: '2-digit', minute: '2-digit' });
+      } catch (e) { st.textContent = 'could not load: refresh'; }
+    }
+    document.getElementById('s3-refresh').addEventListener('click', e => { e.stopPropagation(); go(); });
+    Reveal.on('slidechanged', e => { if (e.currentSlide === sec) go(); });
+    if (sec.classList.contains('present')) go();
   })();
 </script>
 <script>
