@@ -2,46 +2,50 @@
 // The engine of survey/L10/survey.js: anonymous, one record per device, poll "L12-s1" (submitText), the same gate and board code
 // as L10's s1 (quiz 1). New here: kind 'one', a column of answer buttons. The page is chosen by window.S09.
 (function () {
-  const lik = (id, t, lo, hi) => ({ id, t, kind: 'lik', lo: lo || 'not at all', hi: hi || 'very comfortable' });
+  const lik = (id, t, lo, hi) => ({ id, t, kind: 'lik', lo: lo || 'Not at all', hi: hi || 'Very comfortable' });
   const one = (id, t, o) => ({ id, t, kind: 'one', col: true, o });
   const PAGES = {
     s1: { title: 'Problem Set 4: How You Worked', sub: 'Anonymous · about 3 minutes · Microeconomics · Lecture 12', items: [
-      { head: 'problem set 4 · how you worked' },
+      { head: 'How you worked on Problem Set 4' },
       one('way', 'The problem set suggested: Problem 1 with your LLM, then Problem 2 on your own. Did you work this way?',
-        [['y', 'yes'], ['p', 'partly'], ['n', 'no, I worked another way']]),
+        [['y', 'Yes'], ['p', 'Partly'], ['n', 'No, I worked another way']]),
       one('und', 'If you went over an LLM\'s solution of Problem 1: did you understand it?',
-        [['y', 'yes, every step'], ['m', 'most of it'], ['l', 'only a little'], ['x', 'I did not use an LLM for Problem 1']]),
+        [['y', 'Yes, every step'], ['m', 'Most of it'], ['l', 'Only a little'], ['x', 'I did not use an LLM for Problem 1']]),
       one('p2', 'Then Problem 2: were you able to solve it?',
-        [['own', 'yes, on my own'], ['back', 'yes, after going back to the solution of Problem 1'], ['llm', 'only with help from the LLM'], ['no', 'no, I could not solve it'], ['skip', 'I did not try Problem 2']]),
-      { head: 'problem set 4 · how hard, how long' },
-      lik('p2d', 'Problem 2 · Kinked budget lines and a square root: how hard was it?', 'very easy', 'very hard'), { id: 'p2m', t: 'Problem 2 · Kinked budget lines and a square root: how many minutes did it take?', kind: 'num' },
-      lik('p3d', 'Problem 3 · From words to equations: how hard was it?', 'very easy', 'very hard'), { id: 'p3m', t: 'Problem 3 · From words to equations: how many minutes did it take?', kind: 'num' },
+        [['own', 'Yes, on my own'], ['back', 'Yes, after going back to the solution of Problem 1'], ['llm', 'Only with help from the LLM'], ['no', 'No, I could not solve it'], ['skip', 'I did not try Problem 2']]),
+      { head: 'How hard, how long' },
+      lik('p2d', 'Problem 2 · Kinked budget lines and a square root: how hard was it?', 'Very easy', 'Very hard'), { id: 'p2m', t: 'Problem 2 · Kinked budget lines and a square root: how many minutes did it take?', kind: 'num' },
+      lik('p3d', 'Problem 3 · From words to equations: how hard was it?', 'Very easy', 'Very hard'), { id: 'p3m', t: 'Problem 3 · From words to equations: how many minutes did it take?', kind: 'num' },
       { id: 'ps-m', t: 'The whole problem set: how many minutes in total?', kind: 'num' },
-      lik('ps-d', 'The whole problem set: how hard was it?', 'very easy', 'very hard'),
-      { head: 'from words to equations' },
+      lik('ps-d', 'The whole problem set: how hard was it?', 'Very easy', 'Very hard'),
+      { head: 'From words to equations' },
       lik('w-sub', 'Problem 3, Part A: from a story to the utility function of <b>perfect substitutes</b> (for example, two brands of pasta). How comfortable do you feel?'),
       lik('w-leo', 'Problem 3, Part B: from a story to a utility function of <b>perfect complements</b>, Leontief, with min (for example, hot dogs). How comfortable do you feel?'),
       lik('w-bud', 'Problem 3, Part C: from a story to the budget line, kinked ones included (for example, gym visits). How comfortable do you feel?'),
       one('cake', 'In the quiz, the hardest part was Problem 3, Part B (c): the cake with 3 eggs and 5 spoons of sugar. What made it hard for you?',
-        [['ok', 'nothing, I got it right'], ['num', 'which number goes with which good'], ['two', 'that two different functions can describe the same preferences'], ['g', 'I was not sure and guessed']])
+        [['ok', 'Nothing, I got it right'], ['num', 'Which number goes with which good'], ['two', 'That two different functions can describe the same preferences'], ['g', 'I was not sure and guessed']])
     ] },
     // survey 2 (Can 11.11, ~16:00): the three hardest non-calculation parts of the PS4 quiz again, a slight variation each. Answers a–e;
     // the key is not in this file (it sits encrypted under the teacher code in s2-key.json, read by the deck's results slide).
     // survey 3 (Can 11.11, Addition 7): every type of question so far (survey/L12/types.js); per type, understand 1–5 and want more practice yes/no
     s3: { title: 'Topics for Practice', sub: 'Anonymous · about 6 minutes · Microeconomics · Lecture 12', items: [
-      { head: 'every type of question so far' },
+      { head: 'Every type of question so far' },
       { note: 'For each line: how well do you understand it (1 not at all … 5 very well), and do you want more practice on it?' },
       ...(window.L12_TYPES || []).map(([id, , t]) => ({ id, t, kind: 'type' })),
-      { head: 'anything else' },
+      { head: 'Anything else' },
       { id: 'more', t: 'Anything else you want to practise before the midterm?', kind: 'text' }
     ] },
-    s2: { title: 'Review of Problem Set 4', sub: 'Anonymous · 3 questions · Microeconomics · Lecture 12', items: [
+    s2: { title: 'Review of Problem Set 4', sub: 'Anonymous · 5 questions · Microeconomics · Lecture 12', items: [
       one('k1', 'A salad requires 4 tomatoes and 3 cucumbers, always in that ratio. Let <span class="m"><i>x</i></span> denote the number of tomatoes and <span class="m"><i>y</i></span> the number of cucumbers. The consumer cares only about the number of salads. Consider these utility functions.<br>I. <span class="m"><i>u</i> = min{4<i>x</i>, 3<i>y</i>}</span><br>II. <span class="m"><i>u</i> = min{<span class="fr"><span><i>x</i></span><span>4</span></span>, <span class="fr"><span><i>y</i></span><span>3</span></span>}</span><br>III. <span class="m"><i>u</i> = min{3<i>x</i>, 4<i>y</i>}</span><br>Which of the utility functions above represent these preferences?',
-        [['a', 'only II'], ['b', 'only III'], ['c', 'I and II'], ['d', 'II and III'], ['e', 'I, II and III']]),
+        [['a', 'Only II'], ['b', 'Only III'], ['c', 'I and II'], ['d', 'II and III'], ['e', 'I, II and III']]),
       one('k2', 'A consumer has the utility function <span class="m"><i>u</i>(<i>x</i>, <i>y</i>) = <i>x</i><sup>2</sup><i>y</i></span>. Both prices are €1 and the income is €8, so the budget line is <span class="m"><i>x</i> + <i>y</i> = 8</span>. Consider the bundles P = (2, 6) and Q = (4, 4). The MRS is different at P and at Q. Consider these statements.<br>I. The exponent 2 in the utility function is different at P and at Q.<br>II. The ratio <span class="m"><span class="fr"><span><i>y</i></span><span><i>x</i></span></span></span> is different at P and at Q.<br>III. The marginal utility of <span class="m"><i>x</i></span> depends on both <span class="m"><i>x</i></span> and <span class="m"><i>y</i></span>.<br>Which of the statements above give the reason?',
-        [['a', 'only I'], ['b', 'only II'], ['c', 'I and II'], ['d', 'II and III'], ['e', 'I, II and III']]),
+        [['a', 'Only I'], ['b', 'Only II'], ['c', 'I and II'], ['d', 'II and III'], ['e', 'I, II and III']]),
       one('k3', 'A student has €30 a month. The first 4 washes in the dormitory laundry are free, and each further wash costs €3. The student can book at most 8 washes a month. All other goods cost €1 per unit. Let <span class="m"><i>x</i></span> denote the number of washes and <span class="m"><i>y</i></span> the quantity of all other goods. Which equations describe the student\'s budget line?',
-        [['a', '<span class="m">3<i>x</i> + <i>y</i> = 30</span> for <span class="m"><i>x</i> ≤ 8</span>'], ['b', '<span class="m"><i>y</i> = 30</span> for <span class="m"><i>x</i> ≤ 4</span>, and <span class="m">3<i>x</i> + <i>y</i> = 30</span> for <span class="m">4 ≤ <i>x</i> ≤ 8</span>'], ['c', '<span class="m"><i>y</i> = 30</span> for <span class="m"><i>x</i> ≤ 4</span>, and <span class="m">3<i>x</i> + <i>y</i> = 42</span> for <span class="m">4 ≤ <i>x</i> ≤ 8</span>'], ['d', '<span class="m"><i>y</i> = 30</span> for <span class="m"><i>x</i> ≤ 4</span>, and <span class="m">3<i>x</i> + <i>y</i> = 34</span> for <span class="m">4 ≤ <i>x</i> ≤ 8</span>'], ['e', '<span class="m"><i>y</i> = 30</span> for <span class="m"><i>x</i> ≤ 4</span>, and <span class="m">3<i>x</i> + <i>y</i> = 42</span> for <span class="m"><i>x</i> ≥ 4</span>, with no limit on the number of washes']])
+        [['a', '<span class="m">3<i>x</i> + <i>y</i> = 30</span> for <span class="m"><i>x</i> ≤ 8</span>'], ['b', '<span class="m"><i>y</i> = 30</span> for <span class="m"><i>x</i> ≤ 4</span>, and <span class="m">3<i>x</i> + <i>y</i> = 30</span> for <span class="m">4 ≤ <i>x</i> ≤ 8</span>'], ['c', '<span class="m"><i>y</i> = 30</span> for <span class="m"><i>x</i> ≤ 4</span>, and <span class="m">3<i>x</i> + <i>y</i> = 42</span> for <span class="m">4 ≤ <i>x</i> ≤ 8</span>'], ['d', '<span class="m"><i>y</i> = 30</span> for <span class="m"><i>x</i> ≤ 4</span>, and <span class="m">3<i>x</i> + <i>y</i> = 34</span> for <span class="m">4 ≤ <i>x</i> ≤ 8</span>'], ['e', '<span class="m"><i>y</i> = 30</span> for <span class="m"><i>x</i> ≤ 4</span>, and <span class="m">3<i>x</i> + <i>y</i> = 42</span> for <span class="m"><i>x</i> ≥ 4</span>, with no limit on the number of washes']]),
+      one('k4', 'A pot of soup requires 3 carrots and 2 onions, always in that ratio. Let <span class="m"><i>x</i></span> denote the number of carrots and <span class="m"><i>y</i></span> the number of onions. The consumer cares only about the number of pots of soup. Consider these utility functions.<br>I. <span class="m"><i>u</i> = min{2<i>x</i>, 3<i>y</i>}</span><br>II. <span class="m"><i>u</i> = min{3<i>x</i>, 2<i>y</i>}</span><br>III. <span class="m"><i>u</i> = min{4<i>x</i>, 6<i>y</i>}</span><br>Which of the utility functions above represent these preferences?',
+        [['a', 'Only I'], ['b', 'I and II'], ['c', 'I and III'], ['d', 'II and III'], ['e', 'I, II and III']]),
+      one('k5', 'A smoothie requires 1 banana and 4 strawberries, always in that ratio. Let <span class="m"><i>x</i></span> denote the number of bananas and <span class="m"><i>y</i></span> the number of strawberries. The consumer cares only about the number of smoothies. Consider these utility functions.<br>I. <span class="m"><i>u</i> = min{<i>x</i>, 4<i>y</i>}</span><br>II. <span class="m"><i>u</i> = min{8<i>x</i>, 2<i>y</i>}</span><br>III. <span class="m"><i>u</i> = min{<span class="fr"><span><i>x</i></span><span>4</span></span>, <i>y</i>}</span><br>Which of the utility functions above represent these preferences?',
+        [['a', 'Only I'], ['b', 'Only II'], ['c', 'I and II'], ['d', 'II and III'], ['e', 'I, II and III']])
     ] }
   };
   const S = window.S09 || 's1', PG = PAGES[S], POLL = 'L12-' + S, ans = {}, txt = {};
@@ -97,14 +101,14 @@
     const code = LS('micro-teacher-code') || '';
     const tag = async v => (await sha('micro-gate:' + code.trim() + ':' + SALT + GQ + ':' + v)).slice(0, 8);
     app.innerHTML = '<h1>' + PG.title + ' · lecturer</h1><p class="s">state: <b id="st">…</b></p>' +
-      '<div class="opts"><button class="go" id="op" type="button">[ open ]</button> <button class="opt" id="cl" type="button">[ close ]</button> <button class="opt" id="rf" type="button">[ refresh ]</button></div><div id="res" class="msg"></div>';
+      '<div class="opts"><button class="go" id="op" type="button">Open</button> <button class="opt" id="cl" type="button">Close</button> <button class="opt" id="rf" type="button">Refresh</button></div><div id="res" class="msg"></div>';
     const setState = async v => { $('st').textContent = 'Saving…'; try { await P.submit(GATE, v + '-' + await tag(v)); $('st').textContent = v; } catch (e) { $('st').textContent = 'not saved, tap again'; } };
     $('op').onclick = () => setState('open');
-    $('cl').onclick = () => { if ($('cl').dataset.sure) setState('closed'); else { $('cl').dataset.sure = 1; $('st').textContent = 'tap [ close ] again: closing is final for this survey'; } };
+    $('cl').onclick = () => { if ($('cl').dataset.sure) setState('closed'); else { $('cl').dataset.sure = 1; $('st').textContent = 'tap Close again: closing is final for this survey'; } };
     async function refresh() {
       $('res').textContent = 'loading…';
       try { $('st').textContent = await gateState(); const r = await P.textResults(POLL).catch(() => []); const n = new Set((r || []).filter(x => x.poll === POLL).map(x => x.client)).size; $('res').innerHTML = '<b>' + n + ' answered</b> <span class="s">· the results are on the next slide</span>'; }
-      catch (e) { $('res').textContent = 'could not load: tap [ refresh ] again'; }
+      catch (e) { $('res').textContent = 'could not load: tap Refresh again'; }
     }
     $('rf').onclick = refresh; refresh();
   }
@@ -122,8 +126,8 @@
         const row = document.createElement('div'); row.className = 'opts';
         const u = document.createElement('div'); u.className = 'opts'; const pr = document.createElement('div'); pr.className = 'opts';
         ['1', '2', '3', '4', '5'].forEach(v => { const b = document.createElement('button'); b.type = 'button'; b.className = 'opt'; b.textContent = v; b.onclick = () => { ans['u-' + q.id] = v; pick(u, b); }; u.appendChild(b); });
-        [['y', 'more practice'], ['n', 'no']].forEach(([v, l]) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'opt'; b.textContent = l; b.onclick = () => { ans['p-' + q.id] = v; pick(pr, b); }; pr.appendChild(b); });
-        u.insertAdjacentHTML('afterbegin', '<span class="opt-note" style="align-self:center">understand</span>'); pr.insertAdjacentHTML('afterbegin', '<span class="opt-note" style="align-self:center">practice?</span>');
+        [['y', 'More practice'], ['n', 'No']].forEach(([v, l]) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'opt'; b.textContent = l; b.onclick = () => { ans['p-' + q.id] = v; pick(pr, b); }; pr.appendChild(b); });
+        u.insertAdjacentHTML('afterbegin', '<span class="opt-note" style="align-self:center">Understand</span>'); pr.insertAdjacentHTML('afterbegin', '<span class="opt-note" style="align-self:center">Practice?</span>');
         row.style.cssText = 'gap:14px;align-items:center'; row.appendChild(u); row.appendChild(pr); d.appendChild(row); f.appendChild(d); return;
       }
       const d = document.createElement('div'); d.className = 'q' + (q.kind === 'lik' ? ' likert' : ''); d.id = 'q-' + q.id;
