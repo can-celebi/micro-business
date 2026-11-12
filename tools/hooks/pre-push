@@ -1,0 +1,118 @@
+#!/usr/bin/env python3
+"""Content guard for pushes to the public site repo (house rule 5.14, Vladimir 12.11; Ali). Git runs this before every push.
+
+It refuses the push when a file changed in the pushed commits
+  1. is a private data file (pool*.json, *choices*.json, practice_items.json, templates.json, midterm-items.js, anything under 00_admin/keys);
+  2. contains the lecturer code (read from MICRO-CAN/00_admin/keys/teacher-code.txt; never printed);
+  3. brings in a 40-character stretch of any midterm exam item (text, statements, question, options, solution) that the file did not
+     have before (wording shared by 3 or more exam items aside; what was already public is not a new leak);
+  4. is practice/items.js and one of its items shares a budget with an exam item (24_quiz-builder/practice_screen.py).
+It fails closed: if the private sources cannot be found (MICRO-CAN/05_exams, 23_leonardo, 24_quiz-builder), the push is refused.
+Nothing private is printed: only file names, exam item ids and the kind of hit.
+
+Install once per clone (all worktrees share it):   git config core.hooksPath tools/hooks
+Skipping it with --no-verify breaks house rule 5.14; ask Celebi instead.
+"""
+import json, os, re, subprocess, sys
+from pathlib import Path
+
+ZERO = "0" * 40
+def git(*a):
+    return subprocess.run(["git", *a], capture_output=True, text=True).stdout
+
+def micro_can():
+    p = Path(git("rev-parse", "--show-toplevel").strip()).resolve()
+    for d in [p, *p.parents]:
+        if (d / "05_exams").is_dir() and (d / "24_quiz-builder").is_dir():
+            return d
+    return None
+
+def refuse(msgs):
+    print("\npre-push content guard: PUSH REFUSED (house rule 5.14)", file=sys.stderr)
+    for m in msgs[:30]:
+        print("  - " + m, file=sys.stderr)
+    print("Fix the content, or ask Celebi; do not push with --no-verify.\n", file=sys.stderr)
+    sys.exit(1)
+
+norm = lambda s: re.sub(r"\s+", " ", re.sub(r"[$\\{}]", "", str(s))).strip().lower()
+PRIVATE = re.compile(r"(^|/)(pool[^/]*\.json|[^/]*choices[^/]*\.json|practice_items\.json|templates\.json|midterm-items\.js)$|(^|/)00_admin/keys/")
+
+def main():
+    M = micro_can()
+    if not M:
+        refuse(["the private sources (MICRO-CAN/05_exams, 24_quiz-builder) were not found next to this repo: cannot screen, so no push"])
+    sys.path.insert(0, str(M / "24_quiz-builder"))
+    try:
+        import practice_screen
+    except Exception as e:
+        refuse([f"24_quiz-builder/practice_screen.py could not be loaded ({type(e).__name__})"])
+    # exam windows
+    texts = []
+    for src in practice_screen.SOURCES:
+        if not src.exists():
+            continue
+        d = json.loads(src.read_text(encoding="utf-8"))
+        for it in (d.get("items", d) if isinstance(d, dict) else d):
+            parts = [it.get("text") or it.get("stem") or "", it.get("question") or "", it.get("solution") or ""]
+            parts += list(it.get("statements") or [])
+            o = it.get("options") or {}
+            parts += list(o.values()) if isinstance(o, dict) else list(o)
+            texts.append((it["id"], norm(" ".join(str(x) for x in parts if isinstance(x, str)))))
+    if not texts:
+        refuse(["no exam items were found to screen against: cannot screen, so no push"])
+    win, owners = 40, {}
+    for iid, t in texts:
+        for k in range(0, max(0, len(t) - win + 1), 5):
+            owners.setdefault(t[k:k + win], set()).add(iid)
+    windows = {w: ids for w, ids in owners.items() if len(ids) < 3}   # wording 3+ exam items share is not item content
+    code = ""
+    kf = Path(os.environ["PREPUSH_TEST_CODE_FILE"]) if os.environ.get("PREPUSH_TEST_CODE_FILE") else M / "00_admin/keys/teacher-code.txt"   # override: tests only, with a dummy code
+    if kf.exists():
+        code = kf.read_text(encoding="utf-8").strip()
+    hits = []
+    for line in sys.stdin:
+        parts = line.split()
+        if len(parts) != 4:
+            continue
+        local_ref, local_sha, remote_ref, remote_sha = parts
+        if local_sha == ZERO:
+            continue
+        base = remote_sha if remote_sha != ZERO else git("merge-base", local_sha, "origin/main").strip()
+        files = [f for f in git("diff", "--name-only", "--diff-filter=AMR", f"{base}..{local_sha}" if base else local_sha).split("\n") if f]
+        for f in files:
+            if PRIVATE.search(f):
+                hits.append(f"{f}: a private data file"); continue
+            blob = subprocess.run(["git", "show", f"{local_sha}:{f}"], capture_output=True).stdout
+            try:
+                text = blob.decode("utf-8")
+            except UnicodeDecodeError:
+                continue
+            if code and len(code) >= 4 and code in text:
+                hits.append(f"{f}: contains the lecturer code"); continue
+            # only exam wording this push brings in counts: what the file already had before (already public) is not a new leak
+            def matched(t):
+                n = norm(t); out = set()
+                for k in range(0, max(0, len(n) - win + 1)):
+                    if n[k:k + win] in windows: out.add(n[k:k + win])
+                return out
+            new = matched(text)
+            if new and base:
+                old = subprocess.run(["git", "show", f"{base}:{f}"], capture_output=True).stdout.decode("utf-8", "replace")
+                new -= matched(old)
+            found = set().union(*(windows[w] for w in new)) if new else set()
+            if found:
+                hits.append(f"{f}: repeats wording of exam item(s) {', '.join(sorted(found)[:5])}")
+            if f == "practice/items.js":
+                try:
+                    d = json.loads(re.sub(r"^window\.PRACTICE\s*=\s*|;\s*$", "", text.strip()))
+                    items = [(it["id"], it["text"], it["options"], k2) for it in d["items"] for k2 in it["options"]]
+                    c = practice_screen.collisions(items)
+                except Exception as e:
+                    hits.append(f"{f}: could not be screened ({type(e).__name__})"); continue
+                if c:
+                    hits.append(f"{f}: shares budgets with exam items {', '.join(sorted(c)[:8])}{' …' if len(c) > 8 else ''}")
+    if hits:
+        refuse(hits)
+    print("pre-push content guard: passed", file=sys.stderr)
+
+main()
