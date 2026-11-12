@@ -113,7 +113,7 @@
   function home() {
     if (!me.nick) return askNick();
     app.innerHTML = header() + '<p class="sub">Choose a category. Each question gives its points once, for a right first answer.</p><div class="cats" id="cats"></div>' +
-      '<p class="fine">For practice only. Answers are checked in your browser, so this is not a test of anything; the leaderboard is just for fun. Nothing but your nickname and scores is stored.</p>';
+      '<p class="fine">For practice only. Answers are checked in your browser, and nothing here counts towards your grade. The leaderboard is just for fun; only your nickname and scores are stored.</p>';
     const box = document.getElementById('cats');
     cats.forEach(c => {
       const all = byCat(c.id), done = all.filter(it => it.id in me.done).length;
@@ -132,7 +132,7 @@
     const c = cats.find(x => x.id === cat);
     if (!it) { app.innerHTML = header() + '<h2>' + esc(c.name) + '</h2><p>You have done every question here. Well done.</p><p><button type="button" id="back">Other categories</button></p>'; document.getElementById('back').onclick = home; wire(); return; }
     const L = 'abcde';
-    app.innerHTML = header() + '<h2>' + esc(c.name) + '</h2><div class="card"><div class="qmeta"><span>' + esc(it.level) + ' · ' + it.points + ' points</span><span>' + byCat(cat).filter(x => x.id in me.done).length + ' of ' + byCat(cat).length + ' done</span></div>' +
+    app.innerHTML = header() + '<h2>' + esc(c.name) + '</h2><div class="card"><div class="qmeta"><span>' + it.points + ' points</span><span>' + byCat(cat).filter(x => x.id in me.done).length + ' of ' + byCat(cat).length + ' done</span></div>' +
       '<p class="qtext">' + tex(it.text) + '</p>' +
       (it.statements ? '<ul class="stmts">' + it.statements.map((s, i) => '<li><span class="r">' + ['I.', 'II.', 'III.', 'IV.', 'V.'][i] + '</span>' + tex(s) + '</li>').join('') + '</ul>' : '') +
       (it.question ? '<p class="qtext">' + tex(it.question) + '</p>' : '') +
@@ -146,8 +146,10 @@
       const right = hs.indexOf(it.h), chosen = +b.dataset.i, ok = chosen === right;
       if (!(it.id in me.done)) { me.done[it.id] = ok ? 1 : 0; keep(); }
       btns[right] && btns[right].classList.add('right'); if (!ok) b.classList.add('wrong');
-      document.getElementById('after').innerHTML = '<p class="verdict ' + (ok ? 'ok' : 'no') + '">' + (ok ? 'Right: +' + it.points + ' points.' : 'Not quite.') + '</p>' +
-        '<div class="sol">' + (it.solution ? tex(it.solution) : 'The answer is ' + L[right] + ') ' + tex(it.options[right]) + '.') + '</div>' +
+      document.getElementById('after').innerHTML = '<p class="verdict ' + (ok ? 'ok' : 'no') + '">' + (ok ? 'Correct: +' + it.points + ' points.' : 'Incorrect.') + '</p>' +
+        // the solution, step by step with the numbers (Can, via Celebi 12.11): a list of steps, open at once; a single line still works
+        '<div class="sol"><div class="solh">Solution</div>' + (Array.isArray(it.solution) && it.solution.length ? '<ol class="steps">' + it.solution.map(s => '<li>' + tex(s) + '</li>').join('') + '</ol>'
+          : it.solution ? tex(it.solution) : '') + '<p class="ans">The answer is ' + L[right] + ') ' + tex(it.options[right]) + '.</p></div>' +
         '<div class="next"><button class="go" type="button" id="nx">Next question</button></div>';
       const nx = document.getElementById('nx'); nx.onclick = () => ask(cat); nx.focus();
       app.querySelector('.me') && (app.querySelector('.me').firstElementChild.nextSibling.textContent = ' · ' + score() + ' points · ');
