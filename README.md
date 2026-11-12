@@ -10,8 +10,10 @@ Served via GitHub Pages; the link is posted on Moodle. Problem sets and quizzes 
 
 ## Before pushing: the content guard (house rule 5.14)
 
-`tools/hooks/pre-push` refuses a push that brings exam item wording, a private data file, the lecturer code, or a practice item sharing a budget with an exam item into this public repo. It reads the private sources next to this repo (`MICRO-CAN/05_exams`, `23_leonardo`, `24_quiz-builder`) and refuses when it cannot find them. Install it once per clone (all worktrees share it):
+The guard refuses a push that brings into this public repo: exam item wording (also inside PDFs), a private data file, the lecturer code, an unreadable binary, or a practice item that leaks an exam item (a shared budget line, the same answer, an exam answer printed in it). It refuses too when the pushed range cannot be read (run `git fetch`) or the private sources are missing.
 
-    git config core.hooksPath tools/hooks
+It lives OUTSIDE this repo, at one absolute path next to the private sources it reads (`MICRO-CAN/24_quiz-builder/hooks/pre-push`), so a checkout or worktree on any branch runs it. Install it once in the main checkout (all worktrees share the config):
+
+    git config core.hooksPath "<absolute path to MICRO-CAN>/24_quiz-builder/hooks"
 
 Do not push with `--no-verify`; if the guard blocks something that must go out, ask Celebi.
