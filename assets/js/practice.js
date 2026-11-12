@@ -7,8 +7,11 @@
 // with the public data token, so anyone can write any score. The leaderboard is for fun, not for grades.
 // Leaderboard storage, like the polls: one git ref per player in the data repo,
 //   refs/heads/v/<session>/practice/<ts>--<cid>--<nick>--<total>--<CAT.points_CAT.points>
-// A new score writes a new ref and then deletes the player's previous one, so one API call reads the whole board. Writes are throttled
-// (shared token): at most every 2 minutes while answering, and when the page is hidden or left.
+// A new score writes a new ref and then deletes the player's previous one, so one API call reads the whole board.
+// Time per answer (Can 12.11, Addition 3; Hande's format): one record per answer {ts, client, nick, run, item, template, slot, mirrors,
+// level, points, attempt, seconds, capped, correct, lecturer}; seconds = visible time only, capped at 900. Records wait on the device
+// and go as one batch: a blob + a tag ref t/<session>/practice-times/<ts>--<cid>, exported by tools/export_practice.py.
+// Writes are throttled (one shared token): scores and times together at most every 5 minutes, and when the page is hidden or left.
 (function () {
   'use strict';
   const D = window.PRACTICE, CFG = window.MICRO_CONFIG || {}, GH = CFG.github || {};
@@ -21,14 +24,16 @@
   const API = 'https://api.github.com/repos/' + GH.owner + '/' + GH.repo;
   const PREFIX = 'heads/v/' + SESSION + '/practice/';
   const KEY = 'micro-practice-v1' + (SESSION === 'test' ? '-test' : '');
-  const WRITE_EVERY = 120000;
+  const WRITE_EVERY = 300000, CAP = 900;
   const cats = D.categories, byCat = id => D.items.filter(it => it.cat === id);
 
   // ---------- this device's progress: {nick, cid, done: {id: 1 right first time | 0 wrong}, ref, wrote} ----------
   let me = {};
   try { me = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { me = {}; }
   if (!me.cid) me.cid = Math.random().toString(36).slice(2, 10);
-  me.done = me.done || {};
+  me.done = me.done || {}; me.attempts = me.attempts || {}; me.pending = me.pending || [];
+  let lecturer = false; try { lecturer = !!localStorage.getItem('micro-teacher-code'); } catch (e) {}
+  let RUNID = '';
   const keep = () => { try { localStorage.setItem(KEY, JSON.stringify(me)); } catch (e) {} };
   keep();
   const pointsOf = id => { const it = D.items.find(x => x.id === id); return it ? it.points : 0; };
@@ -54,19 +59,57 @@
     return lead + core.split(/(,\s*and\s+|,\s+)/).map((p, i) => i % 2 ? p : (isEq(p) ? eq(p) : proseVars(p))).join('') + trail;
   });
 
+  // figures: one inline SVG (solution "figure", question "stem_figure"), cleaned to drawing elements and plain colours (Utku's rules)
+  const SVG_OK = new Set(['svg', 'g', 'line', 'polyline', 'polygon', 'path', 'circle', 'ellipse', 'text', 'tspan', 'rect', 'title']);
+  const ATTR_OK = new Set(['xmlns', 'viewBox', 'width', 'height', 'x', 'y', 'x1', 'y1', 'x2', 'y2', 'cx', 'cy', 'r', 'rx', 'ry', 'points', 'd', 'dx', 'dy', 'fill', 'stroke',
+    'stroke-width', 'stroke-dasharray', 'stroke-linecap', 'stroke-linejoin', 'fill-opacity', 'stroke-opacity', 'opacity', 'font-size', 'font-family', 'font-style',
+    'font-weight', 'text-anchor', 'dominant-baseline', 'transform', 'role', 'aria-label']);
+  const COLOUR = /^(none|currentColor|[a-zA-Z]{3,20}|#[0-9a-fA-F]{3,8}|rgba?\(\s*[\d.]+%?\s*,\s*[\d.]+%?\s*,\s*[\d.]+%?\s*(,\s*[\d.]+\s*)?\))$/;
+  function cleanSvg(src) {
+    try {
+      const doc = new DOMParser().parseFromString(String(src), 'image/svg+xml'), root = doc.documentElement;
+      if (!root || root.nodeName !== 'svg' || doc.getElementsByTagName('parsererror').length) return null;
+      const walk = el => { [...el.children].forEach(c => { if (!SVG_OK.has(c.nodeName)) c.remove(); else walk(c); });
+        [...el.attributes].forEach(a => { if (!ATTR_OK.has(a.name) || /url\s*\(|javascript:|expression\s*\(|\\|&/i.test(a.value) || ((a.name === 'fill' || a.name === 'stroke') && !COLOUR.test(a.value.trim()))) el.removeAttribute(a.name); }); };
+      walk(root); root.removeAttribute('width'); root.removeAttribute('height'); root.setAttribute('class', 'figsvg');
+      return document.importNode(root, true);
+    } catch (e) { return null; }
+  }
+  function putFig(box, src) { if (!box) return; const f = cleanSvg(src); if (f) box.appendChild(f); else box.remove(); }
+
+  // the clock (as survey 2): runs only while the page is on screen
+  const clock = { t0: 0, acc: 0, away: true };
+  const clockStart = () => { clock.acc = 0; clock.away = document.hidden; clock.t0 = performance.now(); };
+  const clockStop = () => { if (!clock.away) clock.acc += performance.now() - clock.t0; clock.away = true; return Math.round(clock.acc / 1000); };
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden && !clock.away) { clock.acc += performance.now() - clock.t0; clock.away = true; }
+    else if (!document.hidden && clock.away && clock.t0) { clock.away = false; clock.t0 = performance.now(); }
+  });
+
   async function sha(text) { const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text)); return [...new Uint8Array(b)].map(v => v.toString(16).padStart(2, '0')).join(''); }
 
   // ---------- GitHub refs ----------
   const H = () => ({ Authorization: 'Bearer ' + TOKEN, Accept: 'application/vnd.github+json' });
   let mainSha = null, lastWrite = 0, writing = false, etag = null, board = null;
+  async function sendTimes(force) {
+    if (!me.pending.length) return;
+    const batch = me.pending.slice(0, 200);
+    const b = await fetch(API + '/git/blobs', { method: 'POST', headers: H(), body: JSON.stringify({ content: JSON.stringify({ v: 1, session: SESSION, client: me.cid, records: batch }), encoding: 'utf-8' }), keepalive: !!force });
+    if (b.status !== 201) return;
+    const blob = (await b.json()).sha;
+    const r = await fetch(API + '/git/refs', { method: 'POST', headers: H(), body: JSON.stringify({ ref: 'refs/tags/t/' + SESSION + '/practice-times/' + Date.now() + '--' + me.cid, sha: blob }), keepalive: !!force });
+    if (r.ok || r.status === 422) { me.pending = me.pending.slice(batch.length); keep(); }
+  }
   async function writeScore(force) {
     if (!TOKEN || !me.nick || writing) return;
     const total = score(), cs = cats.map(c => c.id + '.' + score(c.id)).join('_');
     const sig = total + '|' + cs + '|' + me.nick;
-    if (sig === me.wrote) return;
+    if (sig === me.wrote && !me.pending.length) return;
     if (!force && Date.now() - lastWrite < WRITE_EVERY) return;
     writing = true; lastWrite = Date.now();
     try {
+      try { await sendTimes(force); } catch (e) {}
+      if (sig === me.wrote) return;
       if (!mainSha) { const r = await fetch(API + '/git/ref/heads/main', { headers: H(), cache: 'no-store' }); if (!r.ok) throw 0; mainSha = (await r.json()).object.sha; }
       const name = 'refs/' + PREFIX + Date.now() + '--' + me.cid + '--' + me.nick + '--' + total + '--' + cs;
       const w = await fetch(API + '/git/refs', { method: 'POST', headers: H(), body: JSON.stringify({ ref: name, sha: mainSha }), keepalive: !!force });
@@ -113,13 +156,13 @@
   function home() {
     if (!me.nick) return askNick();
     app.innerHTML = header() + '<p class="sub">Choose a category. Each question gives its points once, for a right first answer.</p><div class="cats" id="cats"></div>' +
-      '<p class="fine">For practice only. Answers are checked in your browser, and nothing here counts towards your grade. The leaderboard is just for fun; only your nickname and scores are stored.</p>';
+      '<p class="fine">For practice only. Answers are checked in your browser, and nothing here counts towards your grade. The leaderboard is just for fun; only your nickname and scores are stored. Time per question is recorded anonymously to improve the course.</p>';
     const box = document.getElementById('cats');
     cats.forEach(c => {
       const all = byCat(c.id), done = all.filter(it => it.id in me.done).length;
       const b = document.createElement('button'); b.type = 'button'; b.className = 'cat';
       b.innerHTML = '<span class="n">' + esc(c.name) + '</span><span class="d">' + done + ' of ' + all.length + ' done · ' + score(c.id) + ' points</span>';
-      b.onclick = () => ask(c.id); box.appendChild(b);
+      b.onclick = () => { RUNID = Date.now().toString(36) + Math.random().toString(36).slice(2, 5); ask(c.id); }; box.appendChild(b);
     });
     wire();
   }
@@ -134,23 +177,33 @@
     const L = 'abcde';
     app.innerHTML = header() + '<h2>' + esc(c.name) + '</h2><div class="card"><div class="qmeta"><span>' + it.points + ' points</span><span>' + byCat(cat).filter(x => x.id in me.done).length + ' of ' + byCat(cat).length + ' done</span></div>' +
       '<p class="qtext">' + tex(it.text) + '</p>' +
+      (it.stem_figure ? '<div class="fig" id="sfig"></div>' : '') +
       (it.statements ? '<ul class="stmts">' + it.statements.map((s, i) => '<li><span class="r">' + ['I.', 'II.', 'III.', 'IV.', 'V.'][i] + '</span>' + tex(s) + '</li>').join('') + '</ul>' : '') +
       (it.question ? '<p class="qtext">' + tex(it.question) + '</p>' : '') +
       '<div class="opts">' + it.options.map((o, i) => '<button type="button" class="opt" data-i="' + i + '"><span class="l">' + L[i] + ')</span><span>' + tex(o) + '</span></button>').join('') + '</div>' +
       '<div id="after"></div></div><p><button class="link" type="button" id="back">other categories</button></p>';
     document.getElementById('back').onclick = () => { writeScore(true); home(); }; wire();
+    putFig(document.getElementById('sfig'), it.stem_figure);
+    clockStart();
     const btns = [...app.querySelectorAll('.opt')];
     btns.forEach(b => b.onclick = async () => {
       btns.forEach(x => x.disabled = true);
+      const secs = clockStop();
       const hs = await Promise.all(it.options.map(o => sha(D.salt + it.id + '\n' + o)));
       const right = hs.indexOf(it.h), chosen = +b.dataset.i, ok = chosen === right;
-      if (!(it.id in me.done)) { me.done[it.id] = ok ? 1 : 0; keep(); }
+      if (!(it.id in me.done)) me.done[it.id] = ok ? 1 : 0;
+      me.attempts[it.id] = (me.attempts[it.id] || 0) + 1;
+      me.pending.push({ ts: new Date().toISOString(), client: me.cid, nick: me.nick, run: RUNID, item: it.id, template: it.cat, slot: it.slot || null, mirrors: it.mirrors || null,
+        level: it.level, points: it.points, attempt: me.attempts[it.id], seconds: Math.min(CAP, secs), capped: secs >= CAP, correct: ok, lecturer });
+      keep();
       btns[right] && btns[right].classList.add('right'); if (!ok) b.classList.add('wrong');
       document.getElementById('after').innerHTML = '<p class="verdict ' + (ok ? 'ok' : 'no') + '">' + (ok ? 'Correct: +' + it.points + ' points.' : 'Incorrect.') + '</p>' +
         // the solution, step by step with the numbers (Can, via Celebi 12.11): a list of steps, open at once; a single line still works
         '<div class="sol"><div class="solh">Solution</div>' + (Array.isArray(it.solution) && it.solution.length ? '<ol class="steps">' + it.solution.map(s => '<li>' + tex(s) + '</li>').join('') + '</ol>'
-          : it.solution ? tex(it.solution) : '') + '<p class="ans">The answer is ' + L[right] + ') ' + tex(it.options[right]) + '.</p></div>' +
+          : it.solution ? tex(it.solution) : '') + (it.figure ? '<div class="fig" id="solfig"></div>' : '') + (it.explanation ? '<p class="expl">' + tex(it.explanation) + '</p>' : '') +
+        '<p class="ans">The answer is ' + L[right] + ') ' + tex(it.options[right]) + '.</p></div>' +
         '<div class="next"><button class="go" type="button" id="nx">Next question</button></div>';
+      putFig(document.getElementById('solfig'), it.figure);   // the solution figure marks the answer: only after answering (Ulutin)
       const nx = document.getElementById('nx'); nx.onclick = () => ask(cat); nx.focus();
       app.querySelector('.me') && (app.querySelector('.me').firstElementChild.nextSibling.textContent = ' · ' + score() + ' points · ');
       writeScore(false);
