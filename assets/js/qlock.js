@@ -75,6 +75,9 @@
   html.mobile .lq-unlock .lq-btn { font-size: 18px; padding: 8px 22px; min-height: 44px; }
   html.mobile .lq-unlock .lq-st { flex-basis: 100%; font-size: 16px; }
   html.mobile #lq-box { padding: 12px 14px; font-size: 16px; }
+  /* a formula reads as one unit (Celebi, Gozde 12.11): each inline formula in the solution box sits in an unbreakable span; a formula wider
+     than the box makes the box scroll sideways (#lq-box overflow: auto), never the page */
+  #lq-box .lq-m { white-space: nowrap; }
   html.mobile .ink-btn { bottom: 60px; }   /* off the menu button */
   @media (max-height: 500px) {
     html.mobile .reveal .slides > section[data-q] > h2, html.mobile .reveal .slides > section[id$="-signin"] > h2 { margin-top: 2px !important; }
@@ -140,6 +143,10 @@
     const v = document.createElement('div'); v.id = 'lq-view';
     const b = document.createElement('div'); b.id = 'lq-box';
     b.innerHTML = '<button type="button" id="lq-close">close</button>' + html;
+    b.querySelectorAll('math').forEach(m => {   // keep each inline formula on one line
+      if (m.getAttribute('display') === 'block') return;
+      const w = document.createElement('span'); w.className = 'lq-m'; m.replaceWith(w); w.appendChild(m);
+    });
     v.appendChild(b); document.body.appendChild(v);
     b.querySelector('#lq-close').addEventListener('click', e => { e.stopPropagation(); closeView(); });
     v.addEventListener('click', e => { e.stopPropagation(); if (e.target === v) closeView(); });
