@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>Microeconomics · midterm practice</title>
+<link rel="stylesheet" href="../vendor/katex/katex.min.css">
+<style>
+  @font-face { font-family: "Inter"; font-weight: 400; font-display: swap; src: url(../assets/fonts/inter-latin-400-normal.woff2) format("woff2"); }
+  @font-face { font-family: "Inter"; font-weight: 600; font-display: swap; src: url(../assets/fonts/inter-latin-600-normal.woff2) format("woff2"); }
+  @font-face { font-family: "STIX Two Text"; font-style: normal; font-display: swap; src: url(../assets/fonts/stix-two-text-latin-400-normal.woff2) format("woff2"); }
+  @font-face { font-family: "STIX Two Text"; font-style: italic; font-display: swap; src: url(../assets/fonts/stix-two-text-latin-400-italic.woff2) format("woff2"); }
+  :root { --bg: #fbfbf9; --card: #fff; --ink: #1d1d1f; --dim: #6b6f76; --line: #e3e5e8; --accent: #2f5d8c; --ok: #1b7f3b; --okbg: #e3f1e7; --no: #a12f2f; --nobg: #f8e6e6; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.5 "Inter", system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 680px; margin: 0 auto; padding: 18px 16px 60px; }
+  h1 { font-size: 1.15rem; font-weight: 600; margin: 0; }
+  h2 { font-size: 1rem; font-weight: 600; margin: 1.4rem 0 .5rem; }
+  .sub { color: var(--dim); font-size: .85rem; margin: .2rem 0 1rem; }
+  .bar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 6px 12px; }
+  .me { font-size: .88rem; color: var(--dim); } .me b { color: var(--ink); font-weight: 600; }
+  button { font: inherit; cursor: pointer; border-radius: 8px; border: 1px solid #c9ced6; background: #fff; color: var(--ink); padding: 8px 14px; }
+  button:hover { background: #f0f3f7; }
+  button.go { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button.link { border: 0; background: none; color: var(--accent); padding: 0; font-size: .85rem; text-decoration: underline; }
+  input[type=text] { font: inherit; padding: 8px 10px; border: 1px solid #c9ced6; border-radius: 8px; width: 14em; max-width: 100%; }
+  .cats { display: grid; gap: 10px; }
+  .cat { text-align: left; padding: 12px 14px; display: grid; gap: 2px; }
+  .cat .n { font-weight: 600; } .cat .d { font-size: .85rem; color: var(--dim); }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
+  .qmeta { font-size: .8rem; color: var(--dim); margin-bottom: 6px; display: flex; gap: 10px; flex-wrap: wrap; }
+  .qtext { margin: 0 0 10px; }
+  .stmts { list-style: none; padding: 0; margin: 4px 0 8px; } .stmts .r { display: inline-block; width: 2.2em; color: var(--dim); }
+  .opts { display: grid; gap: 8px; margin: 10px 0 4px; }
+  .opt { text-align: left; padding: 10px 12px; display: flex; gap: 10px; align-items: baseline; }
+  .opt .l { color: var(--dim); min-width: 1.4em; }
+  .opt.right { background: var(--okbg); border-color: var(--ok); } .opt.wrong { background: var(--nobg); border-color: var(--no); }
+  .opt:disabled { cursor: default; color: var(--ink); opacity: 1; }
+  .m { font-family: "STIX Two Text", "Cambria Math", Georgia, serif; font-size: 1.08em; white-space: nowrap; } .m i { font-style: italic; }
+  .m .w { font-family: "Inter", system-ui, sans-serif; font-style: normal; font-size: .86em; }
+  .katex { font-size: 1.05em; white-space: nowrap; }
+  .verdict { margin: 12px 0 6px; font-weight: 600; } .verdict.ok { color: var(--ok); } .verdict.no { color: var(--no); }
+  .sol { font-size: .92rem; background: #f6f7f9; border-radius: 8px; padding: 8px 10px; }
+  .next { margin-top: 12px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  table.lb { width: 100%; border-collapse: collapse; font-size: .92rem; }
+  table.lb td, table.lb th { padding: 5px 6px; border-bottom: 1px solid var(--line); text-align: left; }
+  table.lb th { font-weight: 600; color: var(--dim); font-size: .8rem; } table.lb td.p { text-align: right; font-variant-numeric: tabular-nums; }
+  table.lb tr.mine td { background: #eef4fb; }
+  .tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; } .tabs button { padding: 4px 10px; font-size: .85rem; } .tabs button.on { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .fine { font-size: .78rem; color: var(--dim); margin-top: 2rem; }
+  .msg { font-size: .88rem; color: var(--dim); }
+  .bad { color: var(--no); }
+</style>
+</head>
+<body>
+<main id="app"><h1>Midterm practice</h1><p class="sub">Loading…</p></main>
+<script src="../assets/js/config.js?v=20261014a"></script>
+<script src="../vendor/katex/katex.min.js"></script>
+<script src="items.js?v=1"></script>
+<script src="../assets/js/practice.js?v=20261112b"></script>
+</body>
+</html>
