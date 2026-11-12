@@ -100,7 +100,15 @@
     const r = await fetch(API + '/git/refs', { method: 'POST', headers: H(), body: JSON.stringify({ ref: 'refs/tags/t/' + SESSION + '/practice-times/' + Date.now() + '--' + me.cid, sha: blob }), keepalive: !!force });
     if (r.ok || r.status === 422) { me.pending = me.pending.slice(batch.length); keep(); }
   }
+  // one save at a time; a forced save (board opened, page hidden) waits for the one in flight and then saves what is new (12.11: the
+  // board used to read before the first save had finished)
+  let inflight = null;
   async function writeScore(force) {
+    if (inflight) { await inflight.catch(() => {}); if (!force) return; }
+    inflight = writeOnce(force);
+    try { await inflight; } finally { inflight = null; }
+  }
+  async function writeOnce(force) {
     if (!TOKEN || !me.nick || writing) return;
     const total = score(), cs = cats.map(c => c.id + '.' + score(c.id)).join('_');
     const sig = total + '|' + cs + '|' + me.nick;
