@@ -56,6 +56,7 @@
   #lq-box { background: #fff; color: #111; max-width: min(1000px, 96vw); max-height: 92vh; overflow: auto; border-radius: 6px; padding: 16px 20px; font: 17px/1.5 "Inter", system-ui, sans-serif; text-align: left; position: relative; box-sizing: border-box; }
   #lq-box svg { max-width: 100%; height: auto; max-height: 76vh; display: block; margin: 0 auto; }
   #lq-box h4 { margin: 0.7em 0 0.2em; font-size: 1em; }
+  #lq-box td, #lq-box th { padding: 0.1em 0.6em; } #lq-box table { border-collapse: collapse; margin: 0.3em 0; }   /* table cells apart: '= 70' and 'optimal' ran together (Utku 12.11) */
   #lq-close { position: sticky; top: 0; float: right; font: 15px "Inter", system-ui, sans-serif; background: #fff; color: #111; border: 1.5px solid #333; border-radius: 4px; padding: 3px 12px; cursor: pointer; z-index: 2; }
   .lq-part math, #lq-box math { font-family: "STIX Two Math", "Cambria Math", serif; }
   html.mobile .reveal .lq-part.fragment:not(.visible) { display: none !important; }   /* the phone layout shows all steps at once; parts come one at a time here too */
