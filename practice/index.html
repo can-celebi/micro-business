@@ -28,7 +28,8 @@
   .menu { position: absolute; z-index: 20; background: #fff; border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 6px 20px rgba(20, 24, 30, .12); padding: 4px; display: grid; min-width: 12em; }
   .menu a, .menu button { display: flex; align-items: center; min-height: 40px; padding: 0 12px; border: 0; border-radius: 6px; background: none; color: var(--ink); text-decoration: none; text-align: left; font-size: .92rem; }
   .menu a:hover, .menu button:hover { background: #f0f3f7; } .menu .mrow-mid { color: var(--accent); }
-  @media (max-width: 560px) { .crumbs .c-mid { display: none; } }
+  .c-mid .bk { display: none; }
+  @media (max-width: 560px) { .crumbs .sep.c-mid { display: none; } .c-mid .bk { display: inline; } .c-mid .lg { display: none; } .crumbs a.c-mid { flex-shrink: 0; margin-right: 6px; } }
   /* the answer bar, pinned to the bottom after an answer */
   main { padding-bottom: 96px; }
   .abar { position: sticky; bottom: 0; z-index: 4; background: #fff; border-top: 1px solid var(--line); margin: 12px -16px 0; padding: 10px 16px calc(10px + env(safe-area-inset-bottom)); }
@@ -107,7 +108,7 @@
   .modal .fine { margin-top: .5rem; }
   .modal .card { max-width: 620px; width: 100%; position: relative; max-height: 90vh; overflow: auto; }
   .modal .x { position: absolute; top: 6px; right: 8px; border: 0; background: none; font-size: 1.4rem; line-height: 1; padding: 6px 10px; color: var(--dim); } .modal p { font-size: .92rem; } ol.tut { padding-left: 1.3em; } ol.tut li { margin: 6px 0; }
-  .warn { font-size: .86rem; background: #fff4d6; border: 1px solid #e0b64a; border-radius: 8px; padding: 8px 10px; }
+  .warn { font-size: .86rem; background: #FFF9D0; border: 1.5px dashed #222222; border-radius: 3px; padding: 8px 10px; }   /* as the dashed yellow card on /midterm/ (Oyun) */
   .forms { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; } .forms h2 { margin: 0 0 .4rem; }
   .forms label { display: grid; gap: 2px; font-size: .85rem; color: var(--dim); margin-bottom: 8px; }
   .forms input { font: inherit; padding: 8px 10px; border: 1px solid #c9ced6; border-radius: 8px; width: 100%; color: var(--ink); }
@@ -146,7 +147,9 @@
   .tabs button.on, .filters .pill.on, .subs .pill.on { background: var(--accent); border-color: var(--accent); color: #fff; }
   /* the question chips in Selection: the small chips of the /midterm/ resources */
   .qc, .qc.done { border: 1.5px solid var(--edge); border-radius: 2px; } .qc.done { background: #E6F5E6; }
-  input, select { border: 1.5px solid var(--edge) !important; border-radius: 3px !important; }
+  input, select, textarea, #fbp textarea { border: 1.5px solid var(--edge) !important; border-radius: 3px !important; }
+  .fine.slop { margin: .2rem 0 .6rem; }
+  @media (pointer: coarse) { .fbo { min-height: 40px; display: flex; align-items: center; } }
   /* the shared box and tiles from arena.css take their frame from --line, which is pale in the arena: give them the dark frame too */
   .lbx, .topic { border-color: var(--edge); }
 </style>
@@ -162,7 +165,7 @@
 <script src="topics/pc.js?v=13"></script>
 <script src="topics/pref.js?v=13"></script>
 <script src="topics/rc.js?v=13"></script>
-<script src="../assets/js/arena-board.js?v=20261115c"></script>
+<script src="../assets/js/arena-board.js?v=20261115d"></script>
 <!-- Oyun's fun modules (assets/js/fun/): before practice.js, they only add listeners -->
 <script src="../assets/js/fun/core.js?v=20261115b"></script>
 <script src="../assets/js/fun/f1-diagram.js?v=20261115b"></script>
@@ -174,6 +177,6 @@
 <script src="../assets/js/fun/f8-run.js?v=20261115b"></script>
 <script src="../assets/js/fun/f9-strip.js?v=20261115b"></script>
 <script src="../assets/js/fun/f10-progress.js?v=20261115b"></script>
-<script src="../assets/js/practice.js?v=20261115br"></script>
+<script src="../assets/js/practice.js?v=20261115s2"></script>
 </body>
 </html>
