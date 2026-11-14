@@ -248,7 +248,8 @@
   const fastOf = v => { if (!v) return 0; const x = v * (1 + (SP.rate || 0.1)); let lo = Math.floor(x), hi = Math.ceil(x); while (lo > 2 && !isPrime(lo)) lo--; while (!isPrime(hi)) hi++;
     const p = (x - lo) < (hi - x) ? lo : hi; return p > v ? p : primeUp(v); };
   const mmss = s => Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
-  const ARENA_RULE = 'You start with easy questions; two right answers in a row' + (speedOn ? ' (a fast one counts as two)' : '') + ' move you up a level; after a wrong answer you get another question of the same kind.';
+  // the arena's rule (Hafize's final wording 14.11, Can's Addition 17)
+  const ARENA_RULE = 'You start with easy questions. If you answer two questions in a row right at the first try, you move up a level' + (speedOn ? '; a fast right answer counts as two' : '') + '. If you answer two questions in a row wrongly at the first try, you move down a level. After a wrong answer, you get another question of the same type. With "Easier ↓" and "Harder ↑", you can choose the level of the next question yourself.';
   const params = new URLSearchParams(location.search);
   const TQ = SESSION === 'test' && !LOCAL ? '?test' : '';
   const LEVEL = { easy: 'easy', medium: 'medium', hard: 'hard' }, LV = ['easy', 'medium', 'hard'];
@@ -461,7 +462,12 @@
   // after a wrong answer the same type again; a level that has run out gives the next level up, else down
   // the level is seen and can be asked for (Can, Addition 17; Oyun's specs 11): state = level, streak (right first tries in a row),
   // miss (wrong first tries in a row), retry (the kind to repeat), asked (Easier / Harder was pressed since the last new question)
-  function arenaState(id) { me.arena = me.arena || {}; return me.arena[id] = me.arena[id] || { level: 'easy', streak: 0, miss: 0, retry: null, asked: false }; }
+  function arenaState(id) {
+    me.arena = me.arena || {}; const a = me.arena[id] = me.arena[id] || { level: 'easy', streak: 0, miss: 0, retry: null, asked: false };
+    const have = LV.filter(l => topicItems(id).some(x => x.level === l));   // a saved level the topic (subsection) does not have: the nearest one it has
+    if (have.length && !have.includes(a.level)) a.level = have.filter(l => LV.indexOf(l) <= LV.indexOf(a.level)).pop() || have[0];
+    return a;
+  }
   const arenaOrder = l => [l].concat(LV.slice(LV.indexOf(l) + 1), LV.slice(0, LV.indexOf(l)).reverse());   // the level, then up, else down
   // the level the next question will have (the open question exceptId does not count); null when nothing is left
   function arenaComing(id, exceptId) {
@@ -470,6 +476,7 @@
   }
   // Easier / Harder: the level for the NEXT question; the streaks start again. The answer to the question that is open when it is
   // pressed does not move the level, so the next question has the level the line promises.
+  const levelsIn = id => LV.filter(l => topicItems(id).some(x => x.level === l));   // the levels this topic (subsection) has
   function arenaAsk(id, level) {
     const a = arenaState(id); if (!LV.includes(level) || level === a.level) return;
     a.level = level; a.streak = 0; a.miss = 0; a.asked = true; keep();
@@ -477,15 +484,15 @@
   // fills #alv (Level, three squares, Easier ↓ / Harder ↑) and the grey line #alvn under it; onChange runs after a press
   function arenaLevelUI(id, exceptId, onChange) {
     const box = document.getElementById('alv'), line = document.getElementById('alvn'); if (!box) return;
-    const a = arenaState(id), n = LV.indexOf(a.level), coming = arenaComing(id, exceptId);
+    const a = arenaState(id), n = LV.indexOf(a.level), coming = arenaComing(id, exceptId), have = levelsIn(id), hi = have.indexOf(a.level);
     box.innerHTML = '<span>Level</span><span class="alv-sq" role="img" aria-label="' + a.level + '">' + LV.map((l, i) => '<i' + (i <= n ? ' class="on"' : '') + '></i>').join('') + '</span>' +
-      '<button type="button" class="link" id="alvd"' + (n <= 0 ? ' disabled' : '') + '>Easier ↓</button><button type="button" class="link" id="alvu"' + (n >= LV.length - 1 ? ' disabled' : '') + '>Harder ↑</button>';
+      '<button type="button" class="link" id="alvd"' + (hi <= 0 ? ' disabled' : '') + '>Easier ↓</button><button type="button" class="link" id="alvu"' + (hi < 0 || hi >= have.length - 1 ? ' disabled' : '') + '>Harder ↑</button>';
     if (line) {
       const t = coming && coming !== a.level ? 'No ' + a.level + ' questions left: the next question will be ' + coming + '.' : coming && a.asked ? 'The next question will be ' + a.level + '.' : '';
       line.textContent = t; line.hidden = !t;
     }
     const press = (bid, d) => { document.getElementById(bid).onclick = () => {
-      arenaAsk(id, LV[n + d]); arenaLevelUI(id, exceptId, onChange);
+      arenaAsk(id, have[hi + d]); arenaLevelUI(id, exceptId, onChange);
       const again = document.getElementById(bid), other = document.getElementById(bid === 'alvd' ? 'alvu' : 'alvd'); (again.disabled ? other : again).focus();   // the keyboard stays on the buttons
       if (onChange) onChange();
     }; };
@@ -512,10 +519,12 @@
     if (a.asked) { a.retry = right ? null : typeOf(it); keep(); return null; }   // asked for a level while this question was open: it stands
     if (!right) {
       a.retry = typeOf(it); a.streak = 0; a.miss = (a.miss || 0) + 1;
-      if (a.miss >= 2 && a.level !== 'easy') a.level = LV[LV.indexOf(a.level) - 1];
+      const have = levelsIn(it.topic), i = have.indexOf(a.level);
+      if (a.miss >= 2 && i > 0) a.level = have[i - 1];
     } else {
       a.retry = null; a.miss = 0; a.streak += speedOn && fast ? 2 : 1;
-      if (a.streak >= 2 && a.level !== 'hard') a.level = LV[LV.indexOf(a.level) + 1];
+      const have = levelsIn(it.topic), i = have.indexOf(a.level);
+      if (a.streak >= 2 && i >= 0 && i < have.length - 1) a.level = have[i + 1];
     }
     const change = a.level === from ? null : LV.indexOf(a.level) > LV.indexOf(from) ? 'up' : 'down';
     if (change) { a.streak = 0; a.miss = 0; }
@@ -671,7 +680,7 @@
       score, pointsNow: id => byId[id] ? pointsNow(byId[id]) : 0,
       ladder: (level, k) => ladder({ level }, k), afterWrong: (value, w) => stepDown({}, value, w), floor: level => floorOf({ level }),
       board: () => { if (boardCache && Date.now() - boardCache.t < 60000) return Promise.resolve(boardCache.rows);
-        return readBoard().then(rows => { const r = rows.map(x => ({ key: x.key, nick: x.nick, total: x.total, topics: Object.assign({}, x.topics) })); boardCache = { t: Date.now(), rows: r }; return r; }); },
+        return readBoard().then(rows => { const r = rows.map(x => ({ key: x.key, nick: x.nick, total: x.total, ts: x.ts, topics: Object.assign({}, x.topics) })); boardCache = { t: Date.now(), rows: r }; return r; }); },
       get: name => ((me.fun || {})[name]), set: (name, value) => { if (!login || name === 'awards') return; me.fun = me.fun || {}; me.fun[name] = value; keep(); writeAll(false); },
       award: name => { if (!login || !AWARDS[name]) return; me.fun = me.fun || {}; me.fun.awards = me.fun.awards || {}; if (me.fun.awards[name]) return;
         me.fun.awards[name] = new Date().toISOString(); keep(); const tt = document.getElementById('tot'); if (tt) tt.textContent = score(); totalChanged(); writeAll(false); },

@@ -1,5 +1,6 @@
 // f9 · the leaderboard strip (Oyun, 14.11.2026; Can's Additions 15 and 16).
-// Slot `strip`, directly under the top bar on every screen: the top three and "you: rank N" in one line.
+// Slot `strip`, directly under the top bar on every screen: the top three with their points and "you: rank N", always in sight
+// (Can: the leaderboard is visible without a tap). Inside a question: the leader and "you: rank N" in one line.
 // A tap opens a small panel: tabs (Total, the six topics), the top 10 and the student's own row.
 // Reads the bridge only inside handlers; total and topic points come from board() and score(), nothing is computed here.
 // Offline, rejected board, missing slot or bridge: nothing is shown and nothing is thrown.
@@ -14,25 +15,29 @@
     '.fun-strip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}' +
     '.fun-strip i{font-style:normal;font-weight:400;color:var(--dim);flex:none}' +
     '.fun-strip-top,.fun-strip-e{display:flex;gap:.35em;min-width:0}.fun-strip-top{flex:1;overflow:hidden}' +
-    '.fun-strip-n{min-width:0;max-width:16ch;overflow:hidden;text-overflow:ellipsis}.fun-strip-n.first{font-weight:600}' +
+    '.fun-strip-n{min-width:3ch;max-width:16ch;overflow:hidden;text-overflow:ellipsis}.fun-strip-n.first{font-weight:600}' +
     '.fun-strip-you{flex:none;margin-left:auto;font-weight:600}' +
     '.fun-strip-none{margin:0;padding:7px 0;min-height:36px;border-bottom:1px solid var(--line);margin-bottom:8px}' +
     '.fun-strip-panel{max-height:50vh;overflow-y:auto;background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:0 0 8px;font-size:.85rem}' +
     '.fun-strip-panel .tabs{overflow-x:auto}.fun-strip-panel .tabs button{flex:none;padding:4px 10px;white-space:nowrap}' +
     '.fun-strip-panel table.lb{font-size:inherit}.fun-strip-panel table.lb td{padding:2px 6px;overflow-wrap:anywhere}.fun-strip-panel table.lb td.p{white-space:nowrap}' +
     '.fun-strip-panel p{margin:6px 0}.fun-strip-full{display:block;margin-top:8px;color:var(--accent);text-decoration:underline}' +
-    '@media (max-width:559px){.fun-strip-n{max-width:9ch}}@media (max-width:479px){.fun-strip-p{display:none}}');
+    '@media (max-width:559px){.fun-strip-n{max-width:9ch}}' +
+    // on a phone the top three keep their points: they take the first line, "you: rank n" the second; inside a question it is one line (the leader and you)
+    '@media (max-width:559px){.fun-strip{flex-wrap:wrap;height:auto;min-height:36px;padding:5px 0;row-gap:2px}.fun-strip-top{flex:1 0 100%}.fun-strip-n{max-width:8ch}' +
+    '.fun-strip-q{flex-wrap:nowrap}.fun-strip-q .fun-strip-top{flex:1 1 auto}.fun-strip-q .fun-strip-n{max-width:12ch}}');
 
   // everyone with points in a tab ('all' or a topic id), best first; the student's own row counts max(row, score())
   function ranked(api, t) {
     const me = api.user && api.user();
-    const list = rows.map(r => ({ key: r.key, nick: r.nick, p: +(t === 'all' ? r.total : (r.topics || {})[t]) || 0 }));
+    const seen = {}, list = [];
+    rows.forEach(r => { if (!r || seen[r.key]) return; seen[r.key] = 1; const p = +(t === 'all' ? r.total : (r.topics || {})[t]) || 0; if (isFinite(p)) list.push({ key: r.key, nick: r.nick, p, ts: +r.ts || Infinity }); });   // one row per account
     if (me) {
       let mine = list.find(r => r.key === me.key);
-      if (!mine) list.push(mine = { key: me.key, nick: me.nick, p: 0 });
+      if (!mine) list.push(mine = { key: me.key, nick: me.nick, p: 0, ts: Infinity });
       mine.mine = true; mine.p = Math.max(mine.p, +(t === 'all' ? api.score() : api.score(t)) || 0);
     }
-    return list.filter(r => r.p > 0).sort((a, b) => b.p - a.p);
+    return list.filter(r => r.p > 0).sort((a, b) => b.p - a.p || (a.mine ? 1 : b.mine ? -1 : (a.ts - b.ts) || 0));   // a tie goes to whoever was there first, as on the leaderboard page
   }
 
   function panel(api) {
@@ -52,29 +57,34 @@
     if (!api || !s || !s.isConnected || !rows) return;
     const all = ranked(api, 'all'), me = api.user && api.user(), at = all.findIndex(r => r.mine);
     if (!all.length) { s.innerHTML = '<p class="fun-dim fun-strip-none">No one is on the board yet. The first right answer takes rank 1.</p>'; return; }
-    const top = cur.q ? '' : '<span class="fun-strip-top">' + all.slice(0, 3).map((r, i) => '<span class="fun-strip-e"><i>' + (i + 1) + '</i> <span class="fun-strip-n' + (i ? '' : ' first') + '">' +
+    const top = '<span class="fun-strip-top">' + all.slice(0, cur.q ? 1 : 3).map(   // inside a question: the leader only, so the question keeps the screen
+      (r, i) => '<span class="fun-strip-e"><i>' + (i + 1) + '</i> <span class="fun-strip-n' + (i ? '' : ' first') + '">' +
       F.esc(r.nick) + '</span> <i class="fun-strip-p">' + F.esc(r.p) + '</i></span>').join('<i> · </i>') + '</span> ';
     const focused = s.contains(document.activeElement);
-    s.innerHTML = '<button type="button" class="fun-strip" aria-expanded="' + open + '">' + top +
+    s.innerHTML = '<button type="button" class="fun-strip' + (cur.q ? ' fun-strip-q' : '') + '" aria-expanded="' + open + '">' + top +
       '<span class="fun-strip-you">' + (me ? 'you: ' + (at < 0 ? 'not ranked yet' : 'rank ' + (at + 1)) + ' ' : '') + '<i aria-hidden="true">' + (open ? '▴' : '▾') + '</i></span></button>' +
       (open ? '<div class="fun-strip-panel">' + panel(api) + '</div>' : '');
-    if (focused) { const b = s.querySelector('.tabs .on') || s.querySelector('.fun-strip'); if (b) b.focus(); }
+    if (focused) { const b = s.querySelector('.tabs .on') || s.querySelector('.fun-strip'); if (b) b.focus({ preventScroll: true }); }
     s.onclick = click;
+    s.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') e.stopPropagation(); };   // Enter on the strip opens the strip; the arena's "Enter = next question" does not see it
   }
 
   function click(e) {
     try {
       const b = e.target.closest('button'), api = F.api(); if (!b || !api) return;
-      if (b.classList.contains('fun-strip')) { open = !open; tab = 'all'; draw(); cur.slot.querySelector('.fun-strip').focus(); }
-      else if (b.dataset.tab) { tab = b.dataset.tab; draw(); const on = cur.slot.querySelector('.tabs .on'); if (on) on.focus(); }
+      if (b.classList.contains('fun-strip')) { open = !open; tab = 'all'; draw(); cur.slot.querySelector('.fun-strip').focus({ preventScroll: true }); }
+      else if (b.dataset.tab) { tab = b.dataset.tab; draw(); const on = cur.slot.querySelector('.tabs .on'); if (on) on.focus({ preventScroll: true }); }
       else if (b.classList.contains('fun-strip-full') && typeof api.go === 'function') api.go('leaderboard');
     } catch (err) { if (window.console) console.warn('fun module f9', err); }
   }
 
+  F.on('total', () => draw());   // the student's own points changed: the rank follows at once (no new board call)
+
   F.on('screen', d => {
+    if (d.name === 'how') return;                    // a box over the page, not a new screen
     const my = ++turn, api = F.api(), s = F.slot('strip');
     open = false; tab = 'all'; cur = { slot: s, q: d.name === 'question' };
-    if (s) { s.innerHTML = ''; s.onclick = null; }
+    if (s) { s.innerHTML = ''; s.onclick = null; s.onkeydown = null; }
     if (!api || !s || d.name === 'login') return;
     draw();                                          // the rows from before, at once: the strip does not jump in later
     if (cur.q && rows) return;                       // on a question: no new call when there are rows

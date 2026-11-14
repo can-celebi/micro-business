@@ -50,13 +50,14 @@
   const draw = (e, cls) => e.t === 'dot' ? '<circle cx="' + e.x + '" cy="' + e.y + '" r="3" fill="' + INK + '" class="' + cls + '"/>'
     : e.t === 'hollow' ? '<circle cx="' + e.x + '" cy="' + e.y + '" r="3" fill="#fff" stroke="' + INK + '" stroke-width="1.4" class="' + cls + '"/>'
     : '<path d="' + e.d + '" fill="none" stroke="' + e.c + '" stroke-width="' + (e.w || 2) + '" stroke-linecap="round" pathLength="1" opacity="' + (e.o || 1) + '" class="' + cls + '"/>';
-  // F.diagram(topicId, step, {size, animate, miss, label})
+  // F.diagram(topicId, step, {size, animate, miss, ghost, label})   ghost: the steps still to come are shown as a faint outline
   //   step 0…3; animate: the newest step draws itself (once); miss: steps 1 and 2 plus the topic's "miss" mark (a wrong answer)
   F.diagram = (topic, step, o) => {
     o = o || {}; const D = F.DIAGRAMS[topic]; if (!D) return '';
     step = Math.max(0, Math.min(3, step | 0));
     const anim = o.animate && !F.still();
     let g = '';
+    if (o.ghost && !o.miss) for (let s = step; s < 3; s++) { if (topic === 'opt' && s === 1) continue; g += '<g opacity=".16">' + D[s].map(e => draw(e, '')).join('') + '</g>'; }
     for (let s = 0; s < (o.miss ? 2 : step); s++) {
       if (topic === 'opt' && s === 1 && step === 3 && !o.miss) continue;     // the far curve gives way to the tangent one
       g += D[s].map(e => draw(e, anim && s === step - 1 && !o.miss ? 'fun-draw' : '')).join('');

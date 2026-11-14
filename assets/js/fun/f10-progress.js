@@ -48,7 +48,7 @@
   // ---------- the box ----------
   const html = s => {
     const fig = (v, label) => '<div><b>' + v + '</b><span class="fun-dim">' + label + '</span></div>';
-    const row = r => '<div class="f10-row" data-topic="' + F.esc(r.id) + '">' + F.diagram(r.id, r.answered ? r.step : 0, { size: 36 }) +
+    const row = r => '<div class="f10-row" data-topic="' + F.esc(r.id) + '">' + F.diagram(r.id, r.answered ? r.step : 0, { size: 36, ghost: true }) +
       '<div class="f10-mid"><b>' + F.esc(r.name) + '</b><span class="fun-dim">' +
       (r.answered ? r.m + ' of ' + r.n + (r.n === 1 ? ' type' : ' types') + ' mastered · longest run ' + r.run : 'not started') + '</span></div>' +
       '<div class="f10-imp fun-dim">' + (r.halves ? r.halves[0] + '% → ' + r.halves[1] + '%' + (r.halves[1] > r.halves[0] ? ' <span class="f10-up">▲</span>' : '') : DASH) + '</div></div>';

@@ -19,7 +19,7 @@
     let changed = false;
     slots.forEach(el => {
       const topic = el.dataset.topic, card = el.parentElement, p = F.mastery(A, topic);   // the same definition as in My progress
-      const svg = p.n && card ? F.diagram(topic, p.step, { size: 44, animate: p.step > (seen[topic] || 0), label: 'Progress picture: step ' + p.step + ' of 3' }) : '';
+      const svg = p.n && card ? F.diagram(topic, p.step, { size: 44, ghost: true, animate: p.step > (seen[topic] || 0), label: 'Progress picture: step ' + p.step + ' of 3' }) : '';
       if (!svg) return;
       el.innerHTML = '<span class="fun-dim fun-f1-line">' + p.m + ' of ' + p.n + (p.n === 1 ? ' question type' : ' question types') + ' mastered</span>' +
         '<span class="fun-f1-pic" style="grid-row-end:span ' + card.children.length + '">' + svg + '</span>';   // the picture spans all rows of the card

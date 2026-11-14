@@ -37,21 +37,22 @@
     const X = k => 44 + (k - 1) * 36, Y = v => 104 - 88 * v / top, n = p.r + 1, INK = 'var(--ink)', NO = 'var(--no)';
     const txt = (x, y, s, anchor, cls) => '<text x="' + x + '" y="' + y.toFixed(1) + '" text-anchor="' + (anchor || 'middle') + '"' + (cls ? ' class="' + cls + '"' : '') + '>' + F.esc(s) + '</text>';
     let dots = '', tries = '', dropLast = false;
-    for (let k = 1; k <= 8; k++) {
-      const v = A.ladder(p.level, k), x = X(k), y = Y(v);
+    const o = Math.max(0, n - 8);   // after many right answers the eight points move along, so the next one is always in the picture
+    for (let j = 1; j <= 8; j++) {
+      const k = j + o, v = A.ladder(p.level, k), x = X(j), y = Y(v);
       if (k !== n) { dots += '<circle cx="' + x + '" cy="' + y.toFixed(1) + '" r="3" fill="' + INK + '"' + (k > n ? ' opacity=".22"' : '') + '/>'; continue; }
       // the next one: hollow, with the three wrong tries straight below it
       const w = [1, 2, 3].map(i => A.afterWrong(v, i)), base = []; let b = 110;
       for (let i = 2; i >= 0; i--) base[i] = b = Math.min(Y(w[i]) + 3, b - 9);        // the red numbers keep clear of each other and of the axis
-      dropLast = k === 7 && base.some(q => Math.abs(q - (Y(A.ladder(p.level, 8)) - 7)) < 9);
+      dropLast = j === 7 && base.some(q => Math.abs(q - (Y(A.ladder(p.level, 8 + o)) - 7)) < 9);
       tries = '<path d="M' + x + ' ' + (y + 3).toFixed(1) + 'V104" stroke="' + NO + '" stroke-width="1" stroke-dasharray="2 2"/>' +
         w.map((q, i) => '<rect x="' + (x - 2.5) + '" y="' + (Y(q) - 2.5).toFixed(1) + '" width="5" height="5" fill="none" stroke="' + NO + '"/>' + txt(x + 6, base[i], q, 'start', 'f6w')).join('') +
         '<circle cx="' + x + '" cy="' + y.toFixed(1) + '" r="3" fill="#fff" stroke="' + INK + '" stroke-width="1.4"/>' +
-        (k === 1 ? txt(x - 8, y - 7, 'next: ' + v, 'start') : k === 8 ? txt(x + 18, y - 7, 'next: ' + v, 'end') : txt(x, y - 7, 'next: ' + v));
+        (j === 1 ? txt(x - 8, y - 7, 'next: ' + v, 'start') : j === 8 ? txt(x + 18, y - 7, 'next: ' + v, 'end') : txt(x, y - 7, 'next: ' + v));
     }
-    const num = k => { const v = A.ladder(p.level, k); return txt(X(k), Y(v) - 7, v); };
+    const num = j => { const v = A.ladder(p.level, j + o); return txt(X(j), Y(v) - 7, v); };
     return '<svg class="f6" viewBox="0 0 320 132" aria-hidden="true"><path d="M26 8V104H312" fill="none" stroke="#9aa0a8" stroke-width="1"/>' +
-      dots + (n !== 1 ? num(1) : '') + (n !== 8 && !dropLast ? num(8) : '') + tries + '</svg>';
+      dots + (n !== 1 + o ? num(1) : '') + (n !== 8 + o && !dropLast ? num(8) : '') + tries + '</svg>';
   };
 
   F.on('screen', d => {
@@ -62,7 +63,7 @@
       const p = pick(A, item), svg = picture(A, p);
       if (svg) how = svg + '<p class="fun-dim f6c">' + L1 + (corner(A, p) ? CORNER : '') + '</p><p class="fun-dim f6c">' + L2 + '</p>';
     }
-    F.slots('qmeta').forEach(s => { s.innerHTML = note; });
+    if (d.name !== 'how') F.slots('qmeta').forEach(s => { s.innerHTML = note; });   // "How points work" opens over the question: its note stays
     if (d.name === 'how') F.slots('how-top').forEach(s => { s.innerHTML = how; });
   });
 })();
