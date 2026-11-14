@@ -239,19 +239,33 @@
   const LEVEL = { easy: 'easy', medium: 'medium', hard: 'hard' }, LV = ['easy', 'medium', 'hard'];
   let MODE = load('micro-arena-mode' + T, 'arena') === 'select' ? 'select' : 'arena';
   // one line: where you are (Midterm practice › topic › mode), and who you are
-  // one sticky line: ← Midterm practice › topic (a switcher to any section) › mode (Arena / Selection); who you are, points, links
+  // one sticky top bar on every screen (Oyun's spec, Can's orientation requests): crumbs on the left, each a link (the topic crumb opens
+  // the list of topics), "nickname · points ▾" on the right with How points work, Leaderboard, Log out. The crumb is the one way back.
+  let crumbTopic = null, crumbMode = null;
   function header(topicId, mode) {
-    const tsel = '<select id="tsw" aria-label="topic">' + (topicId ? '' : '<option value="">Topics</option>') + P.topics.map(t => '<option value="' + t.id + '"' + (t.id === topicId ? ' selected' : '') + ((TOP[t.id] || []).length ? '' : ' disabled') + '>' + esc(t.name) + '</option>').join('') + '</select>';
-    const msel = topicId ? ' › <select id="msw" aria-label="mode"><option value="arena"' + (mode === 'arena' ? ' selected' : '') + '>Arena</option><option value="select"' + (mode === 'select' ? ' selected' : '') + '>Selection</option></select>' : '';
-    const crumbs = '<a href="../midterm/' + TQ + '">← Midterm practice</a> › ' + tsel + msel;
-    return '<div class="bar"><nav class="crumbs">' + crumbs + '</nav>' + (login ? '<span class="me">logged in as <b>' + esc(login.nick) + '</b> · <span id="tot">' + score() + '</span> points · <button class="link" id="howL" type="button">how points work</button> · <button class="link" id="lbl" type="button">leaderboard</button> · <button class="link" id="out" type="button">log out</button></span>' : '<span class="me"><button class="link" id="howL" type="button">how points work</button></span>') + '</div>';
+    crumbTopic = topicId || null; crumbMode = mode || null;
+    const mid = '<a class="c-mid" href="../midterm/' + TQ + '">Midterm practice</a>';
+    const tc = topicId ? '<button type="button" class="crumb" id="tsw">' + esc(topicName(topicId)) + ' ▾</button>' : '<button type="button" class="crumb" id="tsw">Topics ▾</button>';
+    const mc = topicId && mode ? '<span class="sep">›</span><span class="c-mode">' + (mode === 'arena' ? 'Arena' : 'Selection') + '</span>' : '';
+    const me_ = login ? '<button type="button" class="crumb mebtn" id="meb">' + esc(login.nick) + ' · <span id="tot">' + score() + '</span> ▾</button>' : '<button type="button" class="crumb mebtn" id="meb">menu ▾</button>';
+    return '<div class="bar"><nav class="crumbs">' + mid + '<span class="sep c-mid">›</span>' + tc + mc + '</nav>' + me_ + '</div>';
   }
+  function closeMenus() { document.querySelectorAll('.menu').forEach(m => m.remove()); }
+  function menu(anchor, rows) {   // a small list under a bar button; rows: [label, action] (null action = a link row)
+    const open = document.querySelector('.menu[data-for="' + anchor.id + '"]'); closeMenus(); if (open) return;
+    const m = document.createElement('div'); m.className = 'menu'; m.dataset.for = anchor.id;
+    rows.forEach(([label, act, cls]) => { const b = document.createElement(typeof act === 'string' ? 'a' : 'button'); if (typeof act === 'string') b.href = act; else { b.type = 'button'; b.onclick = () => { closeMenus(); act(); }; }
+      b.innerHTML = label; if (cls) b.className = cls; m.appendChild(b); });
+    const r = anchor.getBoundingClientRect(); m.style.top = (r.bottom + window.scrollY + 4) + 'px';
+    if (anchor.classList.contains('mebtn')) m.style.right = Math.max(8, document.documentElement.clientWidth - r.right) + 'px'; else m.style.left = Math.max(8, r.left) + 'px';
+    document.body.appendChild(m);
+  }
+  document.addEventListener('click', e => { if (!e.target.closest('.menu') && !e.target.closest('.crumb')) closeMenus(); });
   function wire(topicId) {
-    const l = document.getElementById('lbl'); if (l) l.onclick = () => { leaveQuestion(); leaderboard(); };
-    const o = document.getElementById('out'); if (o) o.onclick = () => { leaveQuestion(); logout(); };
-    const w = document.getElementById('howL'); if (w) w.onclick = howPoints;
-    const t = document.getElementById('tsw'); if (t) t.onchange = () => { if (t.value) { leaveQuestion(); topic(t.value); } };
-    const m = document.getElementById('msw'); if (m) m.onchange = () => { leaveQuestion(); topic(topicId, m.value); };
+    const t = document.getElementById('tsw');
+    if (t) t.onclick = () => menu(t, [['← Midterm practice', '../midterm/' + TQ, 'mrow-mid']].concat(P.topics.filter(x => (TOP[x.id] || []).length).map(x => [esc(x.name) + (x.id === crumbTopic ? ' ✓' : ''), () => { leaveQuestion(); topic(x.id); }]), [['All topics', () => { leaveQuestion(); home(); }]]));
+    const m = document.getElementById('meb');
+    if (m) m.onclick = () => menu(m, [['How points work', howPoints]].concat(login ? [['Leaderboard', () => { leaveQuestion(); leaderboard(); }], ['Log out', () => { leaveQuestion(); logout(); }]] : []));
   }
   // a question left before it was answered: one "skipped" record with its time (Hande's timing data keeps every visit), no points
   let current = null;
@@ -264,16 +278,18 @@
       type: typeOf(c.it), level: c.it.level, mode: c.mode, points: 0, bonus: 0, attempt: (me.wrong[c.it.id] || 0) + 1, seconds: Math.min(CAP, secs), capped: secs >= CAP, correct: null, skipped: true, fast: false, lecturer });
     keep();
   }
-  function howPoints() {
+  function howPoints() {   // the table first, then the five paragraphs; × / Esc / a tap outside closes it
     const rows = LV.map(l => { const it = { level: l }; return '<tr><td>' + l + '</td>' + [1, 2, 3, 4, 5].map(k => '<td class="p">' + ladder(it, k) + '</td>').join('') + '<td class="p">' + floorOf(it) + '</td></tr>'; }).join('');
     const box = document.createElement('div'); box.className = 'modal'; box.id = 'how';
-    box.innerHTML = '<div class="card"><h2>How points work</h2>' + TX.how.map(p => '<p>' + p + '</p>').join('') +
+    box.innerHTML = '<div class="card"><button type="button" class="x" id="howX" aria-label="close">×</button><h2>How points work</h2>' +
       '<table class="lb"><tr><th></th><th class="p">1st</th><th class="p">2nd</th><th class="p">3rd</th><th class="p">4th</th><th class="p">5th</th><th class="p">lowest</th></tr>' + rows + '</table>' +
       '<p class="fine">Points for the 1st, 2nd, … right answer of one question type, at the first try.</p>' +
       (speedOn ? '<p class="fine">Fast bonus: ' + LV.map(l => l + ' +' + bonusOf({ level: l }) + ' within ' + mmss(limitOf({ level: l }))).join(', ') + ' (right at the first try; only the time the page is on screen counts).</p>' : '') +
-      '<p><button class="go" type="button" id="howX">Close</button></p></div>';
-    document.body.appendChild(box); box.onclick = e => { if (e.target === box) box.remove(); };
-    document.getElementById('howX').onclick = () => box.remove(); document.getElementById('howX').focus({ preventScroll: true });
+      TX.how.map(p => '<p>' + p + '</p>').join('') + '</div>';
+    const close = () => { box.remove(); document.removeEventListener('keydown', esc_); };
+    const esc_ = e => { if (e.key === 'Escape') close(); };
+    document.body.appendChild(box); box.onclick = e => { if (e.target === box) close(); };
+    document.getElementById('howX').onclick = close; document.addEventListener('keydown', esc_);
   }
   function tutorial() {   // once per account (Addition 8), dismissable
     if (!login || me.tut) return;
@@ -354,26 +370,34 @@
     leaveQuestion();
     if (!login) return loginScreen();
     mode = mode || MODE; MODE = mode; save('micro-arena-mode' + T, mode);
-    const all = TOP[id] || [];
+    const all = TOP[id] || [], nDone = all.filter(it => me.done[it.id]).length;
     history.replaceState(null, '', location.pathname + '?topic=' + encodeURIComponent(id) + (TQ ? '&test' : ''));
-    app.innerHTML = header(id, mode) + '<h2>' + esc(topicName(id)) + '</h2><p class="dir">' + esc(TX.dir[id] || '') + '</p>' +
-      '<p class="sub">' + all.filter(it => me.done[it.id]).length + ' of ' + all.length + ' done · ' + score(id) + ' points</p>' +
+    window.scrollTo(0, 0);
+    app.innerHTML = header(id, mode) + '<h2>' + esc(topicName(id)) + '</h2><p class="sub">' + esc(TX.dir[id] || '') + '</p>' +
       '<div class="tabs modes"><button type="button" id="mA" class="' + (mode === 'arena' ? 'on' : '') + '">Arena</button><button type="button" id="mS" class="' + (mode === 'select' ? 'on' : '') + '">Selection</button></div><div id="tb"></div>';
     document.getElementById('mA').onclick = () => topic(id, 'arena'); document.getElementById('mS').onclick = () => topic(id, 'select');
     wire(id); tutorial();
     const tb = document.getElementById('tb');
-    if (mode === 'arena') {
-      const a = arenaState(id), open = all.filter(it => !me.done[it.id]).length;
-      tb.innerHTML = '<p class="rule">' + esc(ARENA_RULE) + '</p><p class="sub">Your level now: <b>' + a.level + '</b>.</p>' +
-        (open ? '<p><button class="go big" type="button" id="go">' + (Object.keys(me.done).some(k => byId[k] && byId[k].topic === id) ? 'Continue' : 'Start') + '</button></p>' : '<p>You have answered every question here. Well done.</p>');
+    if (mode === 'arena') {   // Start first (Oyun): the button, a grey status line, the rule as small grey text
+      const a = arenaState(id), open = all.length - nDone, started = Object.keys(me.done).some(k => byId[k] && byId[k].topic === id);
+      tb.innerHTML = (open ? '<p class="startrow"><button class="go big" type="button" id="go">' + (started ? 'Continue' : 'Start') + '</button>' : '<p>You have answered every question here. Well done.</p><p class="startrow">') +
+        '<span class="sub">Level: ' + a.level + ' · ' + nDone + ' of ' + all.length + ' done · ' + score(id) + ' points</span></p><p class="fine">' + esc(ARENA_RULE) + '</p>';
       const g = document.getElementById('go'); if (g) g.onclick = () => { const it = arenaNext(id); if (it) ask(it, 'arena'); else topic(id, 'arena'); };
       return;
     }
     const F = sel.f || {};
-    tb.innerHTML = '<div class="filters"><label>sort <select id="srt"><option value="num">by number</option><option value="pts">by points</option><option value="lvl">by difficulty</option></select></label>' +
-      [['ans', 'answered'], ['open', 'not answered']].concat(speedOn ? [['fast', 'done fast']] : []).concat(LV.map(l => [l, l])).map(([k, l]) => '<label class="ck"><input type="checkbox" data-f="' + k + '"' + (F[k] ? ' checked' : '') + '> ' + l + '</label>').join('') +
-      '</div><div class="qgrid" id="qg"></div><p class="msg" id="none" hidden>No questions match these filters.</p>';
+    tb.innerHTML = '<div class="filters">' + [['ans', 'answered'], ['open', 'not answered']].concat(speedOn ? [['fast', 'done fast']] : []).concat(LV.map(l => [l, l]))
+        .map(([k, l]) => '<button type="button" class="pill' + (F[k] ? ' on' : '') + '" data-f="' + k + '" aria-pressed="' + (F[k] ? 'true' : 'false') + '">' + l + '</button>').join('') +
+      '<select id="srt" aria-label="sort"><option value="num">by number</option><option value="pts">by points</option><option value="lvl">by difficulty</option></select></div>' +
+      '<p class="fine">The number under each question is the points it gives you now.</p><div id="qg"></div><p class="msg" id="none" hidden>No questions match these filters.</p>';
     const srt = document.getElementById('srt'); srt.value = sel.sort || 'num';
+    const DOTS = { easy: '●', medium: '●●', hard: '●●●' };
+    const card = (it, i) => {
+      const d = me.done[it.id], w = me.wrong[it.id] || 0;
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'qc' + (d ? (d.p ? ' done' : ' seen') : ''); b.dataset.id = it.id;
+      b.innerHTML = '<span class="qn">' + (i + 1) + '</span><span class="qp">' + (d ? (d.p ? '✓ ' + d.p + (d.fast ? ' ⚡' : '') : '–') : pointsNow(it)) + '</span>' + (!d && w ? '<span class="qw" title="' + w + ' wrong"></span>' : '');
+      b.onclick = () => ask(it, 'select'); return b;
+    };
     const draw = () => {
       const lv = LV.filter(l => F[l]), st = [F.ans && 'ans', F.open && 'open', F.fast && 'fast'].filter(Boolean);
       let list = all.map((it, i) => ({ it, i })).filter(({ it }) => {
@@ -382,20 +406,19 @@
         if (st.length && !st.some(s => s === 'ans' ? !!d : s === 'open' ? !d : !!(d && d.fast))) return false;
         return true;
       });
-      if (sel.sort === 'pts') list.sort((a, b) => pointsNow(b.it) - pointsNow(a.it) || a.i - b.i);
-      if (sel.sort === 'lvl') list.sort((a, b) => LV.indexOf(a.it.level) - LV.indexOf(b.it.level) || a.i - b.i);
       const g = document.getElementById('qg'); g.innerHTML = '';
-      list.forEach(({ it, i }) => {
-        const d = me.done[it.id], w = me.wrong[it.id] || 0;
-        const b = document.createElement('button'); b.type = 'button'; b.className = 'qc ' + (it.level || '') + (d ? ' done' : ''); b.dataset.id = it.id;
-        b.innerHTML = '<span class="qn">' + (i + 1) + '</span><span class="ql">' + esc(LEVEL[it.level] || it.level || '') + '</span><span class="qp">' +
-          (d ? (d.p ? '✓ ' + d.p + (d.fast ? ' ⚡' : '') : 'solution seen') : pointsNow(it) + ' points') + '</span>' + (!d && w ? '<span class="qw">' + w + ' wrong ' + (w === 1 ? 'try' : 'tries') + '</span>' : '');
-        b.onclick = () => ask(it, 'select'); g.appendChild(b);
+      if (sel.sort === 'pts') {   // sorted by points: one grid, no headings
+        list.sort((a, b) => pointsNow(b.it) - pointsNow(a.it) || a.i - b.i);
+        const grid = document.createElement('div'); grid.className = 'qgrid'; list.forEach(({ it, i }) => grid.appendChild(card(it, i))); g.appendChild(grid);
+      } else LV.forEach(l => {   // grouped: Easy, Medium, Hard
+        const part = list.filter(({ it }) => it.level === l); if (!part.length) return;
+        const h = document.createElement('h3'); h.className = 'lvh'; h.textContent = DOTS[l] + ' ' + l[0].toUpperCase() + l.slice(1); g.appendChild(h);
+        const grid = document.createElement('div'); grid.className = 'qgrid'; part.forEach(({ it, i }) => grid.appendChild(card(it, i))); g.appendChild(grid);
       });
       document.getElementById('none').hidden = list.length > 0;
     };
     srt.onchange = () => { sel.sort = srt.value; save('micro-arena-sel' + T, sel); draw(); };
-    tb.querySelectorAll('input[data-f]').forEach(c => c.onchange = () => { F[c.dataset.f] = c.checked; sel.f = F; save('micro-arena-sel' + T, sel); draw(); });
+    tb.querySelectorAll('.pill').forEach(c => c.onclick = () => { F[c.dataset.f] = !F[c.dataset.f]; c.classList.toggle('on', F[c.dataset.f]); c.setAttribute('aria-pressed', F[c.dataset.f] ? 'true' : 'false'); sel.f = F; save('micro-arena-sel' + T, sel); draw(); });
     draw();
   }
   // the arena's next question: the current level, then the question type where the student is weakest (fewest right, then slowest);
@@ -413,55 +436,72 @@
     const weakest = types[0][0], cands = pool.filter(it => typeOf(it) === weakest);
     return cands[Math.floor(Math.random() * cands.length)];
   }
-  function arenaAfter(it, right, fast) {
+  function arenaAfter(it, right, fast, firstTry) {
     const a = arenaState(it.topic);
     if (!right) { a.retry = typeOf(it); a.streak = 0; keep(); return; }
+    if (!firstTry) { keep(); return; }   // right after a wrong try: the same kind comes next (Utku round 3: the rule says so)
     a.retry = null; a.streak += speedOn && fast ? 2 : 1;
     if (a.streak >= 2 && a.level !== 'hard') { a.level = LV[LV.indexOf(a.level) + 1]; a.streak = 0; }
     keep();
   }
   // ---------- one question ----------
-  let ticker = null;
+  // the answer bar (Oyun): pinned to the bottom, shown only after an answer: the verdict left, [Show solution] and [Next question] right
+  // (Next rightmost; in Selection [Back to the questions]); the solution opens in place under the options (Show/Hide); a new question
+  // starts at the top (scrollTo 0, instant); nothing else moves the page. Keys: 1–5 or a–e choose, Enter or → = Next, s = solution.
+  let ticker = null, keyH = null;
+  const DOTS = { easy: '●', medium: '●●', hard: '●●●' };
   function ask(it, mode) {
     leaveQuestion(); clearInterval(ticker);
+    if (keyH) document.removeEventListener('keydown', keyH);
     const L = 'abcde', d = me.done[it.id];
-    app.innerHTML = header(it.topic, mode) + '<div class="qtop"><button type="button" id="back" class="link">← Back to the questions</button></div>' +
-      '<div class="card"><div class="qmeta"><span>' + esc(LEVEL[it.level] || it.level) + '</span><span id="pn">' +
-      (d ? (d.p ? 'done: ' + d.p + ' points' : 'solution seen') : 'worth ' + pointsNow(it) + ' points now') + '</span>' +
+    window.scrollTo(0, 0);
+    app.innerHTML = header(it.topic, mode) + '<div class="card" data-id="' + esc(it.id) + '"><div class="qmeta"><span class="lvl">' + (DOTS[it.level] || '') + ' ' + esc(LEVEL[it.level] || it.level) + '</span><span id="pn" class="pts">' +
+      (d ? (d.p ? 'done: ' + d.p + ' points' : 'solution seen') : pointsNow(it) + ' points') + '</span>' +
       (!d && speedOn && !(me.wrong[it.id] > 0) ? '<span id="fb">fast bonus +' + bonusOf(it) + ' within ' + mmss(limitOf(it)) + ' · <span id="clk">0:00</span></span>' : '') + '</div>' +
       '<p class="qtext">' + tex(it.text) + '</p>' + (it.stem_figure ? '<div class="fig" id="sfig"></div>' : '') +
       (it.statements ? '<ul class="stmts">' + it.statements.map((s, i) => '<li><span class="r">' + ['I.', 'II.', 'III.', 'IV.', 'V.'][i] + '</span>' + tex(s) + '</li>').join('') + '</ul>' : '') +
       (it.question ? '<p class="qtext">' + tex(it.question) + '</p>' : '') +
       '<div class="opts">' + it.options.map((o, i) => '<button type="button" class="opt" data-i="' + i + '"><span class="l">' + L[i] + ')</span><span>' + tex(o) + '</span></button>').join('') + '</div>' +
-      '<div id="after"></div></div>';
-    document.getElementById('back').onclick = () => { leaveQuestion(); writeAll(false); topic(it.topic, mode); }; wire(it.topic);
+      '<div id="solbox"></div></div><div class="abar" id="abar" hidden><div class="abar-in"><span id="verdict" class="verdict"></span><span class="abtn" id="abtn"></span></div></div>';
+    wire(it.topic);
     putFig(document.getElementById('sfig'), it.stem_figure);
-    const btns = [...app.querySelectorAll('.opt')], after = document.getElementById('after');
-    let right = -1;
+    const btns = [...app.querySelectorAll('.opt')], bar = document.getElementById('abar'), verdict = document.getElementById('verdict'), abtn = document.getElementById('abtn');
+    let right = -1, solOpen = false;
     Promise.all(it.options.map(o => sha(P.salt + it.id + '\n' + o))).then(hs => { right = hs.indexOf(it.h); if (d) done(true); });
     const solution = () => '<div class="sol"><div class="solh">Solution</div>' + (Array.isArray(it.solution) && it.solution.length ? '<ol class="steps">' + it.solution.map(s => '<li>' + tex(s) + '</li>').join('') + '</ol>'
       : it.solution ? tex(it.solution) : '') + (it.figure ? '<div class="fig" id="solfig"></div>' : '') + (it.explanation ? '<p class="expl">' + tex(it.explanation) + '</p>' : '') +
       '<p class="ans">The answer is ' + L[right] + ') ' + tex(it.options[right]) + '.</p></div>';
-    // after the answer: right or wrong and the points; the solution only behind "Show solution" (Addition 8); in the arena a big "Next"
+    const goNext = () => { if (mode === 'arena') { const n = arenaNext(it.topic); n ? ask(n, 'arena') : topic(it.topic, 'arena'); } else { writeAll(false); topic(it.topic, mode); } };
+    function toggleSol() {
+      const sb = document.getElementById('solbox'), ss = document.getElementById('ss');
+      solOpen = !solOpen;
+      if (solOpen) { sb.innerHTML = solution(); putFig(document.getElementById('solfig'), it.figure); } else sb.innerHTML = '';   // the solution figure marks the answer: only after the answer (Ulutin)
+      if (ss) ss.textContent = solOpen ? 'Hide solution' : 'Show solution';
+    }
     function done(again) {
       clearInterval(ticker);
-      btns.forEach(x => x.disabled = true); if (btns[right]) btns[right].classList.add('right');
+      btns.forEach(x => { x.disabled = true; if (x.classList.contains('wrong')) { x.classList.remove('wrong'); x.classList.add('wasw'); } });   // one green row stands out
+      if (btns[right]) btns[right].classList.add('right');
       const dd = me.done[it.id];
-      after.innerHTML = (again ? '' : '<p class="verdict ' + (dd.p ? 'ok' : 'no') + '">' + (dd.p ? 'Correct: +' + dd.p + ' points' + (dd.fast ? ' (with the fast bonus +' + dd.b + ')' : '') + '.' : 'Solution opened: no points for this one.') + '</p>') +
-        '<div class="next">' + (mode === 'arena' ? '<button class="go big" type="button" id="nx">Next question</button>' : '') +
-        (dd.gave ? '' : '<button type="button" id="ss">Show solution</button>') + '</div><div id="solbox"></div>';
-      if (dd.gave) showSol();
-      const ss = document.getElementById('ss'); if (ss) ss.onclick = showSol;
-      const nx = document.getElementById('nx'); if (nx) { nx.onclick = () => { const n = arenaNext(it.topic); n ? ask(n, 'arena') : topic(it.topic, 'arena'); }; }
+      verdict.className = 'verdict ' + (dd.p ? 'ok' : 'no');
+      verdict.textContent = again ? (dd.p ? 'Done: ' + dd.p + ' points.' : 'Solution seen.') : (dd.p ? 'Correct: +' + dd.p + ' points' + (dd.fast ? ' (with the fast bonus +' + dd.b + ')' : '') + '.' : 'Solution opened: no points for this one.');
+      abtn.innerHTML = '<button type="button" id="ss">Show solution</button>' + (mode === 'arena' ? '<button class="go" type="button" id="nx">Next question</button>' : '<button class="go" type="button" id="nx">Back to the questions</button>');
+      bar.hidden = false;
+      document.getElementById('ss').onclick = toggleSol; document.getElementById('nx').onclick = goNext;
+      if (dd.gave && !solOpen) toggleSol();
       const tt = document.getElementById('tot'); if (tt) tt.textContent = score();
     }
-    function showSol() {
-      const sb = document.getElementById('solbox'); sb.innerHTML = solution();
-      putFig(document.getElementById('solfig'), it.figure);   // the solution figure marks the answer: only after the answer (Ulutin)
-      const ss = document.getElementById('ss'); if (ss) ss.remove();
-    }
+    keyH = e => {
+      if (e.target.closest && e.target.closest('input, textarea, select') || document.querySelector('.modal') || e.ctrlKey || e.metaKey || e.altKey) return;
+      const k = e.key.toLowerCase(), i = '12345'.indexOf(k) >= 0 ? '12345'.indexOf(k) : 'abcde'.indexOf(k);
+      const nx = !bar.hidden && document.getElementById('nx'), ss = !bar.hidden && document.getElementById('ss');
+      if (i >= 0 && k.length === 1 && btns[i] && !btns[i].disabled) { e.preventDefault(); btns[i].click(); }
+      else if ((k === 'enter' || k === 'arrowright') && nx) { e.preventDefault(); nx.click(); }
+      else if (k === 's' && ss) { e.preventDefault(); ss.click(); }
+    };
+    document.addEventListener('keydown', keyH);
     if (d) return;
-    clockStart(); current = { it, mode };
+    clockStart(); current = { it, mode };   // visible time only; the running clock stays (Celebi 14.11: Can asked for the time limit), in grey
     const clk = document.getElementById('clk');
     if (clk) ticker = setInterval(() => { const s = Math.round((clock.acc + (clock.away ? 0 : performance.now() - clock.t0)) / 1000); clk.textContent = mmss(s); if (s > limitOf(it)) { const fb = document.getElementById('fb'); if (fb) fb.classList.add('late'); } }, 1000);
     btns.forEach(b => b.onclick = async () => {
@@ -470,21 +510,22 @@
       const fast = ok && speedOn && w0 === 0 && secs <= limitOf(it), bonus = fast ? bonusOf(it) : 0;
       me.pending.push({ ts: new Date().toISOString(), client: dev.cid, nick: login.nick, run: RUNID, item: it.id, template: it.cat, slot: it.slot || null, mirrors: null, topic: it.topic, type: typeOf(it),
         level: it.level, mode, points: ok ? worth + bonus : 0, bonus, attempt: w0 + 1, seconds: Math.min(CAP, secs), capped: secs >= CAP, correct: ok, fast, lecturer });
-      if (mode === 'arena' && (ok || w0 === 0)) arenaAfter(it, ok, fast);
+      if (mode === 'arena' && (ok || w0 === 0)) arenaAfter(it, ok, fast, w0 === 0);
       if (ok) { current = null; me.done[it.id] = { p: worth + bonus, b: bonus, fast, w: w0, at: new Date().toISOString() }; keep(); done(false); writeAll(false); return; }
       me.wrong[it.id] = w0 + 1; keep();
       clearInterval(ticker); const fb = document.getElementById('fb'); if (fb) fb.remove();
       b.classList.add('wrong'); b.disabled = true;
-      document.getElementById('pn').textContent = 'worth ' + pointsNow(it) + ' points now';
-      after.innerHTML = '<p class="verdict no">Not this one. Try again: now worth ' + pointsNow(it) + ' points.</p><div class="next"><button class="link" type="button" id="give">show the solution (0 points)</button></div>';
+      document.getElementById('pn').textContent = pointsNow(it) + ' points';
+      verdict.className = 'verdict no'; verdict.textContent = 'Incorrect. Now worth ' + pointsNow(it) + ' points.';
+      abtn.innerHTML = '<button class="link" type="button" id="give">show the solution (0 points)</button>'; bar.hidden = false;
       document.getElementById('give').onclick = () => { current = null; me.done[it.id] = { p: 0, b: 0, w: me.wrong[it.id] || 0, at: new Date().toISOString(), gave: true }; keep(); done(false); writeAll(false); };
       clockStart(); writeAll(false);
     });
   }
   async function leaderboard(tab) {
     tab = tab || 'all';
-    app.innerHTML = header() + '<h2>Leaderboard</h2><div class="tabs" id="tabs"></div><div id="lb" class="msg">Loading…</div><p><button type="button" id="back">Back to the questions</button> <button type="button" id="rf">Refresh</button></p>';
-    document.getElementById('back').onclick = home; wire();
+    app.innerHTML = header() + '<h2>Leaderboard</h2><div class="tabs" id="tabs"></div><div id="lb" class="msg">Loading…</div><p><button type="button" id="rf">Refresh</button></p>';
+    wire();
     const tabs = document.getElementById('tabs');
     [['all', 'Total']].concat(P.topics.map(t => [t.id, t.name])).forEach(([v, l]) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = l; b.className = v === tab ? 'on' : ''; b.onclick = () => leaderboard(v); tabs.appendChild(b); });
     document.getElementById('rf').onclick = () => { etag = null; leaderboard(tab); };

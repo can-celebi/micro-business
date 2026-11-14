@@ -18,7 +18,25 @@
   h1 { font-size: 1.15rem; font-weight: 600; margin: 0; }
   h2 { font-size: 1rem; font-weight: 600; margin: 1.4rem 0 .5rem; }
   .sub { color: var(--dim); font-size: .85rem; margin: .2rem 0 1rem; }
-  .bar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 6px 12px; }
+  /* one sticky top bar (Oyun): crumbs left, "nickname · points ▾" right, one line */
+  .bar { position: sticky; top: 0; z-index: 5; background: var(--bg); border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 8px 0; margin-bottom: 10px; }
+  .crumbs { display: flex; align-items: center; gap: 4px; min-width: 0; font-size: .9rem; white-space: nowrap; }
+  .crumbs a { color: var(--accent); text-decoration: none; } .crumbs .sep { color: var(--dim); } .crumbs .c-mode { color: var(--ink); }
+  button.crumb { border: 0; background: none; padding: 2px 2px; color: var(--accent); font-size: .9rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  button.mebtn { color: var(--ink); flex-shrink: 0; font-variant-numeric: tabular-nums; } button.crumb:hover { background: #eef2f7; }
+  .menu { position: absolute; z-index: 20; background: #fff; border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 6px 20px rgba(20, 24, 30, .12); padding: 4px; display: grid; min-width: 12em; }
+  .menu a, .menu button { display: flex; align-items: center; min-height: 40px; padding: 0 12px; border: 0; border-radius: 6px; background: none; color: var(--ink); text-decoration: none; text-align: left; font-size: .92rem; }
+  .menu a:hover, .menu button:hover { background: #f0f3f7; } .menu .mrow-mid { color: var(--accent); }
+  @media (max-width: 560px) { .crumbs .c-mid { display: none; } }
+  /* the answer bar, pinned to the bottom after an answer */
+  main { padding-bottom: 96px; }
+  .abar { position: sticky; bottom: 0; z-index: 4; background: #fff; border-top: 1px solid var(--line); margin: 12px -16px 0; padding: 10px 16px calc(10px + env(safe-area-inset-bottom)); }
+  .abar-in { display: flex; align-items: center; justify-content: space-between; gap: 8px 12px; flex-wrap: wrap; }
+  .abar .verdict { margin: 0; font-weight: 600; } .abar .abtn { display: flex; gap: 8px; margin-left: auto; } .abar button { min-height: 44px; }
+  @media (max-width: 420px) { .abar .abtn { width: 100%; } .abar .abtn button { flex: 1; } }
+  .qmeta .lvl { color: var(--ink); } .qmeta .pts { color: var(--ink); font-weight: 600; } #fb { color: var(--dim); } #fb.late { text-decoration: line-through; }
+  .opt.wasw { background: #fff; border-color: #c9ced6; border-left: 3px solid var(--no); color: var(--dim); }
+  @media (max-width: 560px) { .opt { min-height: 48px; } }
   .me { font-size: .88rem; color: var(--dim); } .me b { color: var(--ink); font-weight: 600; }
   button { font: inherit; cursor: pointer; border-radius: 8px; border: 1px solid #c9ced6; background: #fff; color: var(--ink); padding: 8px 14px; }
   button:hover { background: #f0f3f7; }
@@ -52,46 +70,46 @@
   table.lb td, table.lb th { padding: 5px 6px; border-bottom: 1px solid var(--line); text-align: left; }
   table.lb th { font-weight: 600; color: var(--dim); font-size: .8rem; } table.lb td.p { text-align: right; font-variant-numeric: tabular-nums; }
   table.lb tr.mine td { background: #eef4fb; }
-  .tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; } .tabs button { padding: 4px 10px; font-size: .85rem; } .tabs button.on { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .tabs { display: flex; flex-wrap: nowrap; overflow-x: auto; gap: 6px; margin-bottom: 8px; } .tabs button { flex-shrink: 0; } .tabs button { padding: 4px 10px; font-size: .85rem; } .tabs button.on { background: var(--accent); color: #fff; border-color: var(--accent); }
   .fine { font-size: .78rem; color: var(--dim); margin-top: 2rem; }
   .msg { font-size: .88rem; color: var(--dim); }
   .bad { color: var(--no); }
-  .bar { position: sticky; top: 0; z-index: 5; background: var(--bg); padding: 6px 0; border-bottom: 1px solid var(--line); }
-  .crumbs { font-size: .9rem; white-space: nowrap; overflow-x: auto; max-width: 100%; } .crumbs a { color: var(--accent); text-decoration: none; }
-  .crumbs select { font: inherit; font-size: .9rem; border: 0; background: transparent; color: var(--accent); padding: 0 2px; max-width: 13em; cursor: pointer; }
   .dir { margin: .2rem 0 .3rem; } .rule { font-size: .9rem; background: #eef4fb; border-radius: 8px; padding: 8px 10px; }
   .modes button { padding: 6px 16px; font-size: .92rem; }
+  .startrow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; } @media (max-width: 560px) { .startrow .go { width: 100%; } }
   button.big { font-size: 1.05rem; padding: 12px 22px; }
-  .filters { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; font-size: .86rem; color: var(--dim); margin: 6px 0 10px; }
-  .filters select { font: inherit; padding: 3px 6px; border-radius: 6px; border: 1px solid #c9ced6; } .filters .ck { display: inline-flex; gap: 4px; align-items: center; color: var(--ink); }
-  .qtop { margin: 4px 0 8px; }
-  #after { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; } #after .verdict { margin: 8px 0; } #after .next { margin: 0; } #solbox { flex-basis: 100%; } #fb { color: var(--ok); } #fb.late { color: var(--dim); text-decoration: line-through; }
+  .filters { display: flex; flex-wrap: nowrap; overflow-x: auto; gap: 6px; align-items: center; margin: 6px 0 6px; padding-bottom: 2px; }
+  .filters .pill { flex-shrink: 0; padding: 4px 12px; border-radius: 999px; font-size: .85rem; } .filters .pill.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .filters select { flex-shrink: 0; font: inherit; font-size: .85rem; padding: 4px 6px; border-radius: 8px; border: 1px solid #c9ced6; margin-left: auto; }
+  h3.lvh { font-size: .88rem; font-weight: 600; margin: 12px 0 6px; color: var(--ink); }
   .modal { position: fixed; inset: 0; background: rgba(20, 24, 30, .35); display: flex; align-items: flex-start; justify-content: center; padding: 6vh 12px; overflow-y: auto; z-index: 10; }
-  .modal .card { max-width: 620px; width: 100%; } .modal p { font-size: .92rem; } ol.tut { padding-left: 1.3em; } ol.tut li { margin: 6px 0; }
+  .modal .card { max-width: 620px; width: 100%; position: relative; max-height: 90vh; overflow: auto; }
+  .modal .x { position: absolute; top: 6px; right: 8px; border: 0; background: none; font-size: 1.4rem; line-height: 1; padding: 6px 10px; color: var(--dim); } .modal p { font-size: .92rem; } ol.tut { padding-left: 1.3em; } ol.tut li { margin: 6px 0; }
   .warn { font-size: .86rem; background: #fff4d6; border: 1px solid #e0b64a; border-radius: 8px; padding: 8px 10px; }
   .forms { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; } .forms h2 { margin: 0 0 .4rem; }
   .forms label { display: grid; gap: 2px; font-size: .85rem; color: var(--dim); margin-bottom: 8px; }
   .forms input { font: inherit; padding: 8px 10px; border: 1px solid #c9ced6; border-radius: 8px; width: 100%; color: var(--ink); }
   .cat:disabled { opacity: .55; cursor: default; }
-  .qgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(7.4em, 1fr)); gap: 8px; }
-  .qc { display: grid; gap: 1px; padding: 8px 6px; text-align: center; border-left-width: 4px; }
-  .qc.easy { border-left-color: #1b7f3b; } .qc.medium { border-left-color: #c28a00; } .qc.hard { border-left-color: #a12f2f; }
-  .qc .qn { font-weight: 600; } .qc .ql { font-size: .74rem; color: var(--dim); } .qc .qp { font-size: .86rem; font-variant-numeric: tabular-nums; }
-  .qc .qw { font-size: .72rem; color: var(--no); } .qc.done { background: #f3f7f3; } .qc.done .qp { color: var(--ok); }
+  .qgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(3.4em, 1fr)); gap: 6px; }
+  .qc { position: relative; display: grid; gap: 0; padding: 5px 2px; min-height: 44px; text-align: center; border-radius: 8px; }
+  .qc .qn { font-weight: 600; font-size: .9rem; } .qc .qp { font-size: .78rem; color: var(--dim); font-variant-numeric: tabular-nums; }
+  .qc.done { background: var(--okbg); border-color: var(--okbg); } .qc.done .qp { color: var(--ok); } .qc.seen .qp { color: var(--dim); }
+  .qc .qw { position: absolute; top: 4px; right: 4px; width: 6px; height: 6px; border-radius: 50%; background: var(--no); }
   @media (max-width: 560px) { .forms { grid-template-columns: 1fr; } }
+  @media (pointer: coarse) { button.link, .crumbs a, button.crumb { min-height: 44px; display: inline-flex; align-items: center; } }
 </style>
 </head>
 <body>
 <main id="app"><h1>Midterm practice</h1><p class="sub">Loading…</p></main>
 <script src="../assets/js/config.js?v=20261014a"></script>
 <script src="../vendor/katex/katex.min.js"></script>
-<script src="meta.js?v=10"></script>
-<script src="topics/words.js?v=10"></script>
-<script src="topics/opt.js?v=10"></script>
-<script src="topics/sd.js?v=10"></script>
-<script src="topics/pc.js?v=10"></script>
-<script src="topics/pref.js?v=10"></script>
-<script src="topics/rc.js?v=10"></script>
-<script src="../assets/js/practice.js?v=20261114f"></script>
+<script src="meta.js?v=11"></script>
+<script src="topics/words.js?v=11"></script>
+<script src="topics/opt.js?v=11"></script>
+<script src="topics/sd.js?v=11"></script>
+<script src="topics/pc.js?v=11"></script>
+<script src="topics/pref.js?v=11"></script>
+<script src="topics/rc.js?v=11"></script>
+<script src="../assets/js/practice.js?v=20261114h"></script>
 </body>
 </html>
