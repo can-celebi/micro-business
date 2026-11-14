@@ -45,11 +45,16 @@
   .res h3 { font-size: .85rem; font-weight: 600; margin: .9rem 0 .4rem; color: var(--dim); }
   .res h3:first-child { margin-top: .2rem; }
   @media (max-width: 600px) { .topics { grid-template-columns: 1fr; } }
+  /* breadcrumb bar, the same as the practice arena's (Ali) */
+  main { padding-top: 8px !important; }
+  .bar { position: sticky; top: 0; z-index: 5; background: #fbfbf9; padding: 6px 0; border-bottom: 1px solid #e3e5e8; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 6px 12px; margin-bottom: 1.2rem; }
+  .crumbs { font-size: .9rem; white-space: nowrap; overflow-x: auto; max-width: 100%; color: #1d1d1f; }
+  .crumbs a { color: #2f5d8c; text-decoration: none; border-bottom: none; }
 </style>
 </head>
 <body>
 <main>
-  <p class="back"><a href="../">← All weeks</a></p>
+  <div class="bar"><nav class="crumbs"><a href="../">← All weeks</a> › Midterm practice</nav></div>
   <h1>Midterm practice</h1>
   <p class="s">Midterm: Thursday 19.11 · Practise by topic, collect points and see the leaderboards.</p>
   <h2>Topics</h2>
