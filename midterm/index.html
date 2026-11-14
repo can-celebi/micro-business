@@ -134,7 +134,8 @@
     const fmt = n => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, '\u202f');
     const load = src => new Promise((ok, no) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = no; document.head.appendChild(s); });
     const tiles = [...document.querySelectorAll('a.topic[data-topic]')];
-    load('../practice/ids.js').then(() => {   // the arena's small per-topic id list (9 KB; Ali), not the full topic files
+    const IDS_V = '81828bcd';   // ids-v: set by tools/practice_update.sh (first 8 hex of the md5 of practice/ids.js)
+    load('../practice/ids.js?v=' + IDS_V).then(() => {   // the arena's small per-topic id list (9 KB; Ali), not the full topic files
       const P = window.PRACTICE_IDS || {};
       tiles.forEach(a => {
         const ids = P[a.dataset.topic]; if (!Array.isArray(ids) || !ids.length) return;
