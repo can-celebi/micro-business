@@ -74,7 +74,8 @@
     const get = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
     const login = get('micro-arena-login' + T);
     if (!login || !login.key) return;   // logged out: show nothing
-    const done = ((get('micro-arena-prog-' + login.key) || {}).done) || {};
+    // the arena's progress key (practice.js): 'micro-arena-prog' + T + '-' + key
+    const done = ((get('micro-arena-prog' + T + '-' + login.key) || {}).done) || {};
     const fmt = n => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, '\u202f');
     const load = src => new Promise((ok, no) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = no; document.head.appendChild(s); });
     const tiles = [...document.querySelectorAll('a.topic[data-topic]')];
