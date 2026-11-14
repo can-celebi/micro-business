@@ -38,7 +38,7 @@
   const isPrime = n => { if (n < 2) return false; for (let d = 2; d * d <= n; d++) if (n % d === 0) return false; return true; };
   const primeLE = x => { let n = Math.max(2, Math.floor(x)); while (n > 2 && !isPrime(n)) n--; return n; };
   const primeBelow = p => { let n = p - 1; while (n > 2 && !isPrime(n)) n--; return Math.max(2, n); };
-  const baseOf = it => PT.base[it.level] || PT.base.easy;
+  const baseOf = it => (Number.isInteger(it.base) && it.base > 1 ? it.base : 0) || PT.base[it.level] || PT.base.easy;   // it.base: the item's own base from the difficulty model (practice_difficulty.py, Additions 13-14)
   const floorOf = it => primeLE(baseOf(it) * PT.floor);
   function ladder(it, k) { return primeLE(Math.max(baseOf(it) * Math.pow(PT.rate, k - 1), baseOf(it) * PT.floor)); }
   // wrong tries (Can 14.11): each halves the current value to the closest prime (a tie takes the higher); after the third, 0
@@ -718,7 +718,10 @@
       tellLevel(); levelUI();
       abtn.innerHTML = '<button class="link" type="button" id="give">show the solution (0 points)</button>'; bar.hidden = false;
       fire('arena:answer', { item: pub(it), ok: false, attempt: w0 + 1, points: 0, worthNow: pointsNow(it), mode, level: lvNow(), levelChange: lvChange });
-      document.getElementById('give').onclick = () => { lvChange = null; current = null; me.done[it.id] = { p: 0, b: 0, w: me.wrong[it.id] || 0, at: new Date().toISOString(), gave: true }; keep(); done(false); writeAll(false); };
+      document.getElementById('give').onclick = () => { lvChange = null; current = null; const secs = clockStop();
+        me.pending.push({ ts: new Date().toISOString(), client: dev.cid, nick: login.nick, run: RUNID, item: it.id, template: it.cat, slot: it.slot || null, mirrors: null, topic: it.topic, type: typeOf(it),   // the opened solution counts as "never" in the difficulty model
+          level: it.level, mode, points: 0, bonus: 0, attempt: (me.wrong[it.id] || 0) + 1, seconds: Math.min(CAP, secs), capped: secs >= CAP, correct: null, gave: true, fast: false, lecturer });
+        me.done[it.id] = { p: 0, b: 0, w: me.wrong[it.id] || 0, at: new Date().toISOString(), gave: true }; keep(); done(false); writeAll(false); };
       clockStart(); writeAll(false);
     });
   }
