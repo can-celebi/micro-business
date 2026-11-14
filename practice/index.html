@@ -56,7 +56,18 @@
   .fine { font-size: .78rem; color: var(--dim); margin-top: 2rem; }
   .msg { font-size: .88rem; color: var(--dim); }
   .bad { color: var(--no); }
-  h1 a { color: inherit; text-decoration: none; }
+  .bar { position: sticky; top: 0; z-index: 5; background: var(--bg); padding: 6px 0; border-bottom: 1px solid var(--line); }
+  .crumbs { font-size: .9rem; white-space: nowrap; overflow-x: auto; max-width: 100%; } .crumbs a { color: var(--accent); text-decoration: none; }
+  .crumbs select { font: inherit; font-size: .9rem; border: 0; background: transparent; color: var(--accent); padding: 0 2px; max-width: 13em; cursor: pointer; }
+  .dir { margin: .2rem 0 .3rem; } .rule { font-size: .9rem; background: #eef4fb; border-radius: 8px; padding: 8px 10px; }
+  .modes button { padding: 6px 16px; font-size: .92rem; }
+  button.big { font-size: 1.05rem; padding: 12px 22px; }
+  .filters { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; font-size: .86rem; color: var(--dim); margin: 6px 0 10px; }
+  .filters select { font: inherit; padding: 3px 6px; border-radius: 6px; border: 1px solid #c9ced6; } .filters .ck { display: inline-flex; gap: 4px; align-items: center; color: var(--ink); }
+  .qtop { margin: 4px 0 8px; }
+  #after { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; } #after .verdict { margin: 8px 0; } #after .next { margin: 0; } #solbox { flex-basis: 100%; } #fb { color: var(--ok); } #fb.late { color: var(--dim); text-decoration: line-through; }
+  .modal { position: fixed; inset: 0; background: rgba(20, 24, 30, .35); display: flex; align-items: flex-start; justify-content: center; padding: 6vh 12px; overflow-y: auto; z-index: 10; }
+  .modal .card { max-width: 620px; width: 100%; } .modal p { font-size: .92rem; } ol.tut { padding-left: 1.3em; } ol.tut li { margin: 6px 0; }
   .warn { font-size: .86rem; background: #fff4d6; border: 1px solid #e0b64a; border-radius: 8px; padding: 8px 10px; }
   .forms { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; } .forms h2 { margin: 0 0 .4rem; }
   .forms label { display: grid; gap: 2px; font-size: .85rem; color: var(--dim); margin-bottom: 8px; }
@@ -74,13 +85,13 @@
 <main id="app"><h1>Midterm practice</h1><p class="sub">Loading…</p></main>
 <script src="../assets/js/config.js?v=20261014a"></script>
 <script src="../vendor/katex/katex.min.js"></script>
-<script src="meta.js?v=9"></script>
-<script src="topics/words.js?v=9"></script>
-<script src="topics/opt.js?v=9"></script>
-<script src="topics/sd.js?v=9"></script>
-<script src="topics/pc.js?v=9"></script>
-<script src="topics/pref.js?v=9"></script>
-<script src="topics/rc.js?v=9"></script>
-<script src="../assets/js/practice.js?v=20261114c"></script>
+<script src="meta.js?v=10"></script>
+<script src="topics/words.js?v=10"></script>
+<script src="topics/opt.js?v=10"></script>
+<script src="topics/sd.js?v=10"></script>
+<script src="topics/pc.js?v=10"></script>
+<script src="topics/pref.js?v=10"></script>
+<script src="topics/rc.js?v=10"></script>
+<script src="../assets/js/practice.js?v=20261114f"></script>
 </body>
 </html>

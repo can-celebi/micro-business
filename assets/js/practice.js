@@ -154,6 +154,8 @@
     if (!remote || typeof remote !== 'object') return;
     Object.entries(remote.done || {}).forEach(([id, d]) => { const l = me.done[id]; if (d && typeof d.p === 'number' && (!l || (d.at && l.at && d.at < l.at))) me.done[id] = d; });
     Object.entries(remote.wrong || {}).forEach(([id, n]) => { if (typeof n === 'number' && n > (me.wrong[id] || 0)) me.wrong[id] = n; });
+    if (remote.tut) me.tut = 1;   // the tutorial was seen on another device
+    if (remote.arena && typeof remote.arena === 'object') { me.arena = me.arena || {}; Object.entries(remote.arena).forEach(([t, a]) => { if (!me.arena[t] && a && LV.includes(a.level)) me.arena[t] = a; }); }
   }
   async function pullProgress() { const sha = await getRefObj(PROG + login.key); if (sha) { merge(await readBlob(sha)); keep(); } }
   let lastWrite = 0, inflight = null, mainSha = null, etag = null, board = null;
@@ -170,14 +172,14 @@
   }
   async function writeOnce(force) {
     if (!TOKEN || !login) return;
-    const total = score(), ts = P.topics.map(t => t.id + '.' + score(t.id)).join('_'), sig = total + '|' + ts + '|' + JSON.stringify(me.wrong).length;
+    const total = score(), ts = P.topics.map(t => t.id + '.' + score(t.id)).join('_'), sig = total + '|' + ts + '|' + JSON.stringify(me.wrong).length + '|' + (me.tut ? 1 : 0) + '|' + JSON.stringify(me.arena || {});
     if (sig === me.wrote && !me.pending.length) return;
     if (!force && Date.now() - lastWrite < WRITE_EVERY) return;
     lastWrite = Date.now();
     try {
       try { await sendTimes(force); } catch (e) {}
       if (sig === me.wrote) return;
-      const blob = await newBlob({ v: 1, nick: login.nick, done: me.done, wrong: me.wrong, ts: new Date().toISOString() }, force);
+      const blob = await newBlob({ v: 1, nick: login.nick, done: me.done, wrong: me.wrong, tut: me.tut ? 1 : 0, arena: me.arena || {}, ts: new Date().toISOString() }, force);
       const pr = 'refs/' + PROG + login.key;
       let w = await fetch(API + '/git/' + pr, { method: 'PATCH', headers: H(), body: JSON.stringify({ sha: blob, force: true }), keepalive: !!force });
       if (w.status === 422 || w.status === 404) w = await fetch(API + '/git/refs', { method: 'POST', headers: H(), body: JSON.stringify({ ref: pr, sha: blob }), keepalive: !!force });
@@ -208,12 +210,78 @@
   }
 
   // ---------- screens ----------
+  // student texts: Hafize (Student service), passed by Ulutin and Gozde (20_student-desk/frozen/b81e365f4d94/2026-11-14_practice-arena-texts.md)
+  const TX = {
+    how: ['Every question gives a prime number of points. The base depends on the difficulty: an easy question gives 101 points, a medium question 211 points and a hard question 307 points.',
+      'Each question belongs to a question type. Your first right answer of a type gives the full base. Each further right answer of the same type gives a little less: about 15% less each time, always rounded down to a prime number, and never less than about a quarter of the base.',
+      'If you answer a question wrongly, you can try again, but the question then gives the next lower prime number. If you open the solution before you have found the right answer, the question gives no points.',
+      '<b>Example.</b> Your first easy question of a type gives 101 points if you answer it right at the first try. Your second easy question of the same type gives 83 points. If you had needed two tries for the first one, it would have given 97 points instead of 101.',
+      'Each card shows the points it gives you now, so you always see what a question is worth before you open it.'],
+    dir: { words: 'Read a short story about prices and a budget, and choose the equations that describe the budget line.',
+      opt: 'Find the optimal bundle a consumer can afford, on straight and kinked budget lines and for different utility functions.',
+      sd: 'Decide how demand or supply shifts after a change in the market, and find the new equilibrium price and quantity.',
+      pc: 'Decide whether a market has the features of perfect competition.',
+      pref: 'Check which properties a relation or a preference has, match utility functions to the shapes of their indifference curves, and work out the result of a majority vote.',
+      rc: 'Check whether a person\'s choices on different budgets can come from rational preferences, and how far choices that are not rational are from rational (the index e).' },
+    tut: [['Your account.', 'Make an account with a nickname and a password. Please use this one nickname every time and on every device, so that all your points and your progress stay together.'],
+      ['Choose a topic.', 'Pick one of the six topics. Your points for each topic and in total appear on the leaderboards.'],
+      ['Choose a question.', 'Each card shows the difficulty of the question and the points it gives you now. You decide which question to answer and in which order.'],
+      ['Answer.', 'After your answer you see whether it is right and how many points you have earned. You can then open the full solution if you want to.']]
+  };
+  // Addition 9: speed bonus (settings; "on": false switches it off) and the arena's one-line rule
+  const SP = PT.speed || { on: false };
+  const speedOn = !!SP.on;
+  const limitOf = it => (SP.limit || {})[it.level] || 0, bonusOf = it => (SP.bonus || {})[it.level] || 0;
+  const mmss = s => Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+  const ARENA_RULE = 'You start with easy questions; two right answers in a row' + (speedOn ? ' (a fast one counts as two)' : '') + ' move you up a level; after a wrong answer you get another question of the same kind.';
   const params = new URLSearchParams(location.search);
-  const header = () => '<div class="bar"><h1><a href="./' + (SESSION === 'test' && !LOCAL ? '?test' : '') + '" id="homeL">Midterm practice</a></h1>' + (login ? '<span class="me">logged in as <b>' + esc(login.nick) + '</b> · <span id="tot">' + score() + '</span> points · <button class="link" id="lbl" type="button">leaderboard</button> · <button class="link" id="out" type="button">log out</button></span>' : '') + '</div>';
-  function wire() {
-    const l = document.getElementById('lbl'); if (l) l.onclick = () => leaderboard();
-    const o = document.getElementById('out'); if (o) o.onclick = logout;
-    const h = document.getElementById('homeL'); if (h) h.onclick = e => { e.preventDefault(); home(); };
+  const TQ = SESSION === 'test' && !LOCAL ? '?test' : '';
+  const LEVEL = { easy: 'easy', medium: 'medium', hard: 'hard' }, LV = ['easy', 'medium', 'hard'];
+  let MODE = load('micro-arena-mode' + T, 'arena') === 'select' ? 'select' : 'arena';
+  // one line: where you are (Midterm practice › topic › mode), and who you are
+  // one sticky line: ← Midterm practice › topic (a switcher to any section) › mode (Arena / Selection); who you are, points, links
+  function header(topicId, mode) {
+    const tsel = '<select id="tsw" aria-label="topic">' + (topicId ? '' : '<option value="">Topics</option>') + P.topics.map(t => '<option value="' + t.id + '"' + (t.id === topicId ? ' selected' : '') + ((TOP[t.id] || []).length ? '' : ' disabled') + '>' + esc(t.name) + '</option>').join('') + '</select>';
+    const msel = topicId ? ' › <select id="msw" aria-label="mode"><option value="arena"' + (mode === 'arena' ? ' selected' : '') + '>Arena</option><option value="select"' + (mode === 'select' ? ' selected' : '') + '>Selection</option></select>' : '';
+    const crumbs = '<a href="../midterm/' + TQ + '">← Midterm practice</a> › ' + tsel + msel;
+    return '<div class="bar"><nav class="crumbs">' + crumbs + '</nav>' + (login ? '<span class="me">logged in as <b>' + esc(login.nick) + '</b> · <span id="tot">' + score() + '</span> points · <button class="link" id="howL" type="button">how points work</button> · <button class="link" id="lbl" type="button">leaderboard</button> · <button class="link" id="out" type="button">log out</button></span>' : '<span class="me"><button class="link" id="howL" type="button">how points work</button></span>') + '</div>';
+  }
+  function wire(topicId) {
+    const l = document.getElementById('lbl'); if (l) l.onclick = () => { leaveQuestion(); leaderboard(); };
+    const o = document.getElementById('out'); if (o) o.onclick = () => { leaveQuestion(); logout(); };
+    const w = document.getElementById('howL'); if (w) w.onclick = howPoints;
+    const t = document.getElementById('tsw'); if (t) t.onchange = () => { if (t.value) { leaveQuestion(); topic(t.value); } };
+    const m = document.getElementById('msw'); if (m) m.onchange = () => { leaveQuestion(); topic(topicId, m.value); };
+  }
+  // a question left before it was answered: one "skipped" record with its time (Hande's timing data keeps every visit), no points
+  let current = null;
+  function leaveQuestion() {
+    if (!current) return;
+    const c = current; current = null; clearInterval(ticker);
+    if (me.done[c.it.id]) return;
+    const secs = clockStop();
+    me.pending.push({ ts: new Date().toISOString(), client: dev.cid, nick: login && login.nick, run: RUNID, item: c.it.id, template: c.it.cat, slot: c.it.slot || null, mirrors: null, topic: c.it.topic,
+      type: typeOf(c.it), level: c.it.level, mode: c.mode, points: 0, bonus: 0, attempt: (me.wrong[c.it.id] || 0) + 1, seconds: Math.min(CAP, secs), capped: secs >= CAP, correct: null, skipped: true, fast: false, lecturer });
+    keep();
+  }
+  function howPoints() {
+    const rows = LV.map(l => { const it = { level: l }; return '<tr><td>' + l + '</td>' + [1, 2, 3, 4, 5].map(k => '<td class="p">' + ladder(it, k) + '</td>').join('') + '<td class="p">' + floorOf(it) + '</td></tr>'; }).join('');
+    const box = document.createElement('div'); box.className = 'modal'; box.id = 'how';
+    box.innerHTML = '<div class="card"><h2>How points work</h2>' + TX.how.map(p => '<p>' + p + '</p>').join('') +
+      '<table class="lb"><tr><th></th><th class="p">1st</th><th class="p">2nd</th><th class="p">3rd</th><th class="p">4th</th><th class="p">5th</th><th class="p">lowest</th></tr>' + rows + '</table>' +
+      '<p class="fine">Points for the 1st, 2nd, … right answer of one question type, at the first try.</p>' +
+      (speedOn ? '<p class="fine">Fast bonus: ' + LV.map(l => l + ' +' + bonusOf({ level: l }) + ' within ' + mmss(limitOf({ level: l }))).join(', ') + ' (right at the first try; only the time the page is on screen counts).</p>' : '') +
+      '<p><button class="go" type="button" id="howX">Close</button></p></div>';
+    document.body.appendChild(box); box.onclick = e => { if (e.target === box) box.remove(); };
+    document.getElementById('howX').onclick = () => box.remove(); document.getElementById('howX').focus({ preventScroll: true });
+  }
+  function tutorial() {   // once per account (Addition 8), dismissable
+    if (!login || me.tut) return;
+    const box = document.createElement('div'); box.className = 'modal'; box.id = 'tut';
+    box.innerHTML = '<div class="card"><h2>Welcome to the midterm practice</h2><ol class="tut">' + TX.tut.map(([a, b]) => '<li><b>' + a + '</b> ' + b + '</li>').join('') +
+      '</ol><p><button class="go" type="button" id="tutX">Got it</button></p></div>';
+    document.body.appendChild(box);
+    document.getElementById('tutX').onclick = () => { me.tut = 1; keep(); box.remove(); writeAll(false); };
   }
   const WARN = '<p class="warn"><b>One nickname per student.</b> Make one account and keep it: log in with the same nickname and password on every device. A second nickname splits your progress. Do not use your real name, and pick a password you use nowhere else (this page is for practice, its security is light).</p>';
   function loginScreen(msg) {
@@ -266,9 +334,10 @@
   }
   async function logout() { await writeAll(true); login = null; try { localStorage.removeItem(KEY_LOGIN); } catch (e) {} me = { done: {}, wrong: {}, pending: [] }; loginScreen('You are logged out on this device.'); }
   function home() {
+    leaveQuestion();
     if (!login) return loginScreen();
-    history.replaceState(null, '', location.pathname + (SESSION === 'test' && !LOCAL ? '?test' : ''));
-    app.innerHTML = header() + '<p class="sub">Pick a topic. In a topic you see all its questions with the points each gives now; answer them in any order.</p><div class="cats" id="cats"></div>' +
+    history.replaceState(null, '', location.pathname + TQ);
+    app.innerHTML = header() + '<p class="sub">Pick a topic. Play it in the arena (one question after another, harder as you go) or pick the questions yourself.</p><div class="cats" id="cats"></div>' +
       '<p class="fine">For practice only: nothing here counts towards your grade. The leaderboard is just for fun; only your nickname and scores are stored. Time per question is recorded anonymously to improve the course.</p>';
     const box = document.getElementById('cats');
     P.topics.forEach(t => {
@@ -277,64 +346,138 @@
       b.innerHTML = '<span class="n">' + esc(t.name) + '</span><span class="d">' + (all.length ? done + ' of ' + all.length + ' done · ' + score(t.id) + ' points' : 'questions coming soon') + '</span>';
       b.onclick = () => topic(t.id); box.appendChild(b);
     });
-    wire();
+    wire(); tutorial();
   }
-  const LEVEL = { easy: 'easy', medium: 'medium', hard: 'hard' };
-  function topic(id) {
+  // ---------- a topic: Arena or Selection (Addition 9) ----------
+  let sel = load('micro-arena-sel' + T, { sort: 'num', f: {} });
+  function topic(id, mode) {
+    leaveQuestion();
     if (!login) return loginScreen();
+    mode = mode || MODE; MODE = mode; save('micro-arena-mode' + T, mode);
     const all = TOP[id] || [];
-    history.replaceState(null, '', location.pathname + '?topic=' + encodeURIComponent(id) + (SESSION === 'test' && !LOCAL ? '&test' : ''));
-    app.innerHTML = header() + '<h2>' + esc(topicName(id)) + '</h2><p class="sub">' + all.filter(it => me.done[it.id]).length + ' of ' + all.length + ' done · ' + score(id) +
-      ' points. Each card shows the points it gives now: the first right answers of a kind give the most, and each wrong try costs a little.</p><div class="qgrid" id="qg"></div><p><button type="button" id="back">All topics</button></p>';
-    const g = document.getElementById('qg');
-    all.forEach((it, i) => {
-      const d = me.done[it.id], w = me.wrong[it.id] || 0;
-      const b = document.createElement('button'); b.type = 'button'; b.className = 'qc ' + (it.level || '') + (d ? ' done' : '');
-      b.innerHTML = '<span class="qn">' + (i + 1) + '</span><span class="ql">' + esc(LEVEL[it.level] || it.level || '') + '</span><span class="qp">' +
-        (d ? (d.p ? '✓ ' + d.p : 'solution seen') : pointsNow(it) + ' points') + '</span>' + (!d && w ? '<span class="qw">' + w + ' wrong ' + (w === 1 ? 'try' : 'tries') + '</span>' : '');
-      b.onclick = () => ask(it); g.appendChild(b);
-    });
-    document.getElementById('back').onclick = home; wire();
+    history.replaceState(null, '', location.pathname + '?topic=' + encodeURIComponent(id) + (TQ ? '&test' : ''));
+    app.innerHTML = header(id, mode) + '<h2>' + esc(topicName(id)) + '</h2><p class="dir">' + esc(TX.dir[id] || '') + '</p>' +
+      '<p class="sub">' + all.filter(it => me.done[it.id]).length + ' of ' + all.length + ' done · ' + score(id) + ' points</p>' +
+      '<div class="tabs modes"><button type="button" id="mA" class="' + (mode === 'arena' ? 'on' : '') + '">Arena</button><button type="button" id="mS" class="' + (mode === 'select' ? 'on' : '') + '">Selection</button></div><div id="tb"></div>';
+    document.getElementById('mA').onclick = () => topic(id, 'arena'); document.getElementById('mS').onclick = () => topic(id, 'select');
+    wire(id); tutorial();
+    const tb = document.getElementById('tb');
+    if (mode === 'arena') {
+      const a = arenaState(id), open = all.filter(it => !me.done[it.id]).length;
+      tb.innerHTML = '<p class="rule">' + esc(ARENA_RULE) + '</p><p class="sub">Your level now: <b>' + a.level + '</b>.</p>' +
+        (open ? '<p><button class="go big" type="button" id="go">' + (Object.keys(me.done).some(k => byId[k] && byId[k].topic === id) ? 'Continue' : 'Start') + '</button></p>' : '<p>You have answered every question here. Well done.</p>');
+      const g = document.getElementById('go'); if (g) g.onclick = () => { const it = arenaNext(id); if (it) ask(it, 'arena'); else topic(id, 'arena'); };
+      return;
+    }
+    const F = sel.f || {};
+    tb.innerHTML = '<div class="filters"><label>sort <select id="srt"><option value="num">by number</option><option value="pts">by points</option><option value="lvl">by difficulty</option></select></label>' +
+      [['ans', 'answered'], ['open', 'not answered']].concat(speedOn ? [['fast', 'done fast']] : []).concat(LV.map(l => [l, l])).map(([k, l]) => '<label class="ck"><input type="checkbox" data-f="' + k + '"' + (F[k] ? ' checked' : '') + '> ' + l + '</label>').join('') +
+      '</div><div class="qgrid" id="qg"></div><p class="msg" id="none" hidden>No questions match these filters.</p>';
+    const srt = document.getElementById('srt'); srt.value = sel.sort || 'num';
+    const draw = () => {
+      const lv = LV.filter(l => F[l]), st = [F.ans && 'ans', F.open && 'open', F.fast && 'fast'].filter(Boolean);
+      let list = all.map((it, i) => ({ it, i })).filter(({ it }) => {
+        const d = me.done[it.id];
+        if (lv.length && !lv.includes(it.level)) return false;
+        if (st.length && !st.some(s => s === 'ans' ? !!d : s === 'open' ? !d : !!(d && d.fast))) return false;
+        return true;
+      });
+      if (sel.sort === 'pts') list.sort((a, b) => pointsNow(b.it) - pointsNow(a.it) || a.i - b.i);
+      if (sel.sort === 'lvl') list.sort((a, b) => LV.indexOf(a.it.level) - LV.indexOf(b.it.level) || a.i - b.i);
+      const g = document.getElementById('qg'); g.innerHTML = '';
+      list.forEach(({ it, i }) => {
+        const d = me.done[it.id], w = me.wrong[it.id] || 0;
+        const b = document.createElement('button'); b.type = 'button'; b.className = 'qc ' + (it.level || '') + (d ? ' done' : ''); b.dataset.id = it.id;
+        b.innerHTML = '<span class="qn">' + (i + 1) + '</span><span class="ql">' + esc(LEVEL[it.level] || it.level || '') + '</span><span class="qp">' +
+          (d ? (d.p ? '✓ ' + d.p + (d.fast ? ' ⚡' : '') : 'solution seen') : pointsNow(it) + ' points') + '</span>' + (!d && w ? '<span class="qw">' + w + ' wrong ' + (w === 1 ? 'try' : 'tries') + '</span>' : '');
+        b.onclick = () => ask(it, 'select'); g.appendChild(b);
+      });
+      document.getElementById('none').hidden = list.length > 0;
+    };
+    srt.onchange = () => { sel.sort = srt.value; save('micro-arena-sel' + T, sel); draw(); };
+    tb.querySelectorAll('input[data-f]').forEach(c => c.onchange = () => { F[c.dataset.f] = c.checked; sel.f = F; save('micro-arena-sel' + T, sel); draw(); });
+    draw();
   }
-  function ask(it) {
+  // the arena's next question: the current level, then the question type where the student is weakest (fewest right, then slowest);
+  // after a wrong answer the same type again; a level that has run out gives the next level up, else down
+  function arenaState(id) { me.arena = me.arena || {}; return me.arena[id] = me.arena[id] || { level: 'easy', streak: 0, retry: null }; }
+  function arenaNext(id) {
+    const a = arenaState(id), open = (TOP[id] || []).filter(it => !me.done[it.id]);
+    if (!open.length) return null;
+    const order = [a.level].concat(LV.slice(LV.indexOf(a.level) + 1), LV.slice(0, LV.indexOf(a.level)).reverse());
+    let pool = [];
+    for (const l of order) { pool = open.filter(it => it.level === l); if (pool.length) break; }
+    if (a.retry) { const same = pool.filter(it => typeOf(it) === a.retry); if (same.length) pool = same; }
+    const stat = t => { const ds = Object.entries(me.done).filter(([k, d]) => byId[k] && typeOf(byId[k]) === t && d.p > 0); return [ds.length, ds.filter(([, d]) => d.fast).length]; };
+    const types = [...new Set(pool.map(typeOf))].map(t => [t, ...stat(t)]).sort((x, y) => x[1] - y[1] || x[2] - y[2]);
+    const weakest = types[0][0], cands = pool.filter(it => typeOf(it) === weakest);
+    return cands[Math.floor(Math.random() * cands.length)];
+  }
+  function arenaAfter(it, right, fast) {
+    const a = arenaState(it.topic);
+    if (!right) { a.retry = typeOf(it); a.streak = 0; keep(); return; }
+    a.retry = null; a.streak += speedOn && fast ? 2 : 1;
+    if (a.streak >= 2 && a.level !== 'hard') { a.level = LV[LV.indexOf(a.level) + 1]; a.streak = 0; }
+    keep();
+  }
+  // ---------- one question ----------
+  let ticker = null;
+  function ask(it, mode) {
+    leaveQuestion(); clearInterval(ticker);
     const L = 'abcde', d = me.done[it.id];
-    app.innerHTML = header() + '<h2>' + esc(topicName(it.topic)) + '</h2><div class="card"><div class="qmeta"><span>' + esc(LEVEL[it.level] || it.level) + '</span><span id="pn">' +
-      (d ? (d.p ? 'done: ' + d.p + ' points' : 'solution seen') : 'worth ' + pointsNow(it) + ' points now') + '</span></div>' +
+    app.innerHTML = header(it.topic, mode) + '<div class="qtop"><button type="button" id="back" class="link">← Back to the questions</button></div>' +
+      '<div class="card"><div class="qmeta"><span>' + esc(LEVEL[it.level] || it.level) + '</span><span id="pn">' +
+      (d ? (d.p ? 'done: ' + d.p + ' points' : 'solution seen') : 'worth ' + pointsNow(it) + ' points now') + '</span>' +
+      (!d && speedOn && !(me.wrong[it.id] > 0) ? '<span id="fb">fast bonus +' + bonusOf(it) + ' within ' + mmss(limitOf(it)) + ' · <span id="clk">0:00</span></span>' : '') + '</div>' +
       '<p class="qtext">' + tex(it.text) + '</p>' + (it.stem_figure ? '<div class="fig" id="sfig"></div>' : '') +
       (it.statements ? '<ul class="stmts">' + it.statements.map((s, i) => '<li><span class="r">' + ['I.', 'II.', 'III.', 'IV.', 'V.'][i] + '</span>' + tex(s) + '</li>').join('') + '</ul>' : '') +
       (it.question ? '<p class="qtext">' + tex(it.question) + '</p>' : '') +
       '<div class="opts">' + it.options.map((o, i) => '<button type="button" class="opt" data-i="' + i + '"><span class="l">' + L[i] + ')</span><span>' + tex(o) + '</span></button>').join('') + '</div>' +
-      '<div id="after"></div></div><p><button type="button" id="back">Back to the questions</button></p>';
-    document.getElementById('back').onclick = () => { writeAll(false); topic(it.topic); }; wire();
+      '<div id="after"></div></div>';
+    document.getElementById('back').onclick = () => { leaveQuestion(); writeAll(false); topic(it.topic, mode); }; wire(it.topic);
     putFig(document.getElementById('sfig'), it.stem_figure);
     const btns = [...app.querySelectorAll('.opt')], after = document.getElementById('after');
     let right = -1;
-    Promise.all(it.options.map(o => sha(P.salt + it.id + '\n' + o))).then(hs => { right = hs.indexOf(it.h); if (d) reveal(true); });
-    function reveal(again) {
+    Promise.all(it.options.map(o => sha(P.salt + it.id + '\n' + o))).then(hs => { right = hs.indexOf(it.h); if (d) done(true); });
+    const solution = () => '<div class="sol"><div class="solh">Solution</div>' + (Array.isArray(it.solution) && it.solution.length ? '<ol class="steps">' + it.solution.map(s => '<li>' + tex(s) + '</li>').join('') + '</ol>'
+      : it.solution ? tex(it.solution) : '') + (it.figure ? '<div class="fig" id="solfig"></div>' : '') + (it.explanation ? '<p class="expl">' + tex(it.explanation) + '</p>' : '') +
+      '<p class="ans">The answer is ' + L[right] + ') ' + tex(it.options[right]) + '.</p></div>';
+    // after the answer: right or wrong and the points; the solution only behind "Show solution" (Addition 8); in the arena a big "Next"
+    function done(again) {
+      clearInterval(ticker);
       btns.forEach(x => x.disabled = true); if (btns[right]) btns[right].classList.add('right');
       const dd = me.done[it.id];
-      after.innerHTML = (again ? '' : '<p class="verdict ' + (dd.p ? 'ok' : 'no') + '">' + (dd.p ? 'Correct: +' + dd.p + ' points.' : 'Solution opened: no points for this one.') + '</p>') +
-        '<div class="sol"><div class="solh">Solution</div>' + (Array.isArray(it.solution) && it.solution.length ? '<ol class="steps">' + it.solution.map(s => '<li>' + tex(s) + '</li>').join('') + '</ol>'
-          : it.solution ? tex(it.solution) : '') + (it.figure ? '<div class="fig" id="solfig"></div>' : '') + (it.explanation ? '<p class="expl">' + tex(it.explanation) + '</p>' : '') +
-        '<p class="ans">The answer is ' + L[right] + ') ' + tex(it.options[right]) + '.</p></div>' +
-        '<div class="next"><button class="go" type="button" id="nx">Back to the questions</button></div>';
-      putFig(document.getElementById('solfig'), it.figure);   // the solution figure marks the answer: only after the right answer (Ulutin)
-      const nx = document.getElementById('nx'); nx.onclick = () => topic(it.topic); nx.focus();
+      after.innerHTML = (again ? '' : '<p class="verdict ' + (dd.p ? 'ok' : 'no') + '">' + (dd.p ? 'Correct: +' + dd.p + ' points' + (dd.fast ? ' (with the fast bonus +' + dd.b + ')' : '') + '.' : 'Solution opened: no points for this one.') + '</p>') +
+        '<div class="next">' + (mode === 'arena' ? '<button class="go big" type="button" id="nx">Next question</button>' : '') +
+        (dd.gave ? '' : '<button type="button" id="ss">Show solution</button>') + '</div><div id="solbox"></div>';
+      if (dd.gave) showSol();
+      const ss = document.getElementById('ss'); if (ss) ss.onclick = showSol;
+      const nx = document.getElementById('nx'); if (nx) { nx.onclick = () => { const n = arenaNext(it.topic); n ? ask(n, 'arena') : topic(it.topic, 'arena'); }; }
       const tt = document.getElementById('tot'); if (tt) tt.textContent = score();
     }
+    function showSol() {
+      const sb = document.getElementById('solbox'); sb.innerHTML = solution();
+      putFig(document.getElementById('solfig'), it.figure);   // the solution figure marks the answer: only after the answer (Ulutin)
+      const ss = document.getElementById('ss'); if (ss) ss.remove();
+    }
     if (d) return;
-    clockStart();
+    clockStart(); current = { it, mode };
+    const clk = document.getElementById('clk');
+    if (clk) ticker = setInterval(() => { const s = Math.round((clock.acc + (clock.away ? 0 : performance.now() - clock.t0)) / 1000); clk.textContent = mmss(s); if (s > limitOf(it)) { const fb = document.getElementById('fb'); if (fb) fb.classList.add('late'); } }, 1000);
     btns.forEach(b => b.onclick = async () => {
       if (right < 0) return;
-      const chosen = +b.dataset.i, ok = chosen === right, secs = clockStop(), worth = pointsNow(it);
+      const chosen = +b.dataset.i, ok = chosen === right, secs = clockStop(), w0 = me.wrong[it.id] || 0, worth = pointsNow(it);
+      const fast = ok && speedOn && w0 === 0 && secs <= limitOf(it), bonus = fast ? bonusOf(it) : 0;
       me.pending.push({ ts: new Date().toISOString(), client: dev.cid, nick: login.nick, run: RUNID, item: it.id, template: it.cat, slot: it.slot || null, mirrors: null, topic: it.topic, type: typeOf(it),
-        level: it.level, points: ok ? worth : 0, attempt: (me.wrong[it.id] || 0) + 1, seconds: Math.min(CAP, secs), capped: secs >= CAP, correct: ok, lecturer });
-      if (ok) { me.done[it.id] = { p: worth, w: me.wrong[it.id] || 0, at: new Date().toISOString() }; keep(); reveal(false); writeAll(false); return; }
-      me.wrong[it.id] = (me.wrong[it.id] || 0) + 1; keep();
+        level: it.level, mode, points: ok ? worth + bonus : 0, bonus, attempt: w0 + 1, seconds: Math.min(CAP, secs), capped: secs >= CAP, correct: ok, fast, lecturer });
+      if (mode === 'arena' && (ok || w0 === 0)) arenaAfter(it, ok, fast);
+      if (ok) { current = null; me.done[it.id] = { p: worth + bonus, b: bonus, fast, w: w0, at: new Date().toISOString() }; keep(); done(false); writeAll(false); return; }
+      me.wrong[it.id] = w0 + 1; keep();
+      clearInterval(ticker); const fb = document.getElementById('fb'); if (fb) fb.remove();
       b.classList.add('wrong'); b.disabled = true;
       document.getElementById('pn').textContent = 'worth ' + pointsNow(it) + ' points now';
       after.innerHTML = '<p class="verdict no">Not this one. Try again: now worth ' + pointsNow(it) + ' points.</p><div class="next"><button class="link" type="button" id="give">show the solution (0 points)</button></div>';
-      document.getElementById('give').onclick = () => { me.done[it.id] = { p: 0, w: me.wrong[it.id] || 0, at: new Date().toISOString(), gave: true }; keep(); reveal(false); writeAll(false); };
+      document.getElementById('give').onclick = () => { current = null; me.done[it.id] = { p: 0, b: 0, w: me.wrong[it.id] || 0, at: new Date().toISOString(), gave: true }; keep(); done(false); writeAll(false); };
       clockStart(); writeAll(false);
     });
   }
