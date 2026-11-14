@@ -26,6 +26,7 @@
   const SESSION = /[?&]test\b/.test(location.search) || LOCAL ? 'test' : (CFG.session || 'default');
   const TOKEN = (GH.tokenParts || []).length ? atob(GH.tokenParts.join('')) : '';
   const API = 'https://api.github.com/repos/' + GH.owner + '/' + GH.repo;
+  const FB = 'tags/fb/' + SESSION + '/';   // feedback per question (Addition 20)
   const BOARD = 'heads/v/' + SESSION + '/arena/', ACCT = 'tags/acct/' + SESSION + '/', PROG = 'tags/prog/' + SESSION + '/';
   const T = SESSION === 'test' ? '-test' : '';
   const KEY_LOGIN = 'micro-arena-login' + T, KEY_DEV = 'micro-arena-device' + T;
@@ -160,6 +161,7 @@
     Object.entries(remote.done || {}).forEach(([id, d]) => { const l = me.done[id]; if (d && typeof d.p === 'number' && (!l || (d.at && l.at && d.at < l.at))) me.done[id] = d; });
     Object.entries(remote.wrong || {}).forEach(([id, n]) => { if (typeof n === 'number' && n > (me.wrong[id] || 0)) me.wrong[id] = n; });
     if (remote.tut) me.tut = 1;   // the tutorial was seen on another device
+    if (remote.fb && typeof remote.fb === 'object') { me.fb = me.fb || {}; Object.entries(remote.fb).forEach(([k, v]) => { if (!me.fb[k] || (v && v.ts > me.fb[k].ts)) me.fb[k] = v; }); }
     if (remote.fun && typeof remote.fun === 'object') { me.fun = me.fun || {}; Object.entries(remote.fun).forEach(([k, v]) => { if (k === 'awards') me.fun.awards = Object.assign({}, v, me.fun.awards); else if (!(k in me.fun)) me.fun[k] = v; }); }
     if (remote.arena && typeof remote.arena === 'object') { me.arena = me.arena || {}; Object.entries(remote.arena).forEach(([t, a]) => { if (!me.arena[t] && a && LV.includes(a.level)) me.arena[t] = a; }); }
   }
@@ -185,7 +187,7 @@
     try {
       try { await sendTimes(force); } catch (e) {}
       if (sig === me.wrote) return;
-      const blob = await newBlob({ v: 1, nick: login.nick, done: me.done, wrong: me.wrong, tut: me.tut ? 1 : 0, arena: me.arena || {}, fun: me.fun || {}, ts: new Date().toISOString() }, force);
+      const blob = await newBlob({ v: 1, nick: login.nick, done: me.done, wrong: me.wrong, tut: me.tut ? 1 : 0, arena: me.arena || {}, fun: me.fun || {}, fb: me.fb || {}, ts: new Date().toISOString() }, force);
       const pr = 'refs/' + PROG + login.key;
       let w = await fetch(API + '/git/' + pr, { method: 'PATCH', headers: H(), body: JSON.stringify({ sha: blob, force: true }), keepalive: !!force });
       if (w.status === 422 || w.status === 404) w = await fetch(API + '/git/refs', { method: 'POST', headers: H(), body: JSON.stringify({ ref: pr, sha: blob }), keepalive: !!force });
@@ -391,6 +393,15 @@
   // subsections (Addition 18): only topics whose meta entry has "subs"; the choice is kept per topic on this device
   const subsOf = id => ((P.topics.find(t => t.id === id) || {}).subs || []).filter(x => x.count > 0);
   let subSel = load('micro-arena-sub' + T, {});
+  // the Selection list's order as it is drawn: filters, then by points (one grid) or grouped easy / medium / hard in number order
+  function selOrder(id) {
+    const F = sel.f || {}, lv = LV.filter(l => F[l]), st = [F.ans && 'ans', F.open && 'open', F.fast && 'fast'].filter(Boolean);
+    const list = topicItems(id).map((it, i) => ({ it, i })).filter(({ it }) => { const d = me.done[it.id];
+      if (lv.length && !lv.includes(it.level)) return false;
+      return !st.length || st.some(x => x === 'ans' ? !!d : x === 'open' ? !d : !!(d && d.fast)); });
+    if (sel.sort === 'pts') return list.sort((a, b) => pointsNow(b.it) - pointsNow(a.it) || a.i - b.i).map(x => x.it);
+    return LV.flatMap(l => list.filter(x => x.it.level === l)).map(x => x.it);
+  }
   const topicItems = id => { const sub = subSel[id], all = TOP[id] || []; return sub && subsOf(id).some(x => x.id === sub) ? all.filter(it => it.sub === sub) : all; };
   function topic(id, mode) {
     leaveQuestion();
@@ -550,6 +561,39 @@
     all[k] = Object.assign({}, all[k], { [b.dataset.k]: h ? 1 : 0 }); save(INFO_KEY, all);
     sec.classList.toggle('hid', h); b.textContent = h ? 'Show' : 'Hide';
   });
+  // ---------- feedback on a question (Can, Addition 20) ----------
+  const FB_OPTS = [['text', 'The text is confusing'], ['math', 'The math or the answer seems wrong'], ['hard', 'This is too hard for me']];
+  const fbSent = () => (me.fb = me.fb || {});
+  function feedbackUI(it) {
+    const open = document.getElementById('fbo'), box = document.getElementById('fbp'); if (!open || !box || !login) { if (open) open.hidden = true; return; }
+    const prev = fbSent()[it.id];
+    if (prev) open.textContent = 'Feedback (sent · edit)';
+    open.onclick = () => {
+      if (!box.hidden) { box.hidden = true; return; }
+      const cur = fbSent()[it.id] || { opts: [], text: '' };
+      box.innerHTML = FB_OPTS.map(([k, l]) => '<label class="fbo"><input type="checkbox" value="' + k + '"' + (cur.opts.includes(k) ? ' checked' : '') + '> ' + l + '</label>').join('') +
+        '<textarea id="fbt" maxlength="300" rows="2" placeholder="Anything else about this question (optional)"></textarea>' +
+        '<div class="fbr"><button type="button" id="fbs">Send</button><span class="msg" id="fbm"></span></div>';
+      document.getElementById('fbt').value = cur.text || '';   // set as a value: never parsed as HTML
+      box.hidden = false;
+      document.getElementById('fbs').onclick = async () => {
+        const opts = [...box.querySelectorAll('input:checked')].map(x => x.value), text = document.getElementById('fbt').value.slice(0, 300).trim(), m = document.getElementById('fbm');
+        if (!opts.length && !text) { m.textContent = 'Tick a box or write a line first.'; return; }
+        m.textContent = 'Sending…'; document.getElementById('fbs').disabled = true;
+        try {
+          const blob = await newBlob({ v: 1, item: it.id, topic: it.topic, nick: login.nick, key: login.key, opts, text, ts: new Date().toISOString() });
+          const ref = 'refs/' + FB + it.id + '/' + login.key;   // one report per question per account; a new send replaces it
+          let r = await fetch(API + '/git/' + ref, { method: 'PATCH', headers: H(), body: JSON.stringify({ sha: blob, force: true }) });
+          if (r.status === 422 || r.status === 404) r = await fetch(API + '/git/refs', { method: 'POST', headers: H(), body: JSON.stringify({ ref, sha: blob }) });
+          if (!r.ok) throw new Error('GitHub answered ' + r.status);
+          fbSent()[it.id] = { opts, text, ts: new Date().toISOString() }; keep(); writeAll(false);
+          m.textContent = 'Thank you: your feedback is sent.'; open.textContent = 'Feedback (sent · edit)';
+          setTimeout(() => { box.hidden = true; }, 1200);
+        } catch (e) { m.textContent = 'Could not send (' + (e.message || 'offline') + '). Try again in a minute.'; }
+        finally { const b = document.getElementById('fbs'); if (b) b.disabled = false; }
+      };
+    };
+  }
   // ---------- one question ----------
   // the answer bar (Oyun): pinned to the bottom, shown only after an answer: the verdict left, [Show solution] and [Next question] right
   // (Next rightmost; in Selection [Back to the questions]); the solution opens in place under the options (Show/Hide); a new question
@@ -560,17 +604,20 @@
     leaveQuestion(); clearInterval(ticker);
     if (keyH) document.removeEventListener('keydown', keyH);
     const L = 'abcde', d = me.done[it.id];
+    const seq = mode === 'select' ? selOrder(it.topic).map(x => x.id) : null;   // Selection: the list as it stood when this question opened
     window.scrollTo(0, 0);
     const hasParts = !!(it.info || it.example);
     app.innerHTML = header(it.topic, mode) + partsHTML(it) + '<div class="card' + (hasParts ? ' qq' : '') + '" data-id="' + esc(it.id) + '">' + (hasParts ? '<div class="qlab">Question</div>' : '') + '<div class="qmeta"><span class="lvl">' + (DOTS[it.level] || '') + ' ' + esc(LEVEL[it.level] || it.level) + '</span><span id="pn" class="pts">' +
       (d ? (d.gave ? 'solution seen' : 'done: ' + d.p + ' points') : pointsNow(it) + ' points') + '</span>' +
       (!d && speedOn && !(me.wrong[it.id] > 0) ? '<span id="fb">fast: ' + fastOf(pointsNow(it)) + ' within ' + mmss(limitOf(it)) + ' · <span id="clk">0:00</span></span>' : '') + '<span class="fun" data-fun="qmeta"></span>' + (mode === 'arena' ? '<span class="alv" id="alv"></span></div><p class="alvn" id="alvn" hidden></p>' : '</div>') +
       '<p class="qtext">' + tex(it.text) + '</p>' + (it.stem_figure ? '<div class="fig" id="sfig"></div>' : '') +
-      (it.statements ? '<ul class="stmts">' + it.statements.map((s, i) => '<li><span class="r">' + ['I.', 'II.', 'III.', 'IV.', 'V.'][i] + '</span>' + tex(s) + '</li>').join('') + '</ul>' : '') +
+      (it.statements ? '<ul class="stmts">' + it.statements.map((s, i) => '<li><span class="r">' + ['I.', 'II.', 'III.', 'IV.', 'V.'][i] + '</span><span>' + tex(s) + '</span></li>').join('') + '</ul>' : '') +
       (it.question ? '<p class="qtext">' + tex(it.question) + '</p>' : '') +
       '<div class="opts">' + it.options.map((o, i) => '<button type="button" class="opt" data-i="' + i + '"><span class="l">' + L[i] + ')</span><span>' + tex(o) + '</span></button>').join('') + '</div>' +
+      '<div class="fbk"><button type="button" class="link" id="fbo">Feedback</button><div id="fbp" hidden></div></div>' +
       '<div id="solbox"></div></div><div class="abar" id="abar" hidden><div class="abar-in"><span class="fun" data-fun="abar"></span><span id="verdict" class="verdict"></span><span class="abtn" id="abtn"></span></div></div>';
     wire(it.topic);
+    feedbackUI(it);
     putFig(document.getElementById('sfig'), it.stem_figure);
     const btns = [...app.querySelectorAll('.opt')], bar = document.getElementById('abar'), verdict = document.getElementById('verdict'), abtn = document.getElementById('abtn');
     let right = -1, solOpen = false, lvChange = null;   // lvChange: what this answer did to the arena level ('up', 'down' or null)
@@ -583,7 +630,9 @@
     const solution = () => '<div class="sol"><div class="solh">Solution</div>' + (Array.isArray(it.solution) && it.solution.length ? '<ol class="steps">' + it.solution.map(s => '<li>' + tex(s) + '</li>').join('') + '</ol>'
       : it.solution ? tex(it.solution) : '') + (it.figure ? '<div class="fig" id="solfig"></div>' : '') + (it.explanation ? '<p class="expl">' + tex(it.explanation) + '</p>' : '') +
       '<p class="ans">The answer is ' + L[right] + ') ' + tex(it.options[right]) + '.</p></div>';
-    const goNext = () => { if (mode === 'arena') { const n = arenaNext(it.topic); n ? ask(n, 'arena') : topic(it.topic, 'arena'); } else { writeAll(false); topic(it.topic, mode); } };
+    const nextInList = () => { if (!seq) return null; const k = seq.indexOf(it.id); const nid = k >= 0 ? seq[k + 1] : null; return nid && byId[nid] ? byId[nid] : null; };
+    const goNext = () => { if (mode === 'arena') { const n = arenaNext(it.topic); n ? ask(n, 'arena') : topic(it.topic, 'arena'); } else { writeAll(false); const n = nextInList(); n ? ask(n, 'select') : topic(it.topic, mode); } };
+    const goList = () => { writeAll(false); topic(it.topic, mode); };
     function toggleSol() {
       const sb = document.getElementById('solbox'), ss = document.getElementById('ss');
       solOpen = !solOpen;
@@ -602,16 +651,17 @@
         : dd.p ? 'Correct: +' + dd.p + ' points' + (dd.fast ? ' (fast)' : '') + '.'
         : 'Correct, but after three wrong tries this question gives no points.';
       if (!again) { tellLevel(); levelUI(); }
-      abtn.innerHTML = '<button type="button" id="ss">Show solution</button>' + (mode === 'arena' ? '<button class="go" type="button" id="nx">Next question</button>' : '<button class="go" type="button" id="nx">Back to the questions</button>');
+      abtn.innerHTML = '<button type="button" id="ss">Show solution</button>' + (mode === 'arena' ? '<button class="go" type="button" id="nx">Next question</button>' : '<button type="button" id="bk">Back to the list</button>' + (nextInList() ? '<button class="go" type="button" id="nx">Next question</button>' : ''));
       bar.hidden = false;
-      document.getElementById('ss').onclick = toggleSol; document.getElementById('nx').onclick = goNext;
+      document.getElementById('ss').onclick = toggleSol; const nxb = document.getElementById('nx'); if (nxb) nxb.onclick = goNext;
+      const bkb = document.getElementById('bk'); if (bkb) bkb.onclick = goList;
       if (dd.gave && !solOpen) toggleSol();
       const tt = document.getElementById('tot'); if (tt) tt.textContent = score();
       if (!again) { fire('arena:answer', { item: pub(it), ok: !dd.gave, attempt: (dd.w || 0) + 1, points: dd.p, worthNow: 0, mode, level: lvNow(), levelChange: lvChange }); totalChanged(); }
     }
     keyH = e => {
       if (!document.body.contains(bar)) { document.removeEventListener('keydown', keyH); return; }   // only on its own question (Utku round 4)
-      if (e.target.closest && e.target.closest('input, textarea, select') || document.querySelector('.modal') || e.ctrlKey || e.metaKey || e.altKey) return;
+      if (e.target.closest && e.target.closest('input, textarea, select, .fbk') || document.querySelector('.modal') || e.ctrlKey || e.metaKey || e.altKey) return;
       const k = e.key.toLowerCase(), i = '12345'.indexOf(k) >= 0 ? '12345'.indexOf(k) : 'abcde'.indexOf(k);
       const nx = !bar.hidden && document.getElementById('nx'), ss = !bar.hidden && document.getElementById('ss');
       if (i >= 0 && k.length === 1 && btns[i] && !btns[i].disabled) { e.preventDefault(); btns[i].click(); }
