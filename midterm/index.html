@@ -50,6 +50,7 @@
   .bar { position: sticky; top: 0; z-index: 5; background: #fbfbf9; padding: 6px 0; border-bottom: 1px solid #e3e5e8; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 6px 12px; margin-bottom: 1.2rem; }
   .crumbs { font-size: .9rem; white-space: nowrap; overflow-x: auto; max-width: 100%; color: #1d1d1f; }
   .crumbs a { color: #2f5d8c; text-decoration: none; border-bottom: none; }
+  .topic .pr { color: #6b6f76; font-size: .8rem; margin-top: .2rem; }
 </style>
 </head>
 <body>
@@ -58,10 +59,34 @@
   <h1>Midterm practice</h1>
   <p class="s">Midterm: Thursday 19.11 · Practise by topic, collect points and see the leaderboards.</p>
   <h2>Topics</h2>
-  <div class="card big"><div class="d">Pick a topic to practise · <a href="../practice/">All topics and the total leaderboard</a></div><div class="topics"><a class="topic" href="../practice/?topic=sd"><div class="n">Topic 1</div><div class="tt">Supply and demand shifts</div></a><a class="topic" href="../practice/?topic=pc"><div class="n">Topic 2</div><div class="tt">Perfect competition</div></a><a class="topic" href="../practice/?topic=pref"><div class="n">Topic 3</div><div class="tt">Preferences</div></a><a class="topic" href="../practice/?topic=rc"><div class="n">Topic 4</div><div class="tt">Rational choices and e</div></a><a class="topic" href="../practice/?topic=words"><div class="n">Topic 5</div><div class="tt">Words to equations</div></a><a class="topic" href="../practice/?topic=opt"><div class="n">Topic 6</div><div class="tt">Optimal consumption</div></a></div></div>
+  <div class="card big"><div class="d">Pick a topic to practise · <a href="../practice/">All topics and the total leaderboard</a></div><div class="topics"><a class="topic" data-topic="sd" href="../practice/?topic=sd"><div class="n">Topic 1</div><div class="tt">Supply and demand shifts</div></a><a class="topic" data-topic="pc" href="../practice/?topic=pc"><div class="n">Topic 2</div><div class="tt">Perfect competition</div></a><a class="topic" data-topic="pref" href="../practice/?topic=pref"><div class="n">Topic 3</div><div class="tt">Preferences</div></a><a class="topic" data-topic="rc" href="../practice/?topic=rc"><div class="n">Topic 4</div><div class="tt">Rational choices and e</div></a><a class="topic" data-topic="words" href="../practice/?topic=words"><div class="n">Topic 5</div><div class="tt">Words to equations</div></a><a class="topic" data-topic="opt" href="../practice/?topic=opt"><div class="n">Topic 6</div><div class="tt">Optimal consumption</div></a></div></div>
   <h2>Resources</h2>
   <div class="card res"><h3>Lecture notes (pdf)</h3><div class="links"><a href="../lectures/L01/L01-notes.pdf" title="L01 · introduction">L01</a><a href="../lectures/L02/L02-notes.pdf" title="L02 · markets">L02</a><a href="../lectures/L03/L03-notes.pdf" title="L03 · supply and demand">L03</a><a href="../lectures/L04/L04-notes.pdf" title="L04 · equilibrium">L04</a><a href="../lectures/L05/L05-notes.pdf" title="L05 · the budget set">L05</a><a href="../lectures/L06/L06-notes.pdf" title="L06 · preferences and indifference curves">L06</a><a href="../lectures/L08/L08-notes.pdf" title="L08 · the MRS, the best feasible bundle, utility functions">L08</a><a href="../lectures/L09/L09-notes.pdf" title="L09 · utility functions, one form at a time">L09</a><a href="../lectures/L10/L10-notes.pdf" title="L10 · finding the optimal consumption bundle">L10</a><a href="../lectures/L11/L11-notes.pdf" title="L11 · practice with Cobb-Douglas">L11</a><a href="../lectures/L12/L12-notes.pdf" title="L12 · practice with perfect substitutes and perfect complements">L12</a></div><h3>Problem sets (pdf)</h3><div class="links"><a href="../weeks/W02/PS1.pdf">Problem set 1</a><a href="../weeks/W03/PS2.pdf">Problem set 2</a><a href="../weeks/W04/PS3.pdf">Problem set 3</a><a href="../weeks/W04/PS3_solutions.pdf">Problem set 3 with solutions</a><a href="../weeks/W06/PS4.pdf">Problem set 4</a><a href="../weeks/W06/PS4_solutions.pdf">Problem set 4 with solutions</a></div><h3>Additional readings (password from class)</h3><div class="links"><a href="../lectures/L04/readings.html" target="_blank">L04</a><a href="../lectures/L05/readings.html" target="_blank">L05</a><a href="../lectures/L06/readings.html" target="_blank">L06</a><a href="../lectures/L08/readings.html" target="_blank">L08</a><a href="../lectures/L09/readings.html" target="_blank">L09</a></div></div>
 </main>
 <script src="../assets/js/config.js?v=20261014a"></script>
+<script>
+  // a logged-in student's progress under each topic (Oyun, Celebi 14.11): read from the arena's own browser storage, nothing sent.
+  // The same test-session rule as interactive.js: ?test, or a page served from this computer, uses the '-test' keys and keeps ?test in the links.
+  (function () {
+    const LOCAL = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname) && !/[?&]live\b/.test(location.search);
+    const TEST = /[?&]test\b/.test(location.search) || LOCAL, T = TEST ? '-test' : '';
+    if (/[?&]test\b/.test(location.search)) document.querySelectorAll('a[href^="../practice/"]').forEach(a => { a.href += (a.href.includes('?') ? '&' : '?') + 'test'; });
+    const get = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+    const login = get('micro-arena-login' + T);
+    if (!login || !login.key) return;   // logged out: show nothing
+    const done = ((get('micro-arena-prog-' + login.key) || {}).done) || {};
+    const fmt = n => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, '\u202f');
+    const load = src => new Promise((ok, no) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = no; document.head.appendChild(s); });
+    const tiles = [...document.querySelectorAll('a.topic[data-topic]')];
+    load('../practice/meta.js').then(() => Promise.all(tiles.map(a => load('../practice/topics/' + a.dataset.topic + '.js').catch(() => null)))).then(() => {
+      const P = window.PRACTICE_TOPICS || {};
+      tiles.forEach(a => {
+        const items = P[a.dataset.topic]; if (!Array.isArray(items) || !items.length) return;
+        const mine = items.filter(it => done[it.id]), pts = mine.reduce((s, it) => s + (Number(done[it.id].p) || 0), 0);
+        const d = document.createElement('div'); d.className = 'pr'; d.textContent = mine.length + ' of ' + items.length + ' done · ' + fmt(pts) + ' points'; a.appendChild(d);
+      });
+    }).catch(() => {});   // the arena isn't there yet (or offline): the page stays as it is
+  })();
+</script>
 </body>
 </html>
