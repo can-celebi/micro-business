@@ -22,7 +22,7 @@
   .bar { position: sticky; top: 0; z-index: 5; background: var(--bg); border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 8px 0; margin-bottom: 10px; }
   .crumbs { display: flex; align-items: center; gap: 4px; min-width: 0; font-size: .9rem; white-space: nowrap; }
   .crumbs a { color: var(--accent); text-decoration: none; } .crumbs .sep { color: var(--dim); } .crumbs .c-mode { color: var(--ink); }
-  button.crumb { border: 0; background: none; padding: 2px 2px; color: var(--accent); font-size: .9rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  button.crumb { display: block; border: 0; background: none; padding: 2px 2px; color: var(--accent); font-size: .9rem; min-width: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   button.mebtn { color: var(--ink); flex-shrink: 0; } #tot { font-variant-numeric: tabular-nums; } button.crumb:hover { background: #eef2f7; }
   .menu { position: absolute; z-index: 20; background: #fff; border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 6px 20px rgba(20, 24, 30, .12); padding: 4px; display: grid; min-width: 12em; }
   .menu a, .menu button { display: flex; align-items: center; min-height: 40px; padding: 0 12px; border: 0; border-radius: 6px; background: none; color: var(--ink); text-decoration: none; text-align: left; font-size: .92rem; }
@@ -83,6 +83,17 @@
   .modes select { flex-shrink: 0; font: inherit; font-size: .85rem; padding: 4px 6px; border-radius: 8px; border: 1px solid #c9ced6; margin-left: auto; }
   .subs { display: flex; flex-wrap: nowrap; overflow-x: auto; gap: 6px; margin: 2px 0 8px; scrollbar-width: none; } .subs::-webkit-scrollbar { display: none; }
   .subs .pill { flex-shrink: 0; padding: 4px 12px; border-radius: 999px; font-size: .85rem; } .subs .pill.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+  /* Definition / Example / Question cards (Oyun's e-cards spec) */
+  .qpart { border-radius: 10px; padding: 12px 16px; margin: 0 0 10px; } .qpart.hid { padding: 8px 16px; } .qpart.hid .pbody { display: none; }
+  .plab { display: flex; justify-content: space-between; align-items: center; font-size: .72rem; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; }
+  .plab .ptitle { text-transform: none; letter-spacing: 0; font-weight: 400; display: none; } .qpart.hid .plab .ptitle { display: inline; }
+  .plab .phide { font-size: .78rem; text-transform: none; letter-spacing: 0; font-weight: 400; }
+  .qdef { background: #f1f2f4; } .qdef .plab { color: var(--dim); } .qdef h3 { font-size: 1rem; font-weight: 600; margin: 4px 0 4px; } .qdef p { font-size: .92rem; line-height: 1.55; margin: 6px 0 0; color: var(--ink); }
+  .qex { background: #fff; border: 1px solid var(--line); border-left: 3px solid var(--accent); } .qex .plab { color: var(--accent); }
+  .qex ol { margin: 6px 0 0; padding-left: 1.4em; font-size: .92rem; } .qex li { margin: 4px 0; } .qex .dmath { text-align: center; font-size: 1.1rem; margin-top: 6px; overflow-x: auto; }
+  .card.qq .qlab { font-size: .72rem; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--dim); margin-bottom: 4px; }
+  .card.qq .qtext + .stmts + .qtext, .card.qq .qtext:last-of-type { font-weight: 600; }
+  @media (max-width: 420px) { .qpart { padding: 10px 12px; } }
   h3.lvh { font-size: .88rem; font-weight: 600; margin: 12px 0 6px; color: var(--ink); }
   .modal { position: fixed; inset: 0; background: rgba(20, 24, 30, .35); display: flex; align-items: flex-start; justify-content: center; padding: 6vh 12px; overflow-y: auto; z-index: 10; }
   .modal .fine { margin-top: .5rem; }
@@ -99,20 +110,23 @@
   .qc.done { background: var(--okbg); border-color: var(--okbg); } .qc.done .qp { color: var(--ok); } .qc.seen .qp { color: var(--dim); }
   .qc .qw { position: absolute; top: 4px; right: 4px; width: 6px; height: 6px; border-radius: 50%; background: var(--no); }
   @media (max-width: 560px) { .forms { grid-template-columns: 1fr; } }
-  @media (pointer: coarse) { button.link, .crumbs a, button.crumb { min-height: 44px; display: inline-flex; align-items: center; } }
+  @media (pointer: coarse) { button.link, .crumbs a { min-height: 44px; display: inline-flex; align-items: center; } button.crumb { min-height: 44px; }
+    .pill, .tabs button, .modes button, .qc, .menu a, .menu button { min-height: 44px; } }
+  @media (max-width: 760px) { .tabs, .filters, .subs { flex-wrap: wrap; overflow-x: visible; } .filters select { margin-left: 0; } }
+  .cat .n { white-space: normal; overflow-wrap: anywhere; }
 </style>
 </head>
 <body>
 <main id="app"><h1>Midterm practice</h1><p class="sub">Loading…</p></main>
 <script src="../assets/js/config.js?v=20261014a"></script>
 <script src="../vendor/katex/katex.min.js"></script>
-<script src="meta.js?v=12"></script>
-<script src="topics/words.js?v=12"></script>
-<script src="topics/opt.js?v=12"></script>
-<script src="topics/sd.js?v=12"></script>
-<script src="topics/pc.js?v=12"></script>
-<script src="topics/pref.js?v=12"></script>
-<script src="topics/rc.js?v=12"></script>
+<script src="meta.js?v=13"></script>
+<script src="topics/words.js?v=13"></script>
+<script src="topics/opt.js?v=13"></script>
+<script src="topics/sd.js?v=13"></script>
+<script src="topics/pc.js?v=13"></script>
+<script src="topics/pref.js?v=13"></script>
+<script src="topics/rc.js?v=13"></script>
 <!-- Oyun's fun modules (assets/js/fun/): before practice.js, they only add listeners -->
 <script src="../assets/js/fun/core.js?v=20261114b"></script>
 <script src="../assets/js/fun/f1-diagram.js?v=20261114b"></script>
@@ -123,6 +137,6 @@
 <script src="../assets/js/fun/f8-run.js?v=20261114b"></script>
 <script src="../assets/js/fun/f9-strip.js?v=20261114b"></script>
 <script src="../assets/js/fun/f10-progress.js?v=20261114b"></script>
-<script src="../assets/js/practice.js?v=20261114p"></script>
+<script src="../assets/js/practice.js?v=20261114t"></script>
 </body>
 </html>

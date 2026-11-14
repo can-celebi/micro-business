@@ -242,7 +242,11 @@
   // Addition 9: speed bonus (settings; "on": false switches it off) and the arena's one-line rule
   const SP = PT.speed || { on: false };
   const speedOn = !!SP.on;
-  const limitOf = it => (SP.limit || {})[it.level] || 0, bonusOf = it => (SP.bonus || {})[it.level] || 0;
+  const limitOf = it => (SP.limit || {})[it.level] || 0;
+  const primeUp = x => { let n = Math.floor(x) + 1; while (!isPrime(n)) n++; return n; };
+  // the fast award: one prime, the closest to value × (1 + rate) (a tie rounds up), always more than the value (Can: points are prime)
+  const fastOf = v => { if (!v) return 0; const x = v * (1 + (SP.rate || 0.1)); let lo = Math.floor(x), hi = Math.ceil(x); while (lo > 2 && !isPrime(lo)) lo--; while (!isPrime(hi)) hi++;
+    const p = (x - lo) < (hi - x) ? lo : hi; return p > v ? p : primeUp(v); };
   const mmss = s => Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
   const ARENA_RULE = 'You start with easy questions; two right answers in a row' + (speedOn ? ' (a fast one counts as two)' : '') + ' move you up a level; after a wrong answer you get another question of the same kind.';
   const params = new URLSearchParams(location.search);
@@ -298,7 +302,7 @@
     box.innerHTML = '<div class="card"><button type="button" class="x" id="howX" aria-label="close">×</button><h2>How points work</h2>' +
       '<span class="fun" data-fun="how-top"></span><table class="lb"><tr><th></th><th class="p">1st</th><th class="p">2nd</th><th class="p">3rd</th><th class="p">4th</th><th class="p">5th</th><th class="p">lowest</th></tr>' + rows + '</table>' +
       '<p class="fine">Points for the 1st, 2nd, … right answer of one question type, at the first try.</p>' +
-      (speedOn ? '<p class="fine">Fast bonus: ' + LV.map(l => l + ' +' + bonusOf({ level: l }) + ' within ' + mmss(limitOf({ level: l }))).join(', ') + ' (right at the first try; only the time the page is on screen counts).</p>' : '') +
+      (speedOn ? '<p class="fine">Fast answers: right at the first try within ' + LV.map(l => mmss(limitOf({ level: l })) + ' (' + l + ')').join(', ') + ' give about 10% more, again a prime: ' + LV.map(l => { const b = ladder({ level: l }, 1); return b + ' → ' + fastOf(b); }).join(', ') + '. Only the time the page is on screen counts.</p>' : '') +
       TX.how.map(p => '<p>' + p + '</p>').join('') + '</div>';
     const close = () => { box.remove(); document.removeEventListener('keydown', esc_); };
     const esc_ = e => { if (e.key === 'Escape') close(); };
@@ -474,6 +478,26 @@
     if (a.streak >= 2 && a.level !== 'hard') { a.level = LV[LV.indexOf(a.level) + 1]; a.streak = 0; }
     keep();
   }
+  // ---------- Definition / Example cards (Can, Addition 19; Oyun's e-cards spec) ----------
+  const INFO_KEY = 'micro-arena-info' + T;
+  const bold = h => h.replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>');   // **term** in a definition only
+  const disp = s => String(s).split(/(\$\$[^$]+\$\$)/).map(x => /^\$\$[^$]+\$\$$/.test(x) && window.katex ? '<div class="dmath">' + katex.renderToString(x.slice(2, -2), { throwOnError: false, displayMode: true, trust: false, strict: 'ignore' }) + '</div>' : tex(x)).join('');
+  const infoOf = it => typeof it.info === 'string' ? { title: '', paras: [it.info] } : (it.info || null);
+  const exOf = it => typeof it.example === 'string' ? { steps: [it.example] } : (it.example || null);
+  function partsHTML(it) {
+    const inf = infoOf(it), ex = exOf(it); if (!inf && !ex) return '';
+    const key = (inf && inf.title) || it.type || it.cat || '', hid = (load(INFO_KEY, {})[key]) || {};
+    const btn = (k, h) => '<button type="button" class="link phide" data-k="' + k + '" data-key="' + esc(key) + '">' + (h ? 'Show' : 'Hide') + '</button>';
+    return (inf ? '<section class="qpart qdef' + (hid.def ? ' hid' : '') + '"><div class="plab"><span>Definition' + (inf.title ? '<span class="ptitle"> · ' + esc(inf.title) + '</span>' : '') + '</span>' + btn('def', hid.def) + '</div>' +
+        '<div class="pbody">' + (inf.title ? '<h3>' + esc(inf.title) + '</h3>' : '') + (inf.paras || []).map(x => '<p>' + bold(tex(x)) + '</p>').join('') + '</div></section>' : '') +
+      (ex ? '<section class="qpart qex' + (hid.ex ? ' hid' : '') + '"><div class="plab"><span>Example</span>' + btn('ex', hid.ex) + '</div><div class="pbody"><ol>' + (ex.steps || []).map(x => '<li>' + disp(x) + '</li>').join('') + '</ol></div></section>' : '');
+  }
+  document.addEventListener('click', e => {   // Hide / Show: remembered per definition on this device; never scrolls, no points, not recorded
+    const b = e.target.closest && e.target.closest('.phide'); if (!b) return;
+    const sec = b.closest('.qpart'), all = load(INFO_KEY, {}), k = b.dataset.key, h = !sec.classList.contains('hid');
+    all[k] = Object.assign({}, all[k], { [b.dataset.k]: h ? 1 : 0 }); save(INFO_KEY, all);
+    sec.classList.toggle('hid', h); b.textContent = h ? 'Show' : 'Hide';
+  });
   // ---------- one question ----------
   // the answer bar (Oyun): pinned to the bottom, shown only after an answer: the verdict left, [Show solution] and [Next question] right
   // (Next rightmost; in Selection [Back to the questions]); the solution opens in place under the options (Show/Hide); a new question
@@ -485,9 +509,11 @@
     if (keyH) document.removeEventListener('keydown', keyH);
     const L = 'abcde', d = me.done[it.id];
     window.scrollTo(0, 0);
-    app.innerHTML = header(it.topic, mode) + '<div class="card" data-id="' + esc(it.id) + '"><div class="qmeta"><span class="lvl">' + (DOTS[it.level] || '') + ' ' + esc(LEVEL[it.level] || it.level) + '</span><span id="pn" class="pts">' +
+    const hasParts = !!(it.info || it.example);
+    app.innerHTML = header(it.topic, mode) + partsHTML(it) + '<div class="card' + (hasParts ? ' qq' : '') + '" data-id="' + esc(it.id) + '">' + (hasParts ? '<div class="qlab">Question</div>' : '') + '<div class="qmeta"><span class="lvl">' + (DOTS[it.level] || '') + ' ' + esc(LEVEL[it.level] || it.level) + '</span><span id="pn" class="pts">' +
       (d ? (d.gave ? 'solution seen' : 'done: ' + d.p + ' points') : pointsNow(it) + ' points') + '</span>' +
-      (!d && speedOn && !(me.wrong[it.id] > 0) ? '<span id="fb">fast bonus +' + bonusOf(it) + ' within ' + mmss(limitOf(it)) + ' · <span id="clk">0:00</span></span>' : '') + '<span class="fun" data-fun="qmeta"></span></div>' +
+      (!d && speedOn && !(me.wrong[it.id] > 0) ? '<span id="fb">fast: ' + fastOf(pointsNow(it)) + ' within ' + mmss(limitOf(it)) + ' · <span id="clk">0:00</span></span>' : '') + '<span class="fun" data-fun="qmeta"></span></div>' +
+      partsHTML(it) +
       '<p class="qtext">' + tex(it.text) + '</p>' + (it.stem_figure ? '<div class="fig" id="sfig"></div>' : '') +
       (it.statements ? '<ul class="stmts">' + it.statements.map((s, i) => '<li><span class="r">' + ['I.', 'II.', 'III.', 'IV.', 'V.'][i] + '</span>' + tex(s) + '</li>').join('') + '</ul>' : '') +
       (it.question ? '<p class="qtext">' + tex(it.question) + '</p>' : '') +
@@ -517,7 +543,7 @@
       verdict.className = 'verdict ' + (dd.gave ? 'no' : 'ok');
       verdict.textContent = dd.gave ? (again ? 'Solution seen.' : 'Solution opened: no points for this one.')
         : again ? 'Done: ' + dd.p + ' points.'
-        : dd.p ? 'Correct: +' + dd.p + ' points' + (dd.fast ? ' (with the fast bonus +' + dd.b + ')' : '') + '.'
+        : dd.p ? 'Correct: +' + dd.p + ' points' + (dd.fast ? ' (fast)' : '') + '.'
         : 'Correct, but after three wrong tries this question gives no points.';
       abtn.innerHTML = '<button type="button" id="ss">Show solution</button>' + (mode === 'arena' ? '<button class="go" type="button" id="nx">Next question</button>' : '<button class="go" type="button" id="nx">Back to the questions</button>');
       bar.hidden = false;
@@ -544,7 +570,7 @@
     btns.forEach(b => b.onclick = async () => {
       if (right < 0) return;
       const chosen = +b.dataset.i, ok = chosen === right, secs = clockStop(), w0 = me.wrong[it.id] || 0, worth = pointsNow(it);
-      const fast = ok && speedOn && w0 === 0 && secs <= limitOf(it), bonus = fast ? bonusOf(it) : 0;
+      const fast = ok && speedOn && w0 === 0 && secs <= limitOf(it), bonus = fast ? fastOf(worth) - worth : 0;   // worth + bonus is one prime
       me.pending.push({ ts: new Date().toISOString(), client: dev.cid, nick: login.nick, run: RUNID, item: it.id, template: it.cat, slot: it.slot || null, mirrors: null, topic: it.topic, type: typeOf(it),
         level: it.level, mode, points: ok ? worth + bonus : 0, bonus, attempt: w0 + 1, seconds: Math.min(CAP, secs), capped: secs >= CAP, correct: ok, fast, lecturer });
       if (mode === 'arena' && (ok || w0 === 0)) arenaAfter(it, ok, fast, w0 === 0);
@@ -579,6 +605,7 @@
     const t = params.get('topic');
     if (!login) return loginScreen();
     if (t && P.topics.some(x => x.id === t)) { params.delete('topic'); return topic(t); }
+    if (params.has('board')) { params.delete('board'); return leaderboard(); }   // the strip's "Full leaderboard" from /midterm/
     home();
   }
   document.addEventListener('visibilitychange', () => { if (document.hidden) writeAll(true); });
