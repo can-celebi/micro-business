@@ -737,9 +737,11 @@
         const left = lk.owed - visibleMs();
         if (left > 0) { const n = Math.ceil(left / 1000); line.textContent = 'The answer buttons become active in ' + n + (n === 1 ? ' second.' : ' seconds.'); return; }
         lk.on = false; clearInterval(lockTimer); lockTimer = null; delete lockOwed[it.id];
-        box.classList.remove('locked'); btns.forEach(x => x.removeAttribute('aria-disabled')); line.remove();
+        box.classList.remove('locked'); btns.forEach(x => x.removeAttribute('aria-disabled'));
+        line.style.visibility = 'hidden';   // the line keeps its space: removing it moved the options up under a tap (Utku 2)
       };
-      tick(); clearInterval(lockTimer); lockTimer = setInterval(tick, 200);
+      tick(); line.style.minHeight = line.offsetHeight + 'px';   // its height stays the same while the number changes and after it hides
+      clearInterval(lockTimer); lockTimer = setInterval(tick, 200);
     }   // visible time only; the running clock stays (Celebi 14.11: Can asked for the time limit), in grey
     const clk = document.getElementById('clk');
     if (clk) ticker = setInterval(() => { const s = Math.round((clock.acc + (clock.away ? 0 : performance.now() - clock.t0)) / 1000); clk.textContent = mmss(s); if (s > limitOf(it)) { const fb = document.getElementById('fb'); if (fb) fb.classList.add('late'); } }, 1000);
@@ -765,7 +767,7 @@
         me.pending.push({ ts: new Date().toISOString(), client: dev.cid, nick: login.nick, run: RUNID, item: it.id, template: it.cat, slot: it.slot || null, mirrors: null, topic: it.topic, type: typeOf(it),   // the opened solution counts as "never" in the difficulty model
           level: it.level, mode, points: 0, bonus: 0, attempt: (me.wrong[it.id] || 0) + 1, seconds: Math.min(CAP, secs), capped: secs >= CAP, correct: null, gave: true, fast: false, lecturer });
         me.done[it.id] = { p: 0, b: 0, w: me.wrong[it.id] || 0, at: new Date().toISOString(), gave: true }; keep(); done(false); writeAll(false); };
-      clockStart(); writeAll(true);   // a wrong try is written at once (exploit 1: the 2-minute write delay left a window for a second device)
+      clockStart(); writeAll(false);
     });
   }
   async function leaderboard(tab) {
