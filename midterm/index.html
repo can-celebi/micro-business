@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>Microeconomics · midterm practice</title>
+<link rel="stylesheet" href="../assets/css/console-light.css?v=20261014a">
+<style>
+  /* readable font for students (Can 29.10, 11.11): Inter, no console glyphs */
+  @font-face { font-family: "Inter"; font-weight: 400; font-display: swap; src: url(../assets/fonts/inter-latin-400-normal.woff2) format("woff2"); }
+  @font-face { font-family: "Inter"; font-weight: 600; font-display: swap; src: url(../assets/fonts/inter-latin-600-normal.woff2) format("woff2"); }
+  html:root { --mono: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif; }
+  h2::before { content: none !important; }
+  body { margin: 0; font-family: var(--mono); color: var(--ink); background: var(--bg); }
+  main { max-width: 760px; margin: 0 auto; padding: 48px 16px 80px; }
+  h1 { font-size: 1.3rem; font-weight: 600; margin: 0; }
+  h2 { font-size: .95rem; font-weight: 600; margin: 2.2rem 0 .6rem; }
+  h2::before { content: "> "; color: var(--dim); }
+  .s { color: var(--dim); font-size: .85rem; margin: .4rem 0 1.6rem; }
+  .back { font-size: .8rem; }
+  .card { border: 1.5px solid var(--line); border-radius: 3px; background: #fff; padding: .8rem 1rem; margin: .7rem 0; }
+  .card .t { font-weight: 600; }
+  .card .d { color: var(--dim); font-size: .8rem; margin-bottom: .5rem; }
+  .links { display: flex; flex-wrap: wrap; gap: .5rem; }
+  .links a, .links .soon { font-size: .88rem; padding: .3rem .7rem; border: 1.5px solid var(--line); border-radius: 2px; }
+  .links a { background: var(--p-blue); border-bottom: 1.5px solid var(--line); }
+  .links a:hover { background: var(--p-green); }
+  .links .soon { color: var(--faint); border-color: #ddd; }
+  .empty { color: var(--faint); font-size: .88rem; }
+  a { color: var(--ink); text-decoration: none; border-bottom: 1px solid var(--accent); }
+  .card.ps { background: var(--p-yellow); border-style: dashed; }
+  .card.ps .links a { background: #fff; }
+  .live { margin: 1.2rem 0 .4rem; }
+  .live a { display: inline-block; font-size: .95rem; padding: .45rem 1rem; background: #FFE0E0; border: 1.5px solid #D9480F; border-radius: 2px; border-bottom: 1.5px solid #D9480F; }
+  .live a:hover { background: #FFC9C9; }
+  .live .dim { font-size: .8rem; }
+  .topics { display: grid; grid-template-columns: 1fr 1fr; gap: .7rem; margin-top: .4rem; }
+  .topic { display: block; border: 1.5px solid var(--line); border-radius: 3px; background: #fff; padding: .9rem 1rem; border-bottom: 1.5px solid var(--line); }
+  .topic:hover { background: var(--p-green); }
+  .topic .n { color: var(--dim); font-size: .78rem; }
+  .topic .tt { font-weight: 600; font-size: 1rem; margin: .15rem 0 .25rem; }
+  .topic .x { color: var(--dim); font-size: .82rem; }
+  .card.big { padding: 1rem 1.1rem 1.1rem; }
+  .res h3 { font-size: .85rem; font-weight: 600; margin: .9rem 0 .4rem; color: var(--dim); }
+  .res h3:first-child { margin-top: .2rem; }
+  @media (max-width: 600px) { .topics { grid-template-columns: 1fr; } }
+  /* breadcrumb bar, the same as the practice arena's (Ali) */
+  main { padding-top: 8px !important; }
+  .bar { position: sticky; top: 0; z-index: 5; background: #fbfbf9; padding: 6px 0; border-bottom: 1px solid #e3e5e8; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 6px 12px; margin-bottom: 1.2rem; }
+  .crumbs { font-size: .9rem; white-space: nowrap; overflow-x: auto; max-width: 100%; color: #1d1d1f; }
+  .crumbs a { color: #2f5d8c; text-decoration: none; border-bottom: none; }
+  .topic .pr { color: #6b6f76; font-size: .8rem; margin-top: .2rem; }
+  /* leaderboard, open by default under the title (Can 14.11: "make it apparent everywhere") */
+  .lbx { border: 1.5px solid var(--line); border-radius: 3px; background: #fff; padding: .8rem 1rem .9rem; margin: 0 0 1.2rem; }
+  .lbx .tabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 .6rem; }
+  .lbx .tabs button { font: inherit; font-size: .82rem; padding: 3px 10px; border: 1px solid #d1d5db; border-radius: 999px; background: #fff; color: #374151; cursor: pointer; }
+  .lbx .tabs button.on { background: #2f5d8c; border-color: #2f5d8c; color: #fff; }
+  .lbx ol { margin: 0; padding: 0; list-style: none; }
+  .lbx li { display: grid; grid-template-columns: 2em 1fr auto; gap: 8px; align-items: baseline; padding: 4px 0; border-bottom: 1px solid #f0f1f3; font-size: .98rem; }
+  .lbx li:last-child { border-bottom: none; }
+  .lbx .rk { color: #6b6f76; font-variant-numeric: tabular-nums; } .lbx .pt { font-weight: 600; font-variant-numeric: tabular-nums; }
+  .lbx li.me { background: #f2f7fc; }
+  .lbx .you { margin-top: .5rem; font-size: .9rem; color: #1d1d1f; } .lbx .msg { color: #6b6f76; font-size: .9rem; }
+</style>
+</head>
+<body>
+<main>
+  <div class="bar"><nav class="crumbs"><a href="../">← All weeks</a> › Midterm practice</nav></div>
+  <h1>Midterm practice</h1>
+  <p class="s">Midterm: Thursday 19.11 · Practise by topic, collect points and see the leaderboards.</p>
+  <h2>Leaderboard</h2>
+  <div class="lbx" id="lbx"><div class="tabs" id="lb-tabs"></div><div id="lb-body" class="msg">Loading…</div><div class="you" id="lb-you"></div></div>
+  <h2>Topics</h2>
+  <div class="card big"><div class="d">Pick a topic to practise · <a href="../practice/">All topics and the total leaderboard</a></div><div class="topics"><a class="topic" data-topic="sd" href="../practice/?topic=sd"><div class="n">Topic 1</div><div class="tt">Supply and demand shifts</div></a><a class="topic" data-topic="pc" href="../practice/?topic=pc"><div class="n">Topic 2</div><div class="tt">Perfect competition</div></a><a class="topic" data-topic="pref" href="../practice/?topic=pref"><div class="n">Topic 3</div><div class="tt">Preferences</div></a><a class="topic" data-topic="rc" href="../practice/?topic=rc"><div class="n">Topic 4</div><div class="tt">Rational choices and e</div></a><a class="topic" data-topic="words" href="../practice/?topic=words"><div class="n">Topic 5</div><div class="tt">Words to equations</div></a><a class="topic" data-topic="opt" href="../practice/?topic=opt"><div class="n">Topic 6</div><div class="tt">Optimal consumption</div></a></div></div>
+  <h2>Resources</h2>
+  <div class="card res"><h3>Lecture notes (pdf)</h3><div class="links"><a href="../lectures/L01/L01-notes.pdf" title="L01 · introduction">L01</a><a href="../lectures/L02/L02-notes.pdf" title="L02 · markets">L02</a><a href="../lectures/L03/L03-notes.pdf" title="L03 · supply and demand">L03</a><a href="../lectures/L04/L04-notes.pdf" title="L04 · equilibrium">L04</a><a href="../lectures/L05/L05-notes.pdf" title="L05 · the budget set">L05</a><a href="../lectures/L06/L06-notes.pdf" title="L06 · preferences and indifference curves">L06</a><a href="../lectures/L08/L08-notes.pdf" title="L08 · the MRS, the best feasible bundle, utility functions">L08</a><a href="../lectures/L09/L09-notes.pdf" title="L09 · utility functions, one form at a time">L09</a><a href="../lectures/L10/L10-notes.pdf" title="L10 · finding the optimal consumption bundle">L10</a><a href="../lectures/L11/L11-notes.pdf" title="L11 · practice with Cobb-Douglas">L11</a><a href="../lectures/L12/L12-notes.pdf" title="L12 · practice with perfect substitutes and perfect complements">L12</a><a href="../lectures/L13/L13-notes.pdf" title="L13 · practice with two budget lines">L13</a></div><h3>Problem sets (pdf)</h3><div class="links"><a href="../weeks/W02/PS1.pdf">Problem set 1</a><a href="../weeks/W03/PS2.pdf">Problem set 2</a><a href="../weeks/W04/PS3.pdf">Problem set 3</a><a href="../weeks/W04/PS3_solutions.pdf">Problem set 3 with solutions</a><a href="../weeks/W06/PS4.pdf">Problem set 4</a><a href="../weeks/W06/PS4_solutions.pdf">Problem set 4 with solutions</a></div><h3>Additional readings (password from class)</h3><div class="links"><a href="../lectures/L04/readings.html" target="_blank">L04</a><a href="../lectures/L05/readings.html" target="_blank">L05</a><a href="../lectures/L06/readings.html" target="_blank">L06</a><a href="../lectures/L08/readings.html" target="_blank">L08</a><a href="../lectures/L09/readings.html" target="_blank">L09</a></div></div>
+</main>
+<script src="../assets/js/config.js?v=20261014a"></script>
+<script>
+  // the leaderboard, open by default (Can 14.11). The same data as the arena (assets/js/practice.js, readBoard): one ref per account,
+  // refs/heads/v/<session>/arena/<ts>--<key>--<nick>--<total>--<topic.points_…>; the latest per account counts. Read only, nothing written.
+  (function () {
+    const CFG = window.MICRO_CONFIG || {}, GH = CFG.github || {};
+    const LOCAL = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
+    const SESSION = /[?&]test\b/.test(location.search) || LOCAL ? 'test' : (CFG.session || 'default'), T = SESSION === 'test' ? '-test' : '';
+    const TOKEN = (GH.tokenParts || []).length ? atob(GH.tokenParts.join('')) : '';
+    const API = 'https://api.github.com/repos/' + GH.owner + '/' + GH.repo, BOARD = 'heads/v/' + SESSION + '/arena/';
+    const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+    const fmt = n => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, '\u202f');
+    let login = null; try { login = JSON.parse(localStorage.getItem('micro-arena-login' + T)); } catch (e) {}
+    const tabs = [['all', 'Total']].concat([...document.querySelectorAll('a.topic[data-topic]')].map(a => [a.dataset.topic, a.querySelector('.tt').textContent]));
+    const body = document.getElementById('lb-body'), you = document.getElementById('lb-you'), tbox = document.getElementById('lb-tabs');
+    let rows = null, tab = 'all';
+    async function read() {
+      if (!TOKEN) throw new Error('no token');
+      const r = await fetch(API + '/git/matching-refs/' + BOARD, { headers: { Authorization: 'Bearer ' + TOKEN, Accept: 'application/vnd.github+json' }, cache: 'no-store' });
+      if (!r.ok) throw new Error('GitHub answered ' + r.status);
+      const latest = {};
+      (await r.json()).forEach(x => {
+        const m = x.ref.slice(('refs/' + BOARD).length).match(/^(\d+)--([a-z0-9_-]{2,16})--([A-Za-z0-9_-]{2,16})--(\d{1,7})--([\w.]*)$/);
+        if (!m) return;
+        const row = { ts: +m[1], key: m[2], nick: m[3], total: +m[4], topics: Object.fromEntries(m[5].split('_').filter(Boolean).map(p => p.split('.')).map(([c, v]) => [c, +v])) };
+        if (!latest[row.key] || latest[row.key].ts < row.ts) latest[row.key] = row;
+      });
+      return Object.values(latest);
+    }
+    function draw() {
+      tbox.innerHTML = ''; tabs.forEach(([v, l]) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = l; b.className = v === tab ? 'on' : ''; b.onclick = () => { tab = v; draw(); }; tbox.appendChild(b); });
+      if (!rows) return;
+      const pts = r => tab === 'all' ? r.total : (r.topics[tab] || 0);
+      const list = rows.filter(r => pts(r) > 0).sort((a, b) => pts(b) - pts(a) || a.ts - b.ts);
+      body.className = list.length ? '' : 'msg';
+      body.innerHTML = list.length ? '<ol>' + list.slice(0, 5).map((r, i) => '<li' + (login && r.key === login.key ? ' class="me"' : '') + '><span class="rk">' + (i + 1) + '</span><span>' + esc(r.nick) + '</span><span class="pt">' + fmt(pts(r)) + '</span></li>').join('') + '</ol>' : 'No points yet. Be the first.';
+      if (login && login.key) { const i = list.findIndex(r => r.key === login.key); you.textContent = i >= 0 ? 'You (' + login.nick + '): rank ' + (i + 1) + ' of ' + list.length + ' · ' + fmt(pts(list[i])) + ' points' : 'You (' + login.nick + '): no points here yet'; }
+      else you.textContent = '';
+    }
+    draw();
+    read().then(r => { rows = r; draw(); }).catch(e => { body.className = 'msg'; body.textContent = 'The leaderboard could not be loaded (' + (e.message || 'offline') + '). Reload in a minute.'; });
+  })();
+</script>
+<script>
+  // a logged-in student's progress under each topic (Oyun, Celebi 14.11): read from the arena's own browser storage, nothing sent.
+  // The arena's test-session rule (Ali): ?test, or a page served from this computer, uses the '-test' keys; ?test is kept in the links.
+  (function () {
+    const LOCAL = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);   // the arena's rule: no ?live override
+    const TEST = /[?&]test\b/.test(location.search) || LOCAL, T = TEST ? '-test' : '';
+    if (/[?&]test\b/.test(location.search)) document.querySelectorAll('a[href^="../practice/"]').forEach(a => { a.href += (a.href.includes('?') ? '&' : '?') + 'test'; });
+    const get = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+    const login = get('micro-arena-login' + T);
+    if (!login || !login.key) return;   // logged out: show nothing
+    // the arena's progress key (practice.js): 'micro-arena-prog' + T + '-' + key
+    const done = ((get('micro-arena-prog' + T + '-' + login.key) || {}).done) || {};
+    const fmt = n => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, '\u202f');
+    const load = src => new Promise((ok, no) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = no; document.head.appendChild(s); });
+    const tiles = [...document.querySelectorAll('a.topic[data-topic]')];
+    const IDS_V = '81828bcd';   // ids-v: set by tools/practice_update.sh (first 8 hex of the md5 of practice/ids.js)
+    load('../practice/ids.js?v=' + IDS_V).then(() => {   // the arena's small per-topic id list (9 KB; Ali), not the full topic files
+      const P = window.PRACTICE_IDS || {};
+      tiles.forEach(a => {
+        const ids = P[a.dataset.topic]; if (!Array.isArray(ids) || !ids.length) return;
+        const mine = ids.filter(id => done[id]), pts = mine.reduce((s, id) => s + (Number(done[id].p) || 0), 0);
+        const d = document.createElement('div'); d.className = 'pr'; d.textContent = mine.length + ' of ' + ids.length + ' done · ' + fmt(pts) + ' points'; a.appendChild(d);
+      });
+    }).catch(() => {});   // the arena isn't there yet (or offline): the page stays as it is
+  })();
+</script>
+</body>
+</html>
