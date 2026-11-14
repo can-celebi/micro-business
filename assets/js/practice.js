@@ -735,7 +735,7 @@
       box.classList.add('locked'); btns.forEach(x => x.setAttribute('aria-disabled', 'true'));
       const tick = () => {
         const left = lk.owed - visibleMs();
-        if (left > 0) { const n = Math.ceil(left / 1000); line.textContent = 'The answers open in ' + n + (n === 1 ? ' second.' : ' seconds.'); return; }
+        if (left > 0) { const n = Math.ceil(left / 1000); line.textContent = 'The answer buttons become active in ' + n + (n === 1 ? ' second.' : ' seconds.'); return; }
         lk.on = false; clearInterval(lockTimer); lockTimer = null; delete lockOwed[it.id];
         box.classList.remove('locked'); btns.forEach(x => x.removeAttribute('aria-disabled')); line.remove();
       };
