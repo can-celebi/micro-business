@@ -66,14 +66,16 @@
   let RUNID = Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
 
   // ---------- maths: variants carry $…$ (KaTeX); template items are plain text, shown with italic letters in the maths font ----------
+  // a literal <br> in the data (Murat Hoca's files) is a line break outside maths, never shown as text (Utku 14.11: 12 B22 items)
+  const brk = h => h.replace(/&lt;br\s*\/?&gt;/gi, '<br>');
   function tex(s) {
     const parts = String(s == null ? '' : s).split(/(\$[^$]+\$)/);
-    if (parts.length === 1) return plainMath(esc(s));
+    if (parts.length === 1) return plainMath(brk(esc(s)));
     // a full stop, comma or bracket right after a formula stays on the formula's line (Can 14.11: the "." alone after x* = 4)
     let out = '';
     for (let i = 0; i < parts.length; i++) {
       const x = parts[i];
-      if (!(/^\$[^$]+\$$/.test(x) && window.katex)) { out += esc(x); continue; }
+      if (!(/^\$[^$]+\$$/.test(x) && window.katex)) { out += brk(esc(x)); continue; }
       const m = katex.renderToString(x.slice(1, -1), { throwOnError: false, trust: false, strict: 'ignore' });
       const nx = parts[i + 1] || '', pu = (nx.match(/^[.,;:!?)\]]+/) || [''])[0];
       if (pu) { out += '<span class="nw">' + m + esc(pu) + '</span>'; parts[i + 1] = nx.slice(pu.length); } else out += m;
@@ -421,6 +423,7 @@
     history.replaceState(null, '', location.pathname + '?topic=' + encodeURIComponent(id) + (TQ ? '&test' : ''));
     window.scrollTo(0, 0);
     app.innerHTML = header(id, mode) + '<h2>' + esc(topicName(id)) + '</h2><p class="sub">' + esc(TX.dir[id] || '') + '</p>' +
+      (id === 'opt' && subSel[id] !== 'eq' ? '<p class="fine slop">Some stories here are AI slop, not our best stories.</p>' : '') +   // Can, Addition 22
       '<div class="tabs modes"><button type="button" id="mA" class="' + (mode === 'arena' ? 'on' : '') + '">Arena</button><button type="button" id="mS" class="' + (mode === 'select' ? 'on' : '') + '">Selection</button>' +
       (mode === 'select' ? '<select id="srt" aria-label="sort"><option value="num">by number</option><option value="pts">by points</option><option value="lvl">by difficulty</option></select>' : '') + '</div><div id="tb"></div><div id="lbx"></div>';   // the open board last on a topic page (Oyun 14.11), first on the home page
     document.getElementById('mA').onclick = () => topic(id, 'arena'); document.getElementById('mS').onclick = () => topic(id, 'select');
@@ -573,7 +576,7 @@
     sec.classList.toggle('hid', h); b.textContent = h ? 'Show' : 'Hide';
   });
   // ---------- feedback on a question (Can, Addition 20) ----------
-  const FB_OPTS = [['text', 'The text is confusing'], ['math', 'The math or the answer seems wrong'], ['hard', 'This is too hard for me']];
+  const FB_OPTS = [['text', 'The text is confusing'], ['math', 'The math or the answer seems wrong'], ['hard', 'This is too hard for me'], ['slop', 'AI slop story']];   // slop: Can, Addition 22
   const fbSent = () => (me.fb = me.fb || {});
   function feedbackUI(it) {
     const open = document.getElementById('fbo'), box = document.getElementById('fbp'); if (!open || !box || !login) { if (open) open.hidden = true; return; }

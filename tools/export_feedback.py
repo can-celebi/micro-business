@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Export the students' feedback on practice questions (Can, Practice-arena Addition 20) for Hande's report.
 Each report is a blob under refs/tags/fb/<session>/<item id>/<nickname key> in can-celebi/micro-business-data:
-{v, item, topic, nick, key, opts: ["text" | "math" | "hard"], text, ts}. One per question per account (the latest version).
+{v, item, topic, nick, key, opts: ["text" | "math" | "hard" | "slop"], text, ts}. One per question per account (the latest version).
 Usage: python3 -B tools/export_feedback.py <session> [--csv] [--out FILE]      (session: ws26 or test; uses your gh login)
 Output: JSON lines (default) or CSV, sorted by item then time; free text exactly as typed (plain text, never interpreted).
 Written by Ali (Main coder)."""
@@ -11,7 +11,7 @@ REPO = "can-celebi/micro-business-data"
 def cell(v):   # a text that starts like a spreadsheet formula (= + - @, or a tab/CR) gets a leading ' (Utku: "=HYPERLINK(…)")
     v = str(v)
     return "'" + v if v[:1] in ("=", "+", "-", "@", "\t", "\r") else v
-LABEL = {"text": "the text is confusing", "math": "the math or the answer seems wrong", "hard": "too hard for me"}
+LABEL = {"text": "the text is confusing", "math": "the math or the answer seems wrong", "hard": "too hard for me", "slop": "AI slop story"}
 
 def api(path, token):
     r = urllib.request.Request("https://api.github.com/repos/" + REPO + path, headers={"Authorization": "Bearer " + token, "Accept": "application/vnd.github+json"})
@@ -39,8 +39,8 @@ def main(argv):
     rows.sort(key=lambda r: (r["item"], r["ts"]))
     if "--csv" in argv:
         buf = io.StringIO(); w = csv.writer(buf)
-        w.writerow(["item", "topic", "nick", "time", "text confusing", "math or answer wrong", "too hard", "free text"])
-        for r in rows: w.writerow([cell(r["item"]), cell(r["topic"]), cell(r["nick"]), cell(r["ts"]), int("text" in r["opts"]), int("math" in r["opts"]), int("hard" in r["opts"]), cell(r["text"])])
+        w.writerow(["item", "topic", "nick", "time", "text confusing", "math or answer wrong", "too hard", "AI slop story", "free text"])
+        for r in rows: w.writerow([cell(r["item"]), cell(r["topic"]), cell(r["nick"]), cell(r["ts"]), int("text" in r["opts"]), int("math" in r["opts"]), int("hard" in r["opts"]), int("slop" in r["opts"]), cell(r["text"])])
         text = buf.getvalue()
     else:
         text = "".join(json.dumps(r, ensure_ascii=False) + "\n" for r in rows)
