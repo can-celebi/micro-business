@@ -79,12 +79,12 @@
     const fmt = n => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, '\u202f');
     const load = src => new Promise((ok, no) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = no; document.head.appendChild(s); });
     const tiles = [...document.querySelectorAll('a.topic[data-topic]')];
-    load('../practice/meta.js').then(() => Promise.all(tiles.map(a => load('../practice/topics/' + a.dataset.topic + '.js').catch(() => null)))).then(() => {
-      const P = window.PRACTICE_TOPICS || {};
+    load('../practice/ids.js').then(() => {   // the arena's small per-topic id list (9 KB; Ali), not the full topic files
+      const P = window.PRACTICE_IDS || {};
       tiles.forEach(a => {
-        const items = P[a.dataset.topic]; if (!Array.isArray(items) || !items.length) return;
-        const mine = items.filter(it => done[it.id]), pts = mine.reduce((s, it) => s + (Number(done[it.id].p) || 0), 0);
-        const d = document.createElement('div'); d.className = 'pr'; d.textContent = mine.length + ' of ' + items.length + ' done · ' + fmt(pts) + ' points'; a.appendChild(d);
+        const ids = P[a.dataset.topic]; if (!Array.isArray(ids) || !ids.length) return;
+        const mine = ids.filter(id => done[id]), pts = mine.reduce((s, id) => s + (Number(done[id].p) || 0), 0);
+        const d = document.createElement('div'); d.className = 'pr'; d.textContent = mine.length + ' of ' + ids.length + ' done · ' + fmt(pts) + ' points'; a.appendChild(d);
       });
     }).catch(() => {});   // the arena isn't there yet (or offline): the page stays as it is
   })();
