@@ -23,7 +23,7 @@
   .crumbs { display: flex; align-items: center; gap: 4px; min-width: 0; font-size: .9rem; white-space: nowrap; }
   .crumbs a { color: var(--accent); text-decoration: none; } .crumbs .sep { color: var(--dim); } .crumbs .c-mode { color: var(--ink); }
   button.crumb { border: 0; background: none; padding: 2px 2px; color: var(--accent); font-size: .9rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  button.mebtn { color: var(--ink); flex-shrink: 0; font-variant-numeric: tabular-nums; } button.crumb:hover { background: #eef2f7; }
+  button.mebtn { color: var(--ink); flex-shrink: 0; } #tot { font-variant-numeric: tabular-nums; } button.crumb:hover { background: #eef2f7; }
   .menu { position: absolute; z-index: 20; background: #fff; border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 6px 20px rgba(20, 24, 30, .12); padding: 4px; display: grid; min-width: 12em; }
   .menu a, .menu button { display: flex; align-items: center; min-height: 40px; padding: 0 12px; border: 0; border-radius: 6px; background: none; color: var(--ink); text-decoration: none; text-align: left; font-size: .92rem; }
   .menu a:hover, .menu button:hover { background: #f0f3f7; } .menu .mrow-mid { color: var(--accent); }
@@ -78,11 +78,12 @@
   .modes button { padding: 6px 16px; font-size: .92rem; }
   .startrow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; } @media (max-width: 560px) { .startrow .go { width: 100%; } }
   button.big { font-size: 1.05rem; padding: 12px 22px; }
-  .filters { display: flex; flex-wrap: nowrap; overflow-x: auto; gap: 6px; align-items: center; margin: 6px 0 6px; padding-bottom: 2px; }
+  .filters { display: flex; flex-wrap: nowrap; overflow-x: auto; gap: 6px; align-items: center; margin: 6px 0 6px; padding-bottom: 2px; scrollbar-width: none; } .filters::-webkit-scrollbar { display: none; }
   .filters .pill { flex-shrink: 0; padding: 4px 12px; border-radius: 999px; font-size: .85rem; } .filters .pill.on { background: var(--accent); border-color: var(--accent); color: #fff; }
-  .filters select { flex-shrink: 0; font: inherit; font-size: .85rem; padding: 4px 6px; border-radius: 8px; border: 1px solid #c9ced6; margin-left: auto; }
+  .modes select { flex-shrink: 0; font: inherit; font-size: .85rem; padding: 4px 6px; border-radius: 8px; border: 1px solid #c9ced6; margin-left: auto; }
   h3.lvh { font-size: .88rem; font-weight: 600; margin: 12px 0 6px; color: var(--ink); }
   .modal { position: fixed; inset: 0; background: rgba(20, 24, 30, .35); display: flex; align-items: flex-start; justify-content: center; padding: 6vh 12px; overflow-y: auto; z-index: 10; }
+  .modal .fine { margin-top: .5rem; }
   .modal .card { max-width: 620px; width: 100%; position: relative; max-height: 90vh; overflow: auto; }
   .modal .x { position: absolute; top: 6px; right: 8px; border: 0; background: none; font-size: 1.4rem; line-height: 1; padding: 6px 10px; color: var(--dim); } .modal p { font-size: .92rem; } ol.tut { padding-left: 1.3em; } ol.tut li { margin: 6px 0; }
   .warn { font-size: .86rem; background: #fff4d6; border: 1px solid #e0b64a; border-radius: 8px; padding: 8px 10px; }
@@ -103,13 +104,13 @@
 <main id="app"><h1>Midterm practice</h1><p class="sub">Loading…</p></main>
 <script src="../assets/js/config.js?v=20261014a"></script>
 <script src="../vendor/katex/katex.min.js"></script>
-<script src="meta.js?v=11"></script>
-<script src="topics/words.js?v=11"></script>
-<script src="topics/opt.js?v=11"></script>
-<script src="topics/sd.js?v=11"></script>
-<script src="topics/pc.js?v=11"></script>
-<script src="topics/pref.js?v=11"></script>
-<script src="topics/rc.js?v=11"></script>
-<script src="../assets/js/practice.js?v=20261114h"></script>
+<script src="meta.js?v=12"></script>
+<script src="topics/words.js?v=12"></script>
+<script src="topics/opt.js?v=12"></script>
+<script src="topics/sd.js?v=12"></script>
+<script src="topics/pc.js?v=12"></script>
+<script src="topics/pref.js?v=12"></script>
+<script src="topics/rc.js?v=12"></script>
+<script src="../assets/js/practice.js?v=20261114l"></script>
 </body>
 </html>

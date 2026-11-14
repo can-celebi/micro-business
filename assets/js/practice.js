@@ -40,7 +40,10 @@
   const baseOf = it => PT.base[it.level] || PT.base.easy;
   const floorOf = it => primeLE(baseOf(it) * PT.floor);
   function ladder(it, k) { return primeLE(Math.max(baseOf(it) * Math.pow(PT.rate, k - 1), baseOf(it) * PT.floor)); }
-  function stepDown(it, p, w) { const f = floorOf(it); for (let i = 0; i < w && p > f; i++) p = primeBelow(p); return Math.max(p, f); }
+  // wrong tries (Can 14.11): each halves the current value to the closest prime (a tie takes the higher); after the third, 0
+  const WR = PT.wrong || { rule: 'half', zero_after: 3 };
+  const primeNear = x => { let lo = Math.floor(x), hi = Math.ceil(x); while (lo > 2 && !isPrime(lo)) lo--; while (!isPrime(hi)) hi++; return (x - lo) < (hi - x) ? lo : hi; };
+  function stepDown(it, p, w) { if (w >= (WR.zero_after || 3)) return 0; for (let i = 0; i < w; i++) p = primeNear(p / 2); return p; }
   const typeOf = it => it.type || it.cat;
   const rightInType = (type, except) => Object.entries(me.done).filter(([id, d]) => id !== except && d.p > 0 && byId[id] && typeOf(byId[id]) === type).length;
   function pointsNow(it) { return stepDown(it, ladder(it, rightInType(typeOf(it), it.id) + 1), me.wrong[it.id] || 0); }
@@ -210,12 +213,12 @@
   }
 
   // ---------- screens ----------
-  // student texts: Hafize (Student service), passed by Ulutin and Gozde (20_student-desk/frozen/b81e365f4d94/2026-11-14_practice-arena-texts.md)
+  // student texts: Hafize (Student service), passed by Ulutin and Gozde (20_student-desk/frozen/b81e365f4d94/…; How points work: frozen/364fcecf89e3/…, the halving rule)
   const TX = {
     how: ['Every question gives a prime number of points. The base depends on the difficulty: an easy question gives 101 points, a medium question 211 points and a hard question 307 points.',
       'Each question belongs to a question type. Your first right answer of a type gives the full base. Each further right answer of the same type gives a little less: about 15% less each time, always rounded down to a prime number, and never less than about a quarter of the base.',
-      'If you answer a question wrongly, you can try again, but the question then gives the next lower prime number. If you open the solution before you have found the right answer, the question gives no points.',
-      '<b>Example.</b> Your first easy question of a type gives 101 points if you answer it right at the first try. Your second easy question of the same type gives 83 points. If you had needed two tries for the first one, it would have given 97 points instead of 101.',
+      'If you answer a question wrongly, you can try again, but each wrong try halves the points the question gives, rounded to the closest prime number. After the third wrong try, the question gives no points. If you open the solution before you have found the right answer, the question also gives no points.',
+      '<b>Example.</b> Your first easy question of a type gives 101 points if you answer it right at the first try. Your second easy question of the same type gives 83 points. If you answer the first one wrongly once and then right, it gives 53 points instead of 101; after two wrong tries it gives 29 points.',
       'Each card shows the points it gives you now, so you always see what a question is worth before you open it.'],
     dir: { words: 'Read a short story about prices and a budget, and choose the equations that describe the budget line.',
       opt: 'Find the optimal bundle a consumer can afford, on straight and kinked budget lines and for different utility functions.',
@@ -254,7 +257,7 @@
   function menu(anchor, rows) {   // a small list under a bar button; rows: [label, action] (null action = a link row)
     const open = document.querySelector('.menu[data-for="' + anchor.id + '"]'); closeMenus(); if (open) return;
     const m = document.createElement('div'); m.className = 'menu'; m.dataset.for = anchor.id;
-    rows.forEach(([label, act, cls]) => { const b = document.createElement(typeof act === 'string' ? 'a' : 'button'); if (typeof act === 'string') b.href = act; else { b.type = 'button'; b.onclick = () => { closeMenus(); act(); }; }
+    rows.forEach(([label, act, cls]) => { const b = document.createElement(typeof act === 'string' ? 'a' : 'button'); if (typeof act === 'string') { b.href = act; b.onclick = () => { leaveQuestion(); writeAll(true); }; } else { b.type = 'button'; b.onclick = () => { closeMenus(); act(); }; }
       b.innerHTML = label; if (cls) b.className = cls; m.appendChild(b); });
     const r = anchor.getBoundingClientRect(); m.style.top = (r.bottom + window.scrollY + 4) + 'px';
     if (anchor.classList.contains('mebtn')) m.style.right = Math.max(8, document.documentElement.clientWidth - r.right) + 'px'; else m.style.left = Math.max(8, r.left) + 'px';
@@ -262,6 +265,7 @@
   }
   document.addEventListener('click', e => { if (!e.target.closest('.menu') && !e.target.closest('.crumb')) closeMenus(); });
   function wire(topicId) {
+    const ml = document.querySelector('.crumbs a.c-mid'); if (ml) ml.onclick = () => { leaveQuestion(); writeAll(true); };   // leaving for /midterm/ records a skip too
     const t = document.getElementById('tsw');
     if (t) t.onclick = () => menu(t, [['← Midterm practice', '../midterm/' + TQ, 'mrow-mid']].concat(P.topics.filter(x => (TOP[x.id] || []).length).map(x => [esc(x.name) + (x.id === crumbTopic ? ' ✓' : ''), () => { leaveQuestion(); topic(x.id); }]), [['All topics', () => { leaveQuestion(); home(); }]]));
     const m = document.getElementById('meb');
@@ -272,6 +276,7 @@
   function leaveQuestion() {
     if (!current) return;
     const c = current; current = null; clearInterval(ticker);
+    if (keyH) { document.removeEventListener('keydown', keyH); keyH = null; }
     if (me.done[c.it.id]) return;
     const secs = clockStop();
     me.pending.push({ ts: new Date().toISOString(), client: dev.cid, nick: login && login.nick, run: RUNID, item: c.it.id, template: c.it.cat, slot: c.it.slot || null, mirrors: null, topic: c.it.topic,
@@ -374,7 +379,8 @@
     history.replaceState(null, '', location.pathname + '?topic=' + encodeURIComponent(id) + (TQ ? '&test' : ''));
     window.scrollTo(0, 0);
     app.innerHTML = header(id, mode) + '<h2>' + esc(topicName(id)) + '</h2><p class="sub">' + esc(TX.dir[id] || '') + '</p>' +
-      '<div class="tabs modes"><button type="button" id="mA" class="' + (mode === 'arena' ? 'on' : '') + '">Arena</button><button type="button" id="mS" class="' + (mode === 'select' ? 'on' : '') + '">Selection</button></div><div id="tb"></div>';
+      '<div class="tabs modes"><button type="button" id="mA" class="' + (mode === 'arena' ? 'on' : '') + '">Arena</button><button type="button" id="mS" class="' + (mode === 'select' ? 'on' : '') + '">Selection</button>' +
+      (mode === 'select' ? '<select id="srt" aria-label="sort"><option value="num">by number</option><option value="pts">by points</option><option value="lvl">by difficulty</option></select>' : '') + '</div><div id="tb"></div>';
     document.getElementById('mA').onclick = () => topic(id, 'arena'); document.getElementById('mS').onclick = () => topic(id, 'select');
     wire(id); tutorial();
     const tb = document.getElementById('tb');
@@ -388,7 +394,7 @@
     const F = sel.f || {};
     tb.innerHTML = '<div class="filters">' + [['ans', 'answered'], ['open', 'not answered']].concat(speedOn ? [['fast', 'done fast']] : []).concat(LV.map(l => [l, l]))
         .map(([k, l]) => '<button type="button" class="pill' + (F[k] ? ' on' : '') + '" data-f="' + k + '" aria-pressed="' + (F[k] ? 'true' : 'false') + '">' + l + '</button>').join('') +
-      '<select id="srt" aria-label="sort"><option value="num">by number</option><option value="pts">by points</option><option value="lvl">by difficulty</option></select></div>' +
+      '</div>' +
       '<p class="fine">The number under each question is the points it gives you now.</p><div id="qg"></div><p class="msg" id="none" hidden>No questions match these filters.</p>';
     const srt = document.getElementById('srt'); srt.value = sel.sort || 'num';
     const DOTS = { easy: '●', medium: '●●', hard: '●●●' };
@@ -492,6 +498,7 @@
       const tt = document.getElementById('tot'); if (tt) tt.textContent = score();
     }
     keyH = e => {
+      if (!document.body.contains(bar)) { document.removeEventListener('keydown', keyH); return; }   // only on its own question (Utku round 4)
       if (e.target.closest && e.target.closest('input, textarea, select') || document.querySelector('.modal') || e.ctrlKey || e.metaKey || e.altKey) return;
       const k = e.key.toLowerCase(), i = '12345'.indexOf(k) >= 0 ? '12345'.indexOf(k) : 'abcde'.indexOf(k);
       const nx = !bar.hidden && document.getElementById('nx'), ss = !bar.hidden && document.getElementById('ss');
