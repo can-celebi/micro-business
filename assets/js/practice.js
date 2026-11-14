@@ -273,10 +273,10 @@
   let crumbTopic = null, crumbMode = null;
   function header(topicId, mode) {
     crumbTopic = topicId || null; crumbMode = mode || null;
-    const mid = '<a class="c-mid" href="../midterm/' + TQ + '">Midterm practice</a>';
+    const mid = '<a class="c-mid" href="../midterm/' + TQ + '" aria-label="Midterm practice"><span class="bk">‹ </span>Midterm<span class="lg"> practice</span></a>';   // phone: ‹ Midterm
     const tc = topicId ? '<button type="button" class="crumb" id="tsw">' + esc(topicName(topicId)) + ' ▾</button>' : '<button type="button" class="crumb" id="tsw">Topics ▾</button>';
     const mc = topicId && mode ? '<span class="sep">›</span><span class="c-mode">' + (mode === 'arena' ? 'Arena' : 'Selection') + '</span>' : '';
-    const me_ = login ? '<button type="button" class="crumb mebtn" id="meb">' + esc(login.nick) + ' · <span id="tot">' + score() + '</span><span class="fun" data-fun="tot-mark"></span> ▾</button>' : '<button type="button" class="crumb mebtn" id="meb">menu ▾</button>';
+    const me_ = login ? '<button type="button" class="crumb mebtn" id="meb">' + esc(login.nick) + ' · <span id="tot">' + score() + '</span><span class="fun" data-fun="tot-mark"></span> ▾</button>' : '<button type="button" class="crumb mebtn" id="meb">Menu ▾</button>';
     return '<div class="bar"><nav class="crumbs">' + mid + '<span class="sep c-mid">›</span>' + tc + mc + '</nav>' + me_ + '</div><span class="fun" data-fun="strip"></span>';
   }
   function closeMenus() { document.querySelectorAll('.menu').forEach(m => m.remove()); }
@@ -335,11 +335,12 @@
   const WARN = '<p class="warn"><b>One nickname per student.</b> Make one account and keep it: log in with the same nickname and password on every device. A second nickname splits your progress. Do not use your real name, and pick a password you use nowhere else (this page is for practice, its security is light).</p>';
   function loginScreen(msg) {
     app.innerHTML = header() + '<p class="sub">Practice questions for the midterm. Log in, or make your account once.</p>' + WARN +
-      '<div class="forms"><form class="card" id="fin"><h2>Log in</h2><label>nickname <input type="text" id="n1" maxlength="16" autocomplete="username" required></label>' +
-      '<label>password <input type="password" id="p1" autocomplete="current-password" required></label><button class="go" type="submit">Log in</button></form>' +
-      '<form class="card" id="fnew"><h2>New account</h2><label>nickname <input type="text" id="n2" maxlength="16" autocomplete="username" required></label>' +
-      '<label>password <input type="password" id="p2" autocomplete="new-password" required></label><label>password again <input type="password" id="p3" autocomplete="new-password" required></label>' +
-      '<button type="submit">Make my account</button></form></div><p class="msg" id="lm">' + (msg || 'Nickname: 2 to 16 letters, digits, - or _. Password: at least 6 characters.') + '</p>';
+      '<div class="forms"><form class="card" id="fin"><h2>Log in</h2><label>Nickname <input type="text" id="n1" maxlength="16" autocomplete="username" required></label>' +
+      '<label>Password <input type="password" id="p1" autocomplete="current-password" required></label><button class="go" type="submit">Log in</button></form>' +
+      '<form class="card" id="fnew"><h2>New account</h2><label>Nickname <input type="text" id="n2" maxlength="16" autocomplete="username" required></label>' +
+      '<label>Password <input type="password" id="p2" autocomplete="new-password" required></label><label>Password again <input type="password" id="p3" autocomplete="new-password" required></label>' +
+      '<button type="submit">Make my account</button></form></div><p class="msg" id="lm">' + (msg || 'Nickname: 2 to 16 letters, digits, - or _. Password: at least 6 characters.') + '</p><div id="lbx"></div>';
+    if (window.ArenaBoard) ArenaBoard.mount(document.getElementById('lbx'), { top: 5, tab: 'all', full: false });   // the open board for visitors too (Oyun)
     fire('arena:screen', { name: 'login', topic: null, mode: null, item: null });
     const say = (t, bad) => { document.getElementById('lm').innerHTML = bad ? '<span class="bad">' + esc(t) + '</span>' : esc(t); };
     const busy = on => app.querySelectorAll('form button').forEach(b => b.disabled = on);
@@ -366,7 +367,7 @@
   // after a password reset: the temporary password worked; the student picks a new one, progress stays as it is
   function newPassword(rec, key) {
     app.innerHTML = header() + '<h2>Choose a new password</h2><p class="sub">Your password was reset. Pick a new one for ' + esc(rec.nick) + ' (at least 6 characters, used nowhere else). Your progress and points are kept.</p>' +
-      '<form class="card" id="fpw"><label>new password <input type="password" id="q1" autocomplete="new-password" required></label><label>new password again <input type="password" id="q2" autocomplete="new-password" required></label>' +
+      '<form class="card" id="fpw"><label>New password <input type="password" id="q1" autocomplete="new-password" required></label><label>New password again <input type="password" id="q2" autocomplete="new-password" required></label>' +
       '<button class="go" type="submit">Save my new password</button></form><p class="msg" id="lm"></p>';
     document.getElementById('fpw').onsubmit = async e => {
       e.preventDefault(); const a = document.getElementById('q1').value, b = document.getElementById('q2').value, m = document.getElementById('lm');
@@ -387,8 +388,8 @@
     leaveQuestion();
     if (!login) return loginScreen();
     history.replaceState(null, '', location.pathname + TQ);
-    app.innerHTML = header() + '<p class="sub">Pick a topic. Play it in the arena (one question after another, harder as you go) or pick the questions yourself.</p><div id="lbx"></div><span class="fun" data-fun="home-top"></span><div class="topics cats" id="cats"></div>' +
-      '<p class="fine">For practice only: nothing here counts towards your grade. The leaderboard is just for fun; only your nickname and scores are stored. Time per question is recorded anonymously to improve the course.</p>';
+    app.innerHTML = header() + '<p class="sub">Pick a topic. Play it in the arena (one question after another, harder as you go) or pick the questions yourself.</p><div id="lbx"></div><span class="fun" data-fun="home-top"></span><h2>Topics</h2><div class="topics cats" id="cats"></div>' +
+      '<p class="fine">For practice only: nothing here counts towards your grade. The leaderboard is just for fun; only your nickname and scores are stored. The time you spend on each question is recorded with your nickname, not your real name, to improve the course.</p>';
     const box = document.getElementById('cats');
     P.topics.forEach(t => {
       const all = TOP[t.id] || [], done = all.filter(it => me.done[it.id]).length;
