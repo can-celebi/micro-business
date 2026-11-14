@@ -68,8 +68,40 @@
     return '<svg class="fun-dg" viewBox="0 0 64 64" width="' + size + '" height="' + size + '" role="img" aria-label="' + F.esc(o.label || '') + '"' + (o.label ? '' : ' aria-hidden="true"') + '>' +
       '<path d="M8 6V56H60" fill="none" stroke="#9aa0a8" stroke-width="1"/>' + g + '</svg>';
   };
+  // ---------- the progress graph on a topic tile: one small learning curve ----------
+  // flags: the student's answered questions of the topic in time order, true = right at the first try.
+  // The line moves one step to the right per answered question and one step up when it was right at the first try;
+  // the dashed line is "every question right at the first try". The scale grows with the answers (at least ten steps).
+  // F.curve(flags, {animate}) -> svg; F.tile(tileElement, flags, {animate}) puts it at the right edge of a topic tile.
+  F.curve = (flags, o) => {
+    o = o || {}; flags = Array.isArray(flags) ? flags : [];
+    const W = 108, H = 60, X0 = 8, Y0 = H - 8, PW = W - 16, PH = H - 16, n = flags.length, R = Math.max(10, n), right = flags.filter(Boolean).length;
+    const r2 = v => Math.round(v * 100) / 100;
+    let x = X0, y = Y0, d = 'M' + X0 + ' ' + Y0;
+    flags.forEach(f => { x += PW / R; if (f) y -= PH / R; d += 'L' + r2(x) + ' ' + r2(y); });
+    const label = n ? 'Your learning curve: ' + right + ' of ' + n + ' right at the first try.' : 'Your learning curve: no answers yet.';
+    return '<svg class="fun-curve" viewBox="0 0 ' + W + ' ' + H + '" width="' + W + '" height="' + H + '" role="img" aria-label="' + F.esc(label) + '">' +
+      '<path d="M' + X0 + ' ' + Y0 + 'L' + (X0 + PW) + ' ' + (Y0 - PH) + '" fill="none" stroke="#9aa0a8" stroke-width="1" stroke-dasharray="2 3"/>' +
+      '<path d="M' + X0 + ' 4V' + Y0 + 'H' + (W - 4) + '" fill="none" stroke="#222" stroke-width="1"/>' +
+      (n ? '<path d="' + d + '" fill="none" stroke="#111" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round" pathLength="1"' + (o.animate && !F.still() ? ' class="fun-draw"' : '') + '/>' +
+        '<circle cx="' + r2(x) + '" cy="' + r2(y) + '" r="3" fill="#D9480F"/>' : '') + '</svg>';
+  };
+  // first-try flags of one topic from a list of question ids and the stored "done" records ({id: {p, w, at, gave}})
+  F.flags = (ids, done) => (ids || []).filter(id => done && done[id]).map(id => ({ at: done[id].at || '', first: !!(done[id].p > 0 && !done[id].w && !done[id].gave) }))
+    .sort((a, b) => a.at < b.at ? -1 : a.at > b.at ? 1 : 0).map(r => r.first);
+  F.tile = (el, flags, o) => {
+    if (!el) return;
+    const old = el.querySelector('.fun-tile-g'); if (old) old.remove();
+    el.classList.add('fun-tile');
+    el.insertAdjacentHTML('beforeend', '<span class="fun-tile-g">' + F.curve(flags, o) + '</span>');
+  };
+
   F.style('core', '.fun{display:contents}.fun:empty{display:none}.fun-dg{display:block;flex:none}' +
     '.fun-dim{color:#6b6f76;font-size:.85rem}' +
+    // a topic tile with its graph: the text on the left, the graph on the right, on every width
+    '.fun-tile{display:grid!important;grid-template-columns:minmax(0,1fr) auto;column-gap:12px;align-items:center}.fun-tile>*{grid-column:1}' +
+    '.fun-tile>.fun-tile-g{grid-column:2;grid-row:1/span 6;align-self:center;line-height:0}.fun-curve{display:block}' +
+    '@media (max-width:359px){.fun-curve{width:84px;height:auto}}' +
     '@media (prefers-reduced-motion: no-preference){' +
     'path.fun-draw{stroke-dasharray:1;stroke-dashoffset:1;animation:fun-draw .45s ease-out forwards}' +
     'circle.fun-draw{opacity:0;animation:fun-in .2s ease-out .3s forwards}' +

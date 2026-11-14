@@ -69,7 +69,16 @@
   function tex(s) {
     const parts = String(s == null ? '' : s).split(/(\$[^$]+\$)/);
     if (parts.length === 1) return plainMath(esc(s));
-    return parts.map(x => /^\$[^$]+\$$/.test(x) && window.katex ? katex.renderToString(x.slice(1, -1), { throwOnError: false, trust: false, strict: 'ignore' }) : esc(x)).join('');
+    // a full stop, comma or bracket right after a formula stays on the formula's line (Can 14.11: the "." alone after x* = 4)
+    let out = '';
+    for (let i = 0; i < parts.length; i++) {
+      const x = parts[i];
+      if (!(/^\$[^$]+\$$/.test(x) && window.katex)) { out += esc(x); continue; }
+      const m = katex.renderToString(x.slice(1, -1), { throwOnError: false, trust: false, strict: 'ignore' });
+      const nx = parts[i + 1] || '', pu = (nx.match(/^[.,;:!?)\]]+/) || [''])[0];
+      if (pu) { out += '<span class="nw">' + m + esc(pu) + '</span>'; parts[i + 1] = nx.slice(pu.length); } else out += m;
+    }
+    return out;
   }
   // equations in plain text ("2x + y = 58 for x ≤ 5, and x + y = 53 for x ≥ 5"): each equation one unbreakable unit in the maths font,
   // the letters x, y, u, M italic, the words for/and/all in the text font; x and y in prose italic too; bundles like (6, 36) in the maths font
