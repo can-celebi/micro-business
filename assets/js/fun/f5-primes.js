@@ -6,7 +6,7 @@
 (function () {
   'use strict';
   const F = window.MicroFun; if (!F) return;
-  F.style('f5', '.fun-prime{color:var(--ink)}.f5-row{padding:8px 14px;cursor:default}td.p .fun-prime{position:absolute}');   // in a table the mark hangs beside the number, the column stays flush
+  F.style('f5', '.fun-prime{color:var(--ink)}.f5-row{padding:8px 12px;cursor:default}td.p .fun-prime{display:inline-block;width:0;overflow:visible}');   // in a table the mark hangs beside the number, the column stays flush
   const MARK = '′', STEP = 70, FRAMES = 5;
   const me = () => { const a = F.api(); return a && a.user && a.user() ? a : null; };   // the bridge, only with a signed-in student
   const tot = () => document.getElementById('tot');
@@ -47,7 +47,7 @@
     end();
     const t = tot(); if (!me() || !t) return;
     const primes = [];
-    if (d.to > d.from && !F.still()) for (let n = Math.max(2, Math.floor(d.from) + 1); n < d.to; n++) if (F.isPrime(n)) primes.push(n);
+    if (d.to > d.from && !F.still()) for (let n = Math.max(2, Math.floor(d.from) + 1), top = Math.min(d.to, d.from + 100000); n < top; n++) if (F.isPrime(n)) primes.push(n);
     const L = primes.length;   // at most FRAMES of them, evenly spread
     const frames = L <= FRAMES ? primes : Array.from({ length: FRAMES }, (_, i) => primes[Math.round(i * (L - 1) / (FRAMES - 1))]);
     run = { el: t, to: d.to, shown: 0, timer: 0, frames };
@@ -59,7 +59,7 @@
 
   F.on('board', () => {
     if (!me()) return;
-    document.querySelectorAll('#lb table.lb td.p, [data-fun="strip"] table.lb td.p').forEach(td => {   // the leaderboards only, not the points table in "How points work"
+    document.querySelectorAll('#lb table.lb td.p').forEach(td => {   // the leaderboard only, not the points table in "How points work"
       if (td.querySelector('.fun-prime')) return;
       const txt = td.textContent.replace(/[\s.,]/g, '');
       if (/^\d+$/.test(txt) && F.isPrime(Number(txt))) td.insertAdjacentHTML('beforeend', '<span class="fun-prime">' + MARK + '</span>');

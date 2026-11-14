@@ -10,7 +10,7 @@
   const DASH = '–';
 
   F.style('f10',
-    '.f10-link{border:0;background:none;padding:0;color:var(--accent);text-decoration:underline;font-size:.9rem}' +
+    '.f10-link{border:0;background:none;padding:6px 0;color:var(--accent);text-decoration:underline;font-size:.9rem}' +
     'p[data-f="f10"]{margin:0 0 .8rem}' +
     '.f10-card{position:relative}.f10-card h2{margin:0 2.2rem .7rem 0}' +
     '.f10-x{position:absolute;top:6px;right:6px;border:0;background:none;color:var(--dim);font-size:1.3rem;line-height:1;padding:6px 10px}' +
@@ -63,7 +63,7 @@
   };
   const open = opener => {
     const api = F.api();
-    if (!api || !api.user() || document.getElementById('f10-box')) return;      // never two boxes at once
+    if (!api || !api.user || !api.user() || document.getElementById('f10-box')) return;      // never two boxes at once
     const box = document.createElement('div');
     box.className = 'modal'; box.id = 'f10-box';
     box.innerHTML = html(stats(api));
@@ -72,7 +72,7 @@
       box.remove();
       if (opener && opener.isConnected && !opener.closest('.menu')) opener.focus({ preventScroll: true });   // not the menu row: focus would reopen the menu
     };
-    const onKey = e => { if (e.key === 'Escape') close(); };
+    const onKey = e => { if (!box.isConnected || e.key === 'Escape') close(); };
     box.addEventListener('click', e => { if (e.target === box || e.target.closest('.f10-x')) close(); });
     document.addEventListener('keydown', onKey);
     document.body.appendChild(box);
@@ -86,8 +86,9 @@
       if (markup) slot.insertAdjacentHTML('beforeend', markup);
     });
   };
-  F.on('screen', () => {
-    const api = F.api(), user = !!(api && api.user());
+  F.on('screen', d => {
+    const api = F.api(), user = !!(api && api.user && api.user());
+    const box = document.getElementById('f10-box'); if (box && d.name !== 'how') box.remove();   // the screen changed behind the box: its figures would be old
     place('home-top', user && '<p data-f="f10"><button type="button" class="f10-link f10-open">My progress</button></p>');
   });
   F.on('menu', () => {   // the account menu is built when it opens

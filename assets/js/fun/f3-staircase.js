@@ -9,7 +9,7 @@
   const r2 = n => Math.round(n * 100) / 100;
   let drawn = false;                                   // the staircase draws itself once per visit of the leaderboard
 
-  F.style('f3', '.fun-f3{margin:0 0 10px}.fun-f3 svg{display:block;width:100%;height:auto}' +
+  F.style('f3', '.fun-f3{margin:0 0 10px}.fun-f3 svg{display:block;width:100%;max-width:420px;height:auto}' +
     '.fun-f3 text{font-size:9px;fill:var(--ink,#1d1d1f)}.fun-f3 text.you{fill:' + YOU + '}' +
     '.fun-f3 .st{stroke:var(--ink,#1d1d1f)}.fun-f3 p{margin:2px 0 0}');
 
@@ -28,8 +28,8 @@
     const api = F.api(), me = api && api.user && api.user();
     if (!me || !Array.isArray(d.rows)) return '';
     const tab = d.tab || 'all';
-    const rows = d.rows.map(r => ({ key: r.key, p: +(tab === 'all' ? r.total : (r.topics || {})[tab]) || 0 }))
-      .filter(r => r.p > 0).sort((a, b) => b.p - a.p);
+    const rows = d.rows.filter(Boolean).map(r => ({ key: r.key, p: +(tab === 'all' ? r.total : (r.topics || {})[tab]) || 0 }))
+      .filter(r => r.p > 0 && isFinite(r.p)).sort((a, b) => b.p - a.p);
     const N = rows.length; if (N < 3) return '';
     const x = i => r2(X0 + i * W / N), y = i => r2(BASE - H * rows[i].p / rows[0].p);
     let path = 'M' + X0 + ' ' + y(0);
@@ -38,15 +38,16 @@
     let you = '';
     if (mine >= 0) {
       const mid = Math.max(X0 + 9, Math.min(X0 + W - 9, (x(mine) + x(mine + 1)) / 2));
+      const near = mine > 0 && mid < x(1) + 64 && y(mine) < y(0) + 22;   // next to the "price maker" label: "you" goes under its own step
       you = '<path d="M' + x(mine) + ' ' + y(mine) + 'H' + x(mine + 1) + '" fill="none" stroke="' + YOU + '" stroke-width="4"/>' +
-        '<text class="you" x="' + r2(mid) + '" y="' + r2(Math.max(8, y(mine) - 5)) + '" text-anchor="middle">you</text>';
+        '<text class="you" x="' + r2(mid) + '" y="' + r2(near ? y(mine) + 11 : Math.max(8, y(mine) - 5)) + '" text-anchor="middle">you</text>';
     }
     const anim = !drawn && !F.still(); drawn = true;
     const label = 'The points of all ' + N + ' students, from the highest to the lowest.';
     return '<div data-f="f3" class="fun-f3"><svg viewBox="0 0 320 96" role="img" aria-label="' + F.esc(label) + '">' +
       '<path d="M14 8V84H312" fill="none" stroke="#9aa0a8" stroke-width="1"/>' +
       '<path class="st' + (anim ? ' fun-draw' : '') + '" d="' + path + '" fill="none" stroke-width="1.6" pathLength="1"/>' + you +
-      '<text x="' + r2(x(1) + 4) + '" y="' + r2(y(0) + 6) + '">price maker</text></svg>' +
+      '<text x="' + r2(x(1) + 4) + '" y="' + r2(mine === 0 ? y(0) + 16 : y(0) + 6) + '">price maker</text></svg>' +
       '<p class="fun-dim">1 price maker · ' + (N - 1) + ' price takers</p></div>';
   }
 })();

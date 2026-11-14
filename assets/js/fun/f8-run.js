@@ -39,6 +39,7 @@
   });
 
   F.on('screen', d => {
+    if (d.name === 'how') return;   // a box over the page, not a new screen
     const slot = F.slot('arena-top'); if (!slot) return;
     slot.innerHTML = '';
     const api = F.api();

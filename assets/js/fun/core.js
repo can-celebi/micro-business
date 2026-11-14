@@ -28,7 +28,7 @@
   };
   // the student's answered questions in time order, as { id, topic, first: right at the first try }
   F.history = api => { const topicOf = {}; (api.topics() || []).forEach(t => (api.items(t.id) || []).forEach(it => { topicOf[it.id] = t.id; }));
-    return Object.entries(api.done() || {}).filter(([id]) => topicOf[id]).map(([id, d]) => ({ id, topic: topicOf[id], at: d.at || '', first: !!(d.p > 0 && !d.w && !d.gave) })).sort((x, y) => x.at < y.at ? -1 : x.at > y.at ? 1 : 0); };
+    return Object.entries(api.done() || {}).filter(([id, d]) => topicOf[id] && d).map(([id, d]) => ({ id, topic: topicOf[id], at: d.at || '', first: !!(d.p > 0 && !d.w && !d.gave) })).sort((x, y) => x.at < y.at ? -1 : x.at > y.at ? 1 : 0); };
 
   // ---------- the six topic diagrams: one tiny picture per topic, drawn in three steps ----------
   // viewBox 0 0 64 64; the axes are step 0; steps 1 to 3 add the elements below. Colours: indifference curves and demand blue,

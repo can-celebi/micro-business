@@ -20,5 +20,5 @@
   });
 
   // a new screen starts without a picture (the arena redraws the slot; this covers a slot it kept)
-  F.on('screen', () => { const slot = F.slot('abar'); if (slot) slot.innerHTML = ''; });
+  F.on('screen', d => { if (d.name === 'how') return; const slot = F.slot('abar'); if (slot) slot.innerHTML = ''; });   // "How points work" opens over the question: the picture stays
 })();

@@ -9,12 +9,13 @@
   F.style('f1', '.fun-f1-card{grid-template-columns:minmax(0,1fr) auto;column-gap:12px}.fun-f1-card>*{grid-column:1}' +
     '.fun-f1-line{grid-column:1}.fun-f1-pic{grid-column:2;grid-row-start:1;align-self:center}');
 
-  F.on('screen', () => {
+  F.on('screen', d => {
+    if (d.name !== 'home' || d.tutorial) return;   // the cards are redrawn by the home screen only; a box over it changes nothing
     const slots = F.slots('cat');
     slots.forEach(el => { el.innerHTML = ''; if (el.parentElement) el.parentElement.classList.remove('fun-f1-card'); });
     const A = F.api();
     if (!slots.length || !A || !A.user()) return;
-    const got = A.get('f1'), seen = got && typeof got === 'object' ? got : {};
+    const got = A.get('f1'), seen = got && typeof got === 'object' && !Array.isArray(got) ? got : {};
     let changed = false;
     slots.forEach(el => {
       const topic = el.dataset.topic, card = el.parentElement, p = F.mastery(A, topic);   // the same definition as in My progress

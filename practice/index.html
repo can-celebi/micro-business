@@ -49,7 +49,7 @@
   .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
   .qmeta { font-size: .8rem; color: var(--dim); margin-bottom: 6px; display: flex; gap: 10px; flex-wrap: wrap; }
   .qtext { margin: 0 0 10px; }
-  .stmts { list-style: none; padding: 0; margin: 4px 0 8px; } .stmts .r { display: inline-block; width: 2.2em; color: var(--dim); }
+  .stmts { list-style: none; padding: 0; margin: 4px 0 8px; } .stmts li { display: grid; grid-template-columns: 2.2em 1fr; } .stmts .r { color: var(--dim); }
   .opts { display: grid; gap: 8px; margin: 10px 0 4px; }
   .opt { text-align: left; padding: 10px 12px; display: flex; gap: 10px; align-items: baseline; }
   .opt .l { color: var(--dim); min-width: 1.4em; }
@@ -94,7 +94,7 @@
   .plab { display: flex; justify-content: space-between; align-items: center; font-size: .72rem; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; }
   .plab .ptitle { text-transform: none; letter-spacing: 0; font-weight: 400; display: none; } .qpart.hid .plab .ptitle { display: inline; }
   .plab .phide { font-size: .78rem; text-transform: none; letter-spacing: 0; font-weight: 400; }
-  .qdef { background: #f1f2f4; } .qdef .plab { color: var(--dim); } .qdef h3 { font-size: 1rem; font-weight: 600; margin: 4px 0 4px; } .qdef p { font-size: .92rem; line-height: 1.55; margin: 6px 0 0; color: var(--ink); }
+  .qdef { background: #f1f2f4; } .qdef .plab { color: var(--dim); } .qdef h3 { font-family: "STIX Two Text", "Cambria", Georgia, serif; font-size: 1.12rem; font-weight: 600; margin: 4px 0 4px; } .qdef p { font-family: "STIX Two Text", "Cambria", Georgia, serif; font-size: 1.04rem; line-height: 1.5; margin: 6px 0 0; color: var(--ink); }
   .qex { background: #fff; border: 1px solid var(--line); border-left: 3px solid var(--accent); } .qex .plab { color: var(--accent); }
   .qex ol { margin: 6px 0 0; padding-left: 1.4em; font-size: .92rem; } .qex li { margin: 4px 0; } .qex .dmath { text-align: center; font-size: 1.1rem; margin-top: 6px; overflow-x: auto; }
   .card.qq .qlab { font-size: .72rem; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--dim); margin-bottom: 4px; }
@@ -118,7 +118,9 @@
   @media (max-width: 560px) { .forms { grid-template-columns: 1fr; } }
   @media (pointer: coarse) { button.link, .crumbs a { min-height: 44px; display: inline-flex; align-items: center; } button.crumb { min-height: 44px; }
     .pill, .tabs button, .modes button, .qc, .menu a, .menu button { min-height: 44px; } }
-  @media (max-width: 760px) { .tabs, .filters, .subs { flex-wrap: wrap; overflow-x: visible; } .filters select { margin-left: 0; } }
+  @media (max-width: 560px) { .filters, .subs { flex-wrap: wrap; overflow-x: visible; } }
+  .tabs { -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent); padding-right: 32px; }
+  .crumbs { min-width: 0; }
   .cat .n { white-space: normal; overflow-wrap: anywhere; }
 </style>
 </head>
@@ -134,15 +136,16 @@
 <script src="topics/pref.js?v=13"></script>
 <script src="topics/rc.js?v=13"></script>
 <!-- Oyun's fun modules (assets/js/fun/): before practice.js, they only add listeners -->
-<script src="../assets/js/fun/core.js?v=20261114b"></script>
-<script src="../assets/js/fun/f1-diagram.js?v=20261114b"></script>
-<script src="../assets/js/fun/f2-verdict.js?v=20261114b"></script>
-<script src="../assets/js/fun/f3-staircase.js?v=20261114b"></script>
-<script src="../assets/js/fun/f5-primes.js?v=20261114b"></script>
-<script src="../assets/js/fun/f6-curve.js?v=20261114b"></script>
-<script src="../assets/js/fun/f8-run.js?v=20261114b"></script>
-<script src="../assets/js/fun/f9-strip.js?v=20261114b"></script>
-<script src="../assets/js/fun/f10-progress.js?v=20261114b"></script>
-<script src="../assets/js/practice.js?v=20261114t"></script>
+<script src="../assets/js/fun/core.js?v=20261114c"></script>
+<script src="../assets/js/fun/f1-diagram.js?v=20261114c"></script>
+<script src="../assets/js/fun/f2-verdict.js?v=20261114c"></script>
+<script src="../assets/js/fun/f3-staircase.js?v=20261114c"></script>
+<script src="../assets/js/fun/f4-next-rank.js?v=20261114c"></script>
+<script src="../assets/js/fun/f5-primes.js?v=20261114c"></script>
+<script src="../assets/js/fun/f6-curve.js?v=20261114c"></script>
+<script src="../assets/js/fun/f8-run.js?v=20261114c"></script>
+<script src="../assets/js/fun/f9-strip.js?v=20261114c"></script>
+<script src="../assets/js/fun/f10-progress.js?v=20261114c"></script>
+<script src="../assets/js/practice.js?v=20261114v"></script>
 </body>
 </html>
