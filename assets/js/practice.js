@@ -60,7 +60,14 @@
   let me = { done: {}, wrong: {}, pending: [] };
   const progKey = () => 'micro-arena-prog' + T + '-' + login.key;
   function loadMe() { me = load(progKey(), {}); me.done = me.done || {}; me.wrong = me.wrong || {}; me.pending = me.pending || []; }
-  const keep = () => { if (login) save(progKey(), me); };
+  // two tabs of one account (Carpenter 14.11, exploit 1): before saving, take what another tab stored for this account, the larger
+  // wrong count and any done item, so a second tab can never wipe wrong tries or pay a question twice
+  function mergeLocal(s) {
+    if (!s || typeof s !== 'object') return;
+    Object.entries(s.wrong || {}).forEach(([id, n]) => { if (typeof n === 'number' && n > (me.wrong[id] || 0)) me.wrong[id] = n; });
+    Object.entries(s.done || {}).forEach(([id, d]) => { if (d && typeof d.p === 'number' && !me.done[id]) me.done[id] = d; });
+  }
+  const keep = () => { if (!login) return; mergeLocal(load(progKey(), null)); save(progKey(), me); };
   if (login) loadMe();
   let lecturer = false; try { lecturer = !!localStorage.getItem('micro-teacher-code'); } catch (e) {}
   let RUNID = Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
@@ -130,6 +137,7 @@
   // the clock (as survey 2): runs only while the page is on screen
   const clock = { t0: 0, acc: 0, away: true };
   const clockStart = () => { clock.acc = 0; clock.away = document.hidden; clock.t0 = performance.now(); };
+  const visibleMs = () => clock.acc + (clock.away ? 0 : performance.now() - clock.t0);   // on-screen time since clockStart
   const clockStop = () => { if (!clock.away) clock.acc += performance.now() - clock.t0; clock.away = true; return Math.round(clock.acc / 1000); };
   document.addEventListener('visibilitychange', () => {
     if (document.hidden && !clock.away) { clock.acc += performance.now() - clock.t0; clock.away = true; }
@@ -269,6 +277,7 @@
   const SP = PT.speed || { on: false };
   const speedOn = !!SP.on;
   const limitOf = it => (SP.limit || {})[it.level] || 0;
+  const minOf = it => (SP.min || {})[it.level] || 0;   // Carpenter 14.11 (exploit 2a): no fast bonus under this many seconds; no "min": as before
   const primeUp = x => { let n = Math.floor(x) + 1; while (!isPrime(n)) n++; return n; };
   // the fast award: one prime, the closest to value × (1 + rate) (a tie rounds up), always more than the value (Can: points are prime)
   const fastOf = v => { if (!v) return 0; const x = v * (1 + (SP.rate || 0.1)); let lo = Math.floor(x), hi = Math.ceil(x); while (lo > 2 && !isPrime(lo)) lo--; while (!isPrime(hi)) hi++;
@@ -313,8 +322,14 @@
   }
   // a question left before it was answered: one "skipped" record with its time (Hande's timing data keeps every visit), no points
   let current = null;
+  // the answer lock (Can, Addition 25: "sure we can have 8 second button lock"): the answer buttons open after LOCK_MS of on-screen
+  // time; a question left before that owes only the rest on the next visit (memory only, not stored; a reload starts again)
+  const LOCK_MS = (typeof PT.lock_s === 'number' && PT.lock_s >= 0 && PT.lock_s <= 60 ? PT.lock_s : 8) * 1000;
+  const lockOwed = {}; let lockTimer = null;
   function leaveQuestion() {
+    clearInterval(lockTimer); lockTimer = null;
     if (!current) return;
+    if (current.lk && current.lk.on) lockOwed[current.it.id] = Math.max(0, current.lk.owed - visibleMs());
     const c = current; current = null; clearInterval(ticker);
     if (keyH) { document.removeEventListener('keydown', keyH); keyH = null; }
     if (me.done[c.it.id]) return;
@@ -323,13 +338,25 @@
       type: typeOf(c.it), level: c.it.level, mode: c.mode, points: 0, bonus: 0, attempt: (me.wrong[c.it.id] || 0) + 1, seconds: Math.min(CAP, secs), capped: secs >= CAP, correct: null, skipped: true, fast: false, lecturer });
     keep();
   }
+  // Hafize's wording (14.11, pending Ulutin and Gozde): the numbers come from the settings; without speed.min the minimum clause is left out
+  const secWords = n => n + (n === 1 ? ' second' : ' seconds');
+  const orList = xs => xs.length > 1 ? xs.slice(0, -1).join(', ') + ' or ' + xs[xs.length - 1] : xs.join('');
+  const andList = xs => xs.length > 1 ? xs.slice(0, -1).join(', ') + ' and ' + xs[xs.length - 1] : xs.join('');
+  function fastText() {
+    const hasMin = LV.some(l => minOf({ level: l }) > 0);
+    return 'Fast answers earn about 10% more, again a prime number: ' + andList(LV.map(l => { const b = ladder({ level: l }, 1); return b + ' becomes ' + fastOf(b); })) + '. ' +
+      'An answer counts as fast if it is right at the first try and you give it ' +
+      (hasMin ? 'after at least ' + orList(LV.map(l => secWords(minOf({ level: l })) + ' (' + l + ')')) + ', but ' : '') +
+      'within ' + orList(LV.map(l => mmss(limitOf({ level: l })) + ' (' + l + ')')) + '. Only the time the page is on screen counts.';
+  }
   function howPoints() {   // the table first, then the five paragraphs; × / Esc / a tap outside closes it
     const rows = LV.map(l => { const it = { level: l }; return '<tr><td>' + l + '</td>' + [1, 2, 3, 4, 5].map(k => '<td class="p">' + ladder(it, k) + '</td>').join('') + '<td class="p">' + floorOf(it) + '</td></tr>'; }).join('');
     const box = document.createElement('div'); box.className = 'modal'; box.id = 'how';
     box.innerHTML = '<div class="card"><button type="button" class="x" id="howX" aria-label="close">×</button><h2>How points work</h2>' +
       '<span class="fun" data-fun="how-top"></span><table class="lb"><tr><th></th><th class="p">1st</th><th class="p">2nd</th><th class="p">3rd</th><th class="p">4th</th><th class="p">5th</th><th class="p">lowest</th></tr>' + rows + '</table>' +
       '<p class="fine">Points for the 1st, 2nd, … right answer of one question type, at the first try.</p>' +
-      (speedOn ? '<p class="fine">Fast answers: right at the first try within ' + LV.map(l => mmss(limitOf({ level: l })) + ' (' + l + ')').join(', ') + ' give about 10% more, again a prime: ' + LV.map(l => { const b = ladder({ level: l }, 1); return b + ' → ' + fastOf(b); }).join(', ') + '. Only the time the page is on screen counts.</p>' : '') +
+      (speedOn ? '<p class="fine">' + fastText() + '</p>' : '') +
+      (LOCK_MS > 0 ? '<p class="fine">The answer buttons become active ' + secWords(LOCK_MS / 1000) + ' after the question appears, so that you have time to read it.</p>' : '') +
       TX.how.map(p => '<p>' + p + '</p>').join('') + '</div>';
     const close = () => { box.remove(); document.removeEventListener('keydown', esc_); };
     const esc_ = e => { if (e.key === 'Escape') close(); };
@@ -699,13 +726,29 @@
     document.addEventListener('keydown', keyH);
     fire('arena:screen', { name: 'question', topic: it.topic, mode, item: pub(it), level: mode === 'arena' ? arenaState(it.topic).level : undefined });
     if (d) return;
-    clockStart(); current = { it, mode };   // visible time only; the running clock stays (Celebi 14.11: Can asked for the time limit), in grey
+    clockStart();
+    const lk = { owed: it.id in lockOwed ? lockOwed[it.id] : LOCK_MS, on: false }; current = { it, mode, lk };
+    if (lk.owed > 0) {   // the options dimmed with a countdown line; clicks and the keys a-e do nothing until it ends
+      lk.on = true;
+      const box = app.querySelector('.opts'), line = document.createElement('p');
+      line.className = 'lockn'; line.setAttribute('aria-live', 'polite'); box.parentNode.insertBefore(line, box);
+      box.classList.add('locked'); btns.forEach(x => x.setAttribute('aria-disabled', 'true'));
+      const tick = () => {
+        const left = lk.owed - visibleMs();
+        if (left > 0) { const n = Math.ceil(left / 1000); line.textContent = 'The answers open in ' + n + (n === 1 ? ' second.' : ' seconds.'); return; }
+        lk.on = false; clearInterval(lockTimer); lockTimer = null; delete lockOwed[it.id];
+        box.classList.remove('locked'); btns.forEach(x => x.removeAttribute('aria-disabled')); line.remove();
+      };
+      tick(); clearInterval(lockTimer); lockTimer = setInterval(tick, 200);
+    }   // visible time only; the running clock stays (Celebi 14.11: Can asked for the time limit), in grey
     const clk = document.getElementById('clk');
     if (clk) ticker = setInterval(() => { const s = Math.round((clock.acc + (clock.away ? 0 : performance.now() - clock.t0)) / 1000); clk.textContent = mmss(s); if (s > limitOf(it)) { const fb = document.getElementById('fb'); if (fb) fb.classList.add('late'); } }, 1000);
     btns.forEach(b => b.onclick = async () => {
-      if (right < 0) return;
+      if (right < 0 || lk.on) return;
+      if (login) mergeLocal(load(progKey(), null));   // another tab may have answered this question meanwhile (exploit 1)
+      if (me.done[it.id]) { current = null; clockStop(); keep(); done(true); return; }
       const chosen = +b.dataset.i, ok = chosen === right, secs = clockStop(), w0 = me.wrong[it.id] || 0, worth = pointsNow(it);
-      const fast = ok && speedOn && w0 === 0 && secs <= limitOf(it), bonus = fast ? fastOf(worth) - worth : 0;   // worth + bonus is one prime
+      const fast = ok && speedOn && w0 === 0 && secs <= limitOf(it) && secs >= minOf(it), bonus = fast ? fastOf(worth) - worth : 0;   // worth + bonus is one prime
       me.pending.push({ ts: new Date().toISOString(), client: dev.cid, nick: login.nick, run: RUNID, item: it.id, template: it.cat, slot: it.slot || null, mirrors: null, topic: it.topic, type: typeOf(it),
         level: it.level, mode, points: ok ? worth + bonus : 0, bonus, attempt: w0 + 1, seconds: Math.min(CAP, secs), capped: secs >= CAP, correct: ok, fast, lecturer });
       lvChange = mode === 'arena' && (ok || w0 === 0) ? arenaAfter(it, ok, fast, w0 === 0) : null;
@@ -722,7 +765,7 @@
         me.pending.push({ ts: new Date().toISOString(), client: dev.cid, nick: login.nick, run: RUNID, item: it.id, template: it.cat, slot: it.slot || null, mirrors: null, topic: it.topic, type: typeOf(it),   // the opened solution counts as "never" in the difficulty model
           level: it.level, mode, points: 0, bonus: 0, attempt: (me.wrong[it.id] || 0) + 1, seconds: Math.min(CAP, secs), capped: secs >= CAP, correct: null, gave: true, fast: false, lecturer });
         me.done[it.id] = { p: 0, b: 0, w: me.wrong[it.id] || 0, at: new Date().toISOString(), gave: true }; keep(); done(false); writeAll(false); };
-      clockStart(); writeAll(false);
+      clockStart(); writeAll(true);   // a wrong try is written at once (exploit 1: the 2-minute write delay left a window for a second device)
     });
   }
   async function leaderboard(tab) {
@@ -749,6 +792,7 @@
   }
   document.addEventListener('visibilitychange', () => { if (document.hidden) writeAll(true); });
   window.addEventListener('pagehide', () => writeAll(true));
+  window.addEventListener('storage', e => { if (login && e.key === progKey()) mergeLocal(load(progKey(), null)); });   // another tab saved: take its wrong tries and done items
   if (login) pullProgress().then(() => { const tt = document.getElementById('tot'); if (tt) tt.textContent = score(); }).catch(() => {});
   let boardCache = null;
   window.MicroPractice = { version: 2, session: SESSION, score, pointsNow: id => byId[id] && pointsNow(byId[id]), ladder: (id, k) => byId[id] && ladder(byId[id], k),
