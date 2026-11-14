@@ -84,7 +84,7 @@
   }
   // equations in plain text ("2x + y = 58 for x ≤ 5, and x + y = 53 for x ≥ 5"): each equation one unbreakable unit in the maths font,
   // the letters x, y, u, M italic, the words for/and/all in the text font; x and y in prose italic too; bundles like (6, 36) in the maths font
-  const V = '(?<![A-Za-z])[xyuM](?![A-Za-z])';
+  const V = '(?<![A-Za-z])(?:[xy]{1,3}|[uM])(?![A-Za-z])';   // a product of x and y (xy, xxy) counts too (Gozde: u(x, y) = xy)
   const RUN = new RegExp('(?:[(\\d€.,]|' + V + '|[ +−\\-=≤≥·×/()]|\\bfor\\b|\\band\\b|\\ball\\b)+', 'g');
   const isEq = s => new RegExp(V).test(s) && /[=≤≥]/.test(s);
   const proseVars = s => s.replace(/(?<![A-Za-z])([xy])(?![A-Za-z])/g, '<span class="m"><i>$1</i></span>')
@@ -93,8 +93,21 @@
   const plainMath = h => h.replace(RUN, m => {
     if (!isEq(m)) return proseVars(m);
     const lead = m.match(/^\s*/)[0], trail = m.match(/[\s,.]*$/)[0], core = m.slice(lead.length, m.length - trail.length);
-    return lead + core.split(/(,\s*and\s+|,\s+)/).map((p, i) => i % 2 ? p : (isEq(p) ? eq(p) : proseVars(p))).join('') + trail;
+    return lead + splitTop(core).map((p, i) => i % 2 ? p : (isEq(p) ? eq(p) : proseVars(p))).join('') + trail;
   });
+  // split "eq1, and eq2" at the commas between equations, never at a comma inside brackets such as u(x, y)
+  function splitTop(c) {
+    const out = []; let depth = 0, last = 0;
+    for (let i = 0; i < c.length; i++) {
+      const ch = c[i];
+      if (ch === '(') depth++; else if (ch === ')') depth = Math.max(0, depth - 1);
+      else if (ch === ',' && depth === 0) {
+        const m = c.slice(i).match(/^(,\s*and\s+|,\s+)/);
+        if (m) { out.push(c.slice(last, i), m[0]); i += m[0].length - 1; last = i + 1; }
+      }
+    }
+    out.push(c.slice(last)); return out;
+  }
 
   // figures: one inline SVG (solution "figure", question "stem_figure"), cleaned to drawing elements and plain colours (Utku's rules)
   const SVG_OK = new Set(['svg', 'g', 'line', 'polyline', 'polygon', 'path', 'circle', 'ellipse', 'text', 'tspan', 'rect', 'title']);
@@ -273,10 +286,10 @@
   let crumbTopic = null, crumbMode = null;
   function header(topicId, mode) {
     crumbTopic = topicId || null; crumbMode = mode || null;
-    const mid = '<a class="c-mid" href="../midterm/' + TQ + '">Midterm practice</a>';
+    const mid = '<a class="c-mid" href="../midterm/' + TQ + '" aria-label="Midterm practice"><span class="bk">‹ </span>Midterm<span class="lg"> practice</span></a>';   // phone: ‹ Midterm
     const tc = topicId ? '<button type="button" class="crumb" id="tsw">' + esc(topicName(topicId)) + ' ▾</button>' : '<button type="button" class="crumb" id="tsw">Topics ▾</button>';
     const mc = topicId && mode ? '<span class="sep">›</span><span class="c-mode">' + (mode === 'arena' ? 'Arena' : 'Selection') + '</span>' : '';
-    const me_ = login ? '<button type="button" class="crumb mebtn" id="meb">' + esc(login.nick) + ' · <span id="tot">' + score() + '</span><span class="fun" data-fun="tot-mark"></span> ▾</button>' : '<button type="button" class="crumb mebtn" id="meb">menu ▾</button>';
+    const me_ = login ? '<button type="button" class="crumb mebtn" id="meb">' + esc(login.nick) + ' · <span id="tot">' + score() + '</span><span class="fun" data-fun="tot-mark"></span> ▾</button>' : '<button type="button" class="crumb mebtn" id="meb">Menu ▾</button>';
     return '<div class="bar"><nav class="crumbs">' + mid + '<span class="sep c-mid">›</span>' + tc + mc + '</nav>' + me_ + '</div><span class="fun" data-fun="strip"></span>';
   }
   function closeMenus() { document.querySelectorAll('.menu').forEach(m => m.remove()); }
@@ -335,11 +348,12 @@
   const WARN = '<p class="warn"><b>One nickname per student.</b> Make one account and keep it: log in with the same nickname and password on every device. A second nickname splits your progress. Do not use your real name, and pick a password you use nowhere else (this page is for practice, its security is light).</p>';
   function loginScreen(msg) {
     app.innerHTML = header() + '<p class="sub">Practice questions for the midterm. Log in, or make your account once.</p>' + WARN +
-      '<div class="forms"><form class="card" id="fin"><h2>Log in</h2><label>nickname <input type="text" id="n1" maxlength="16" autocomplete="username" required></label>' +
-      '<label>password <input type="password" id="p1" autocomplete="current-password" required></label><button class="go" type="submit">Log in</button></form>' +
-      '<form class="card" id="fnew"><h2>New account</h2><label>nickname <input type="text" id="n2" maxlength="16" autocomplete="username" required></label>' +
-      '<label>password <input type="password" id="p2" autocomplete="new-password" required></label><label>password again <input type="password" id="p3" autocomplete="new-password" required></label>' +
-      '<button type="submit">Make my account</button></form></div><p class="msg" id="lm">' + (msg || 'Nickname: 2 to 16 letters, digits, - or _. Password: at least 6 characters.') + '</p>';
+      '<div class="forms"><form class="card" id="fin"><h2>Log in</h2><label>Nickname <input type="text" id="n1" maxlength="16" autocomplete="username" required></label>' +
+      '<label>Password <input type="password" id="p1" autocomplete="current-password" required></label><button class="go" type="submit">Log in</button></form>' +
+      '<form class="card" id="fnew"><h2>New account</h2><label>Nickname <input type="text" id="n2" maxlength="16" autocomplete="username" required></label>' +
+      '<label>Password <input type="password" id="p2" autocomplete="new-password" required></label><label>Password again <input type="password" id="p3" autocomplete="new-password" required></label>' +
+      '<button type="submit">Make my account</button></form></div><p class="msg" id="lm">' + (msg || 'Nickname: 2 to 16 letters, digits, - or _. Password: at least 6 characters.') + '</p><div id="lbx"></div>';
+    if (window.ArenaBoard) ArenaBoard.mount(document.getElementById('lbx'), { top: 5, tab: 'all', full: false });   // the open board for visitors too (Oyun)
     fire('arena:screen', { name: 'login', topic: null, mode: null, item: null });
     const say = (t, bad) => { document.getElementById('lm').innerHTML = bad ? '<span class="bad">' + esc(t) + '</span>' : esc(t); };
     const busy = on => app.querySelectorAll('form button').forEach(b => b.disabled = on);
@@ -366,7 +380,7 @@
   // after a password reset: the temporary password worked; the student picks a new one, progress stays as it is
   function newPassword(rec, key) {
     app.innerHTML = header() + '<h2>Choose a new password</h2><p class="sub">Your password was reset. Pick a new one for ' + esc(rec.nick) + ' (at least 6 characters, used nowhere else). Your progress and points are kept.</p>' +
-      '<form class="card" id="fpw"><label>new password <input type="password" id="q1" autocomplete="new-password" required></label><label>new password again <input type="password" id="q2" autocomplete="new-password" required></label>' +
+      '<form class="card" id="fpw"><label>New password <input type="password" id="q1" autocomplete="new-password" required></label><label>New password again <input type="password" id="q2" autocomplete="new-password" required></label>' +
       '<button class="go" type="submit">Save my new password</button></form><p class="msg" id="lm"></p>';
     document.getElementById('fpw').onsubmit = async e => {
       e.preventDefault(); const a = document.getElementById('q1').value, b = document.getElementById('q2').value, m = document.getElementById('lm');
@@ -387,8 +401,8 @@
     leaveQuestion();
     if (!login) return loginScreen();
     history.replaceState(null, '', location.pathname + TQ);
-    app.innerHTML = header() + '<p class="sub">Pick a topic. Play it in the arena (one question after another, harder as you go) or pick the questions yourself.</p><div id="lbx"></div><span class="fun" data-fun="home-top"></span><div class="topics cats" id="cats"></div>' +
-      '<p class="fine">For practice only: nothing here counts towards your grade. The leaderboard is just for fun; only your nickname and scores are stored. Time per question is recorded anonymously to improve the course.</p>';
+    app.innerHTML = header() + '<p class="sub">Pick a topic. Play it in the arena (one question after another, harder as you go) or pick the questions yourself.</p><div id="lbx"></div><span class="fun" data-fun="home-top"></span><h2>Topics</h2><div class="topics cats" id="cats"></div>' +
+      '<p class="fine">For practice only: nothing here counts towards your grade. The leaderboard is just for fun; only your nickname and scores are stored. The time you spend on each question is recorded with your nickname, not your real name, to improve the course.</p>';
     const box = document.getElementById('cats');
     P.topics.forEach(t => {
       const all = TOP[t.id] || [], done = all.filter(it => me.done[it.id]).length;
@@ -447,7 +461,7 @@
       return;
     }
     const F = sel.f || {};
-    tb.innerHTML = '<div class="filters">' + [['ans', 'answered'], ['open', 'not answered']].concat(speedOn ? [['fast', 'done fast']] : []).concat(LV.map(l => [l, l]))
+    tb.innerHTML = '<div class="filters">' + [['ans', 'Answered'], ['open', 'Not answered']].concat(speedOn ? [['fast', 'Done fast']] : []).concat(LV.map(l => [l, l[0].toUpperCase() + l.slice(1)]))
         .map(([k, l]) => '<button type="button" class="pill' + (F[k] ? ' on' : '') + '" data-f="' + k + '" aria-pressed="' + (F[k] ? 'true' : 'false') + '">' + l + '</button>').join('') +
       '</div>' +
       '<p class="fine">The number under each question is the points it gives you now.</p><div id="qg"></div><p class="msg" id="none" hidden>No questions match these filters.</p>';

@@ -12,7 +12,10 @@
     opt = opt || {}; const top = opt.top || 5; let tab = opt.tab || 'all';
     const B = () => (window.MicroPractice && window.MicroPractice.fun) || null;
     el.classList.add('lbx');
-    el.innerHTML = '<div class="lbh">Leaderboard</div><div class="tabs"></div><div class="lbb msg">Loading…</div><div class="you"></div>' + (opt.full ? '<div class="full"><a href="#" class="lbfull">Full leaderboard</a></div>' : '');
+    // one rule for section names (Oyun): the heading is an h2 above its box, like "Topics" and "Resources"
+    const pv = el.previousElementSibling;
+    if (!(pv && pv.classList && pv.classList.contains('lbh2'))) el.insertAdjacentHTML('beforebegin', '<h2 class="lbh2">Leaderboard</h2>');
+    el.innerHTML = '<div class="tabs"></div><div class="lbb msg">Loading…</div><div class="you"></div>' + (opt.full ? '<div class="full"><a href="#" class="lbfull">Full leaderboard</a></div>' : '');
     let rows = null;
     const draw = () => {
       const b = B(); if (!b) return;
@@ -23,7 +26,7 @@
       const pts = r => tab === 'all' ? r.total : ((r.topics || {})[tab] || 0), u = b.user();
       const list = rows.filter(r => pts(r) > 0).sort((p, q) => pts(q) - pts(p) || (p.ts || 0) - (q.ts || 0));
       const body = el.querySelector('.lbb'); body.className = 'lbb' + (list.length ? '' : ' msg');
-      body.innerHTML = list.length ? '<ol>' + list.slice(0, top).map((r, i) => '<li' + (u && r.key === u.key ? ' class="me"' : '') + '><span class="rk">' + (i + 1) + '</span><span>' + escH(r.nick) + '</span><span class="pt">' + fmt(pts(r)) + '</span></li>').join('') + '</ol>' : 'No points yet: be the first.';
+      body.innerHTML = list.length ? '<ol>' + list.slice(0, top).map((r, i) => '<li' + (u && r.key === u.key ? ' class="me"' : '') + '><span class="rk">' + (i + 1) + '</span><span>' + escH(r.nick) + '</span><span class="pt">' + fmt(pts(r)) + '</span></li>').join('') + '</ol>' : 'No points yet. Be the first.';
       const you = el.querySelector('.you');
       if (u) { const i = list.findIndex(r => r.key === u.key); you.textContent = i >= 0 ? 'You (' + u.nick + '): rank ' + (i + 1) + ' of ' + list.length + ' · ' + fmt(pts(list[i])) + ' points' : 'You (' + u.nick + '): no points here yet'; }
       else you.textContent = '';
