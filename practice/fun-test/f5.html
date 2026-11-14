@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fun modules · test page (mock arena)</title>
+<style>
+  /* the arena's own tokens and the few classes the mock uses, copied from practice/index.html so the modules look as they will there */
+  @font-face { font-family: "Inter"; font-weight: 400; font-display: swap; src: url(../../assets/fonts/inter-latin-400-normal.woff2) format("woff2"); }
+  @font-face { font-family: "Inter"; font-weight: 600; font-display: swap; src: url(../../assets/fonts/inter-latin-600-normal.woff2) format("woff2"); }
+  :root { --bg: #fbfbf9; --card: #fff; --ink: #1d1d1f; --dim: #6b6f76; --line: #e3e5e8; --accent: #2f5d8c; --ok: #1b7f3b; --okbg: #e3f1e7; --no: #a12f2f; --nobg: #f8e6e6; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.5 "Inter", system-ui, sans-serif; }
+  main { max-width: 680px; margin: 0 auto; padding: 18px 16px 60px; }
+  h2 { font-size: 1rem; font-weight: 600; margin: 1.4rem 0 .5rem; }
+  .sub { color: var(--dim); font-size: .85rem; margin: .2rem 0 1rem; }
+  .bar { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; border-bottom: 1px solid var(--line); padding: 8px 0; position: sticky; top: 0; background: var(--bg); z-index: 5; }
+  button { font: inherit; cursor: pointer; border-radius: 8px; border: 1px solid #c9ced6; background: #fff; color: var(--ink); padding: 8px 14px; }
+  button.go { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button.link { border: 0; background: none; padding: 0; }
+  .menuwrap { position: relative; } .menu { display: none; position: absolute; right: 0; top: 100%; background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 6px; min-width: 190px; z-index: 6; }
+  .menuwrap:focus-within .menu, .menu.open { display: grid; } .menu button { border: 0; text-align: left; }
+  .cats { display: grid; gap: 10px; } .cat { text-align: left; padding: 12px 14px; display: grid; gap: 2px; }
+  .cat .n { font-weight: 600; } .cat .d { font-size: .85rem; color: var(--dim); }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
+  .qmeta { font-size: .8rem; color: var(--dim); margin-bottom: 6px; display: flex; gap: 10px; flex-wrap: wrap; } .qmeta .pts { color: var(--ink); font-weight: 600; }
+  .opts { display: grid; gap: 8px; margin: 10px 0 4px; } .opt { text-align: left; }
+  .verdict { font-weight: 600; } .verdict.ok { color: var(--ok); } .verdict.no { color: var(--no); }
+  .abar { position: sticky; bottom: 0; background: #fff; border-top: 1px solid var(--line); margin: 12px -16px 0; padding: 10px 16px; }
+  .abar-in { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; } .abtn { margin-left: auto; display: flex; gap: 8px; }
+  .startrow { display: flex; gap: 14px; align-items: center; margin: 12px 0; }
+  .tabs { display: flex; gap: 6px; margin-bottom: 8px; } .tabs button.on { background: var(--accent); color: #fff; }
+  table.lb { width: 100%; border-collapse: collapse; font-size: .92rem; } table.lb td, table.lb th { padding: 5px 6px; border-bottom: 1px solid var(--line); text-align: left; }
+  table.lb td.p, table.lb th.p { text-align: right; font-variant-numeric: tabular-nums; } table.lb tr.mine td { background: #eef4fb; }
+  .modal { position: fixed; inset: 0; background: rgba(20, 24, 30, .35); display: flex; align-items: flex-start; justify-content: center; padding: 6vh 12px; overflow-y: auto; z-index: 10; }
+  .modal .card { max-width: 620px; width: 100%; max-height: 90vh; overflow: auto; }
+  #panel { position: fixed; left: 8px; bottom: 8px; z-index: 20; background: #fffbe6; border: 1px solid #e0c97a; border-radius: 8px; padding: 6px; font-size: 12px; display: flex; gap: 4px; flex-wrap: wrap; max-width: 300px; }
+  #panel button { padding: 2px 6px; font-size: 12px; }
+</style>
+</head>
+<body>
+<main id="app"></main>
+<div id="panel">mock:
+  <button onclick="Mock.home()">home</button><button onclick="Mock.welcome()">welcome</button><button onclick="Mock.topic('opt')">topic opt</button><button onclick="Mock.topic('sd')">topic sd</button>
+  <button onclick="Mock.ask()">question</button><button onclick="Mock.leaderboard()">board</button><button onclick="Mock.how()">how</button>
+  <button onclick="Mock.solve('sd',6,true);Mock.home()">+6 sd</button><button onclick="Mock.reset();Mock.home()">reset</button>
+</div>
+<script src="../../assets/js/fun/core.js"></script>
+<!-- the modules under test go here, before mock.js, exactly as they will stand before practice.js -->
+<script src="../../assets/js/fun/f5-primes.js"></script>
+<script src="mock.js"></script>
+</body>
+</html>

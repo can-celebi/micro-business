@@ -47,7 +47,9 @@
   const typeOf = it => it.type || it.cat;
   const rightInType = (type, except) => Object.entries(me.done).filter(([id, d]) => id !== except && d.p > 0 && byId[id] && typeOf(byId[id]) === type).length;
   function pointsNow(it) { return stepDown(it, ladder(it, rightInType(typeOf(it), it.id) + 1), me.wrong[it.id] || 0); }
-  const score = topic => Object.entries(me.done).reduce((a, [id, d]) => a + (byId[id] && (!topic || byId[id].topic === topic) ? (d.p || 0) : 0), 0);
+  const AWARDS = { Q0: 2 };   // the only award (Oyun's f7, Can approved): counted in the total, in no topic
+  const awardsTotal = () => Object.keys((me.fun && me.fun.awards) || {}).reduce((a, k) => a + (AWARDS[k] || 0), 0);
+  const score = topic => Object.entries(me.done).reduce((a, [id, d]) => a + (byId[id] && (!topic || byId[id].topic === topic) ? (d.p || 0) : 0), 0) + (topic ? 0 : awardsTotal());
 
   // ---------- who is logged in on this device, and their progress ----------
   const load = (k, d) => { try { return JSON.parse(localStorage.getItem(k) || 'null') || d; } catch (e) { return d; } };
@@ -158,6 +160,7 @@
     Object.entries(remote.done || {}).forEach(([id, d]) => { const l = me.done[id]; if (d && typeof d.p === 'number' && (!l || (d.at && l.at && d.at < l.at))) me.done[id] = d; });
     Object.entries(remote.wrong || {}).forEach(([id, n]) => { if (typeof n === 'number' && n > (me.wrong[id] || 0)) me.wrong[id] = n; });
     if (remote.tut) me.tut = 1;   // the tutorial was seen on another device
+    if (remote.fun && typeof remote.fun === 'object') { me.fun = me.fun || {}; Object.entries(remote.fun).forEach(([k, v]) => { if (k === 'awards') me.fun.awards = Object.assign({}, v, me.fun.awards); else if (!(k in me.fun)) me.fun[k] = v; }); }
     if (remote.arena && typeof remote.arena === 'object') { me.arena = me.arena || {}; Object.entries(remote.arena).forEach(([t, a]) => { if (!me.arena[t] && a && LV.includes(a.level)) me.arena[t] = a; }); }
   }
   async function pullProgress() { const sha = await getRefObj(PROG + login.key); if (sha) { merge(await readBlob(sha)); keep(); } }
@@ -175,14 +178,14 @@
   }
   async function writeOnce(force) {
     if (!TOKEN || !login) return;
-    const total = score(), ts = P.topics.map(t => t.id + '.' + score(t.id)).join('_'), sig = total + '|' + ts + '|' + JSON.stringify(me.wrong).length + '|' + (me.tut ? 1 : 0) + '|' + JSON.stringify(me.arena || {});
+    const total = score(), ts = P.topics.map(t => t.id + '.' + score(t.id)).join('_'), sig = total + '|' + ts + '|' + JSON.stringify(me.wrong).length + '|' + (me.tut ? 1 : 0) + '|' + JSON.stringify(me.arena || {}) + '|' + JSON.stringify(me.fun || {});
     if (sig === me.wrote && !me.pending.length) return;
     if (!force && Date.now() - lastWrite < WRITE_EVERY) return;
     lastWrite = Date.now();
     try {
       try { await sendTimes(force); } catch (e) {}
       if (sig === me.wrote) return;
-      const blob = await newBlob({ v: 1, nick: login.nick, done: me.done, wrong: me.wrong, tut: me.tut ? 1 : 0, arena: me.arena || {}, ts: new Date().toISOString() }, force);
+      const blob = await newBlob({ v: 1, nick: login.nick, done: me.done, wrong: me.wrong, tut: me.tut ? 1 : 0, arena: me.arena || {}, fun: me.fun || {}, ts: new Date().toISOString() }, force);
       const pr = 'refs/' + PROG + login.key;
       let w = await fetch(API + '/git/' + pr, { method: 'PATCH', headers: H(), body: JSON.stringify({ sha: blob, force: true }), keepalive: !!force });
       if (w.status === 422 || w.status === 404) w = await fetch(API + '/git/refs', { method: 'POST', headers: H(), body: JSON.stringify({ ref: pr, sha: blob }), keepalive: !!force });
@@ -212,6 +215,11 @@
     board = Object.values(latest); return board;
   }
 
+  // ---------- the fun bridge (Oyun's modules, contract 14.11) ----------
+  const fire = (name, detail) => { try { document.dispatchEvent(new CustomEvent(name, { detail })); } catch (e) {} };
+  let lastTotal = null;
+  const totalChanged = () => { const t = score(); if (lastTotal !== null && t !== lastTotal) fire('arena:total', { from: lastTotal, to: t }); lastTotal = t; };
+  const pub = it => it && { id: it.id, type: typeOf(it), level: it.level, topic: it.topic };
   // ---------- screens ----------
   // student texts: Hafize (Student service), passed by Ulutin and Gozde (20_student-desk/frozen/b81e365f4d94/…; How points work: frozen/364fcecf89e3/…, the halving rule)
   const TX = {
@@ -250,18 +258,19 @@
     const mid = '<a class="c-mid" href="../midterm/' + TQ + '">Midterm practice</a>';
     const tc = topicId ? '<button type="button" class="crumb" id="tsw">' + esc(topicName(topicId)) + ' ▾</button>' : '<button type="button" class="crumb" id="tsw">Topics ▾</button>';
     const mc = topicId && mode ? '<span class="sep">›</span><span class="c-mode">' + (mode === 'arena' ? 'Arena' : 'Selection') + '</span>' : '';
-    const me_ = login ? '<button type="button" class="crumb mebtn" id="meb">' + esc(login.nick) + ' · <span id="tot">' + score() + '</span> ▾</button>' : '<button type="button" class="crumb mebtn" id="meb">menu ▾</button>';
-    return '<div class="bar"><nav class="crumbs">' + mid + '<span class="sep c-mid">›</span>' + tc + mc + '</nav>' + me_ + '</div>';
+    const me_ = login ? '<button type="button" class="crumb mebtn" id="meb">' + esc(login.nick) + ' · <span id="tot">' + score() + '</span><span class="fun" data-fun="tot-mark"></span> ▾</button>' : '<button type="button" class="crumb mebtn" id="meb">menu ▾</button>';
+    return '<div class="bar"><nav class="crumbs">' + mid + '<span class="sep c-mid">›</span>' + tc + mc + '</nav>' + me_ + '</div><span class="fun" data-fun="strip"></span>';
   }
   function closeMenus() { document.querySelectorAll('.menu').forEach(m => m.remove()); }
   function menu(anchor, rows) {   // a small list under a bar button; rows: [label, action] (null action = a link row)
     const open = document.querySelector('.menu[data-for="' + anchor.id + '"]'); closeMenus(); if (open) return;
     const m = document.createElement('div'); m.className = 'menu'; m.dataset.for = anchor.id;
-    rows.forEach(([label, act, cls]) => { const b = document.createElement(typeof act === 'string' ? 'a' : 'button'); if (typeof act === 'string') { b.href = act; b.onclick = () => { leaveQuestion(); writeAll(true); }; } else { b.type = 'button'; b.onclick = () => { closeMenus(); act(); }; }
+    rows.forEach(([label, act, cls]) => { if (act === null) { const d = document.createElement('div'); d.className = cls || ''; d.innerHTML = label; m.appendChild(d); return; } const b = document.createElement(typeof act === 'string' ? 'a' : 'button'); if (typeof act === 'string') { b.href = act; b.onclick = () => { leaveQuestion(); writeAll(true); }; } else { b.type = 'button'; b.onclick = () => { closeMenus(); act(); }; }
       b.innerHTML = label; if (cls) b.className = cls; m.appendChild(b); });
     const r = anchor.getBoundingClientRect(); m.style.top = (r.bottom + window.scrollY + 4) + 'px';
     if (anchor.classList.contains('mebtn')) m.style.right = Math.max(8, document.documentElement.clientWidth - r.right) + 'px'; else m.style.left = Math.max(8, r.left) + 'px';
     document.body.appendChild(m);
+    fire('arena:menu', { name: anchor.id === 'meb' ? 'account' : 'topics' });
   }
   document.addEventListener('click', e => { if (!e.target.closest('.menu') && !e.target.closest('.crumb')) closeMenus(); });
   function wire(topicId) {
@@ -269,7 +278,7 @@
     const t = document.getElementById('tsw');
     if (t) t.onclick = () => menu(t, [['← Midterm practice', '../midterm/' + TQ, 'mrow-mid']].concat(P.topics.filter(x => (TOP[x.id] || []).length).map(x => [esc(x.name) + (x.id === crumbTopic ? ' ✓' : ''), () => { leaveQuestion(); topic(x.id); }]), [['All topics', () => { leaveQuestion(); home(); }]]));
     const m = document.getElementById('meb');
-    if (m) m.onclick = () => menu(m, [['How points work', howPoints]].concat(login ? [['Leaderboard', () => { leaveQuestion(); leaderboard(); }], ['Log out', () => { leaveQuestion(); logout(); }]] : []));
+    if (m) m.onclick = () => menu(m, [['<span class="fun" data-fun="menu-top"></span>', null, 'mrow-fun'], ['How points work', howPoints]].concat(login ? [['Leaderboard', () => { leaveQuestion(); leaderboard(); }], ['Log out', () => { leaveQuestion(); logout(); }]] : []));
   }
   // a question left before it was answered: one "skipped" record with its time (Hande's timing data keeps every visit), no points
   let current = null;
@@ -287,7 +296,7 @@
     const rows = LV.map(l => { const it = { level: l }; return '<tr><td>' + l + '</td>' + [1, 2, 3, 4, 5].map(k => '<td class="p">' + ladder(it, k) + '</td>').join('') + '<td class="p">' + floorOf(it) + '</td></tr>'; }).join('');
     const box = document.createElement('div'); box.className = 'modal'; box.id = 'how';
     box.innerHTML = '<div class="card"><button type="button" class="x" id="howX" aria-label="close">×</button><h2>How points work</h2>' +
-      '<table class="lb"><tr><th></th><th class="p">1st</th><th class="p">2nd</th><th class="p">3rd</th><th class="p">4th</th><th class="p">5th</th><th class="p">lowest</th></tr>' + rows + '</table>' +
+      '<span class="fun" data-fun="how-top"></span><table class="lb"><tr><th></th><th class="p">1st</th><th class="p">2nd</th><th class="p">3rd</th><th class="p">4th</th><th class="p">5th</th><th class="p">lowest</th></tr>' + rows + '</table>' +
       '<p class="fine">Points for the 1st, 2nd, … right answer of one question type, at the first try.</p>' +
       (speedOn ? '<p class="fine">Fast bonus: ' + LV.map(l => l + ' +' + bonusOf({ level: l }) + ' within ' + mmss(limitOf({ level: l }))).join(', ') + ' (right at the first try; only the time the page is on screen counts).</p>' : '') +
       TX.how.map(p => '<p>' + p + '</p>').join('') + '</div>';
@@ -295,12 +304,13 @@
     const esc_ = e => { if (e.key === 'Escape') close(); };
     document.body.appendChild(box); box.onclick = e => { if (e.target === box) close(); };
     document.getElementById('howX').onclick = close; document.addEventListener('keydown', esc_);
+    fire('arena:screen', { name: 'how', topic: crumbTopic, mode: crumbMode, item: null });
   }
   function tutorial() {   // once per account (Addition 8), dismissable
     if (!login || me.tut) return;
     const box = document.createElement('div'); box.className = 'modal'; box.id = 'tut';
     box.innerHTML = '<div class="card"><h2>Welcome to the midterm practice</h2><ol class="tut">' + TX.tut.map(([a, b]) => '<li><b>' + a + '</b> ' + b + '</li>').join('') +
-      '</ol><p><button class="go" type="button" id="tutX">Got it</button></p></div>';
+      '</ol><span class="fun" data-fun="tut-after"></span><p><button class="go" type="button" id="tutX">Got it</button></p></div>';
     document.body.appendChild(box);
     document.getElementById('tutX').onclick = () => { me.tut = 1; keep(); box.remove(); writeAll(false); };
   }
@@ -312,6 +322,7 @@
       '<form class="card" id="fnew"><h2>New account</h2><label>nickname <input type="text" id="n2" maxlength="16" autocomplete="username" required></label>' +
       '<label>password <input type="password" id="p2" autocomplete="new-password" required></label><label>password again <input type="password" id="p3" autocomplete="new-password" required></label>' +
       '<button type="submit">Make my account</button></form></div><p class="msg" id="lm">' + (msg || 'Nickname: 2 to 16 letters, digits, - or _. Password: at least 6 characters.') + '</p>';
+    fire('arena:screen', { name: 'login', topic: null, mode: null, item: null });
     const say = (t, bad) => { document.getElementById('lm').innerHTML = bad ? '<span class="bad">' + esc(t) + '</span>' : esc(t); };
     const busy = on => app.querySelectorAll('form button').forEach(b => b.disabled = on);
     document.getElementById('fin').onsubmit = async e => {
@@ -358,16 +369,17 @@
     leaveQuestion();
     if (!login) return loginScreen();
     history.replaceState(null, '', location.pathname + TQ);
-    app.innerHTML = header() + '<p class="sub">Pick a topic. Play it in the arena (one question after another, harder as you go) or pick the questions yourself.</p><div class="cats" id="cats"></div>' +
+    app.innerHTML = header() + '<p class="sub">Pick a topic. Play it in the arena (one question after another, harder as you go) or pick the questions yourself.</p><span class="fun" data-fun="home-top"></span><div class="cats" id="cats"></div>' +
       '<p class="fine">For practice only: nothing here counts towards your grade. The leaderboard is just for fun; only your nickname and scores are stored. Time per question is recorded anonymously to improve the course.</p>';
     const box = document.getElementById('cats');
     P.topics.forEach(t => {
       const all = TOP[t.id] || [], done = all.filter(it => me.done[it.id]).length;
       const b = document.createElement('button'); b.type = 'button'; b.className = 'cat'; b.disabled = !all.length;
-      b.innerHTML = '<span class="n">' + esc(t.name) + '</span><span class="d">' + (all.length ? done + ' of ' + all.length + ' done · ' + score(t.id) + ' points' : 'questions coming soon') + '</span>';
+      b.innerHTML = '<span class="n">' + esc(t.name) + '</span><span class="d">' + (all.length ? done + ' of ' + all.length + ' done · ' + score(t.id) + ' points' : 'questions coming soon') + '</span><span class="fun" data-fun="cat" data-topic="' + t.id + '"></span>';
       b.onclick = () => topic(t.id); box.appendChild(b);
     });
     wire(); tutorial();
+    fire('arena:screen', { name: 'home', topic: null, mode: null, item: null }); totalChanged();
   }
   // ---------- a topic: Arena or Selection (Addition 9) ----------
   let sel = load('micro-arena-sel' + T, { sort: 'num', f: {} });
@@ -386,9 +398,10 @@
     const tb = document.getElementById('tb');
     if (mode === 'arena') {   // Start first (Oyun): the button, a grey status line, the rule as small grey text
       const a = arenaState(id), open = all.length - nDone, started = Object.keys(me.done).some(k => byId[k] && byId[k].topic === id);
-      tb.innerHTML = (open ? '<p class="startrow"><button class="go big" type="button" id="go">' + (started ? 'Continue' : 'Start') + '</button>' : '<p>You have answered every question here. Well done.</p><p class="startrow">') +
+      tb.innerHTML = '<span class="fun" data-fun="arena-top"></span>' + (open ? '<p class="startrow"><button class="go big" type="button" id="go">' + (started ? 'Continue' : 'Start') + '</button>' : '<p>You have answered every question here. Well done.</p><p class="startrow">') +
         '<span class="sub">Level: ' + a.level + ' · ' + nDone + ' of ' + all.length + ' done · ' + score(id) + ' points</span></p><p class="fine">' + esc(ARENA_RULE) + '</p>';
       const g = document.getElementById('go'); if (g) g.onclick = () => { const it = arenaNext(id); if (it) ask(it, 'arena'); else topic(id, 'arena'); };
+      fire('arena:screen', { name: 'topic', topic: id, mode, item: null, level: a.level });
       return;
     }
     const F = sel.f || {};
@@ -400,8 +413,8 @@
     const DOTS = { easy: '●', medium: '●●', hard: '●●●' };
     const card = (it, i) => {
       const d = me.done[it.id], w = me.wrong[it.id] || 0;
-      const b = document.createElement('button'); b.type = 'button'; b.className = 'qc' + (d ? (d.p ? ' done' : ' seen') : ''); b.dataset.id = it.id;
-      b.innerHTML = '<span class="qn">' + (i + 1) + '</span><span class="qp">' + (d ? (d.p ? '✓ ' + d.p + (d.fast ? ' ⚡' : '') : '–') : pointsNow(it)) + '</span>' + (!d && w ? '<span class="qw" title="' + w + ' wrong"></span>' : '');
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'qc' + (d ? (d.gave ? ' seen' : ' done') : ''); b.dataset.id = it.id;
+      b.innerHTML = '<span class="qn">' + (i + 1) + '</span><span class="qp">' + (d ? (d.gave ? '–' : '✓ ' + d.p + (d.fast ? ' ⚡' : '')) : pointsNow(it)) + '</span>' + (!d && w ? '<span class="qw" title="' + w + ' wrong"></span>' : '');
       b.onclick = () => ask(it, 'select'); return b;
     };
     const draw = () => {
@@ -426,6 +439,7 @@
     srt.onchange = () => { sel.sort = srt.value; save('micro-arena-sel' + T, sel); draw(); };
     tb.querySelectorAll('.pill').forEach(c => c.onclick = () => { F[c.dataset.f] = !F[c.dataset.f]; c.classList.toggle('on', F[c.dataset.f]); c.setAttribute('aria-pressed', F[c.dataset.f] ? 'true' : 'false'); sel.f = F; save('micro-arena-sel' + T, sel); draw(); });
     draw();
+    fire('arena:screen', { name: 'topic', topic: id, mode, item: null });
   }
   // the arena's next question: the current level, then the question type where the student is weakest (fewest right, then slowest);
   // after a wrong answer the same type again; a level that has run out gives the next level up, else down
@@ -462,13 +476,13 @@
     const L = 'abcde', d = me.done[it.id];
     window.scrollTo(0, 0);
     app.innerHTML = header(it.topic, mode) + '<div class="card" data-id="' + esc(it.id) + '"><div class="qmeta"><span class="lvl">' + (DOTS[it.level] || '') + ' ' + esc(LEVEL[it.level] || it.level) + '</span><span id="pn" class="pts">' +
-      (d ? (d.p ? 'done: ' + d.p + ' points' : 'solution seen') : pointsNow(it) + ' points') + '</span>' +
-      (!d && speedOn && !(me.wrong[it.id] > 0) ? '<span id="fb">fast bonus +' + bonusOf(it) + ' within ' + mmss(limitOf(it)) + ' · <span id="clk">0:00</span></span>' : '') + '</div>' +
+      (d ? (d.gave ? 'solution seen' : 'done: ' + d.p + ' points') : pointsNow(it) + ' points') + '</span>' +
+      (!d && speedOn && !(me.wrong[it.id] > 0) ? '<span id="fb">fast bonus +' + bonusOf(it) + ' within ' + mmss(limitOf(it)) + ' · <span id="clk">0:00</span></span>' : '') + '<span class="fun" data-fun="qmeta"></span></div>' +
       '<p class="qtext">' + tex(it.text) + '</p>' + (it.stem_figure ? '<div class="fig" id="sfig"></div>' : '') +
       (it.statements ? '<ul class="stmts">' + it.statements.map((s, i) => '<li><span class="r">' + ['I.', 'II.', 'III.', 'IV.', 'V.'][i] + '</span>' + tex(s) + '</li>').join('') + '</ul>' : '') +
       (it.question ? '<p class="qtext">' + tex(it.question) + '</p>' : '') +
       '<div class="opts">' + it.options.map((o, i) => '<button type="button" class="opt" data-i="' + i + '"><span class="l">' + L[i] + ')</span><span>' + tex(o) + '</span></button>').join('') + '</div>' +
-      '<div id="solbox"></div></div><div class="abar" id="abar" hidden><div class="abar-in"><span id="verdict" class="verdict"></span><span class="abtn" id="abtn"></span></div></div>';
+      '<div id="solbox"></div></div><div class="abar" id="abar" hidden><div class="abar-in"><span class="fun" data-fun="abar"></span><span id="verdict" class="verdict"></span><span class="abtn" id="abtn"></span></div></div>';
     wire(it.topic);
     putFig(document.getElementById('sfig'), it.stem_figure);
     const btns = [...app.querySelectorAll('.opt')], bar = document.getElementById('abar'), verdict = document.getElementById('verdict'), abtn = document.getElementById('abtn');
@@ -489,13 +503,18 @@
       btns.forEach(x => { x.disabled = true; if (x.classList.contains('wrong')) { x.classList.remove('wrong'); x.classList.add('wasw'); } });   // one green row stands out
       if (btns[right]) btns[right].classList.add('right');
       const dd = me.done[it.id];
-      verdict.className = 'verdict ' + (dd.p ? 'ok' : 'no');
-      verdict.textContent = again ? (dd.p ? 'Done: ' + dd.p + ' points.' : 'Solution seen.') : (dd.p ? 'Correct: +' + dd.p + ' points' + (dd.fast ? ' (with the fast bonus +' + dd.b + ')' : '') + '.' : 'Solution opened: no points for this one.');
+      // after the right answer: by "gave" (the solution was opened), not by the points: three wrong tries leave p = 0 with a right answer (Utku round 5)
+      verdict.className = 'verdict ' + (dd.gave ? 'no' : 'ok');
+      verdict.textContent = dd.gave ? (again ? 'Solution seen.' : 'Solution opened: no points for this one.')
+        : again ? 'Done: ' + dd.p + ' points.'
+        : dd.p ? 'Correct: +' + dd.p + ' points' + (dd.fast ? ' (with the fast bonus +' + dd.b + ')' : '') + '.'
+        : 'Correct, but after three wrong tries this question gives no points.';
       abtn.innerHTML = '<button type="button" id="ss">Show solution</button>' + (mode === 'arena' ? '<button class="go" type="button" id="nx">Next question</button>' : '<button class="go" type="button" id="nx">Back to the questions</button>');
       bar.hidden = false;
       document.getElementById('ss').onclick = toggleSol; document.getElementById('nx').onclick = goNext;
       if (dd.gave && !solOpen) toggleSol();
       const tt = document.getElementById('tot'); if (tt) tt.textContent = score();
+      if (!again) { fire('arena:answer', { item: pub(it), ok: !dd.gave, attempt: (dd.w || 0) + 1, points: dd.p, worthNow: 0, mode }); totalChanged(); }
     }
     keyH = e => {
       if (!document.body.contains(bar)) { document.removeEventListener('keydown', keyH); return; }   // only on its own question (Utku round 4)
@@ -507,6 +526,7 @@
       else if (k === 's' && ss) { e.preventDefault(); ss.click(); }
     };
     document.addEventListener('keydown', keyH);
+    fire('arena:screen', { name: 'question', topic: it.topic, mode, item: pub(it), level: mode === 'arena' ? arenaState(it.topic).level : undefined });
     if (d) return;
     clockStart(); current = { it, mode };   // visible time only; the running clock stays (Celebi 14.11: Can asked for the time limit), in grey
     const clk = document.getElementById('clk');
@@ -525,6 +545,7 @@
       document.getElementById('pn').textContent = pointsNow(it) + ' points';
       verdict.className = 'verdict no'; verdict.textContent = 'Incorrect. Now worth ' + pointsNow(it) + ' points.';
       abtn.innerHTML = '<button class="link" type="button" id="give">show the solution (0 points)</button>'; bar.hidden = false;
+      fire('arena:answer', { item: pub(it), ok: false, attempt: w0 + 1, points: 0, worthNow: pointsNow(it), mode });
       document.getElementById('give').onclick = () => { current = null; me.done[it.id] = { p: 0, b: 0, w: me.wrong[it.id] || 0, at: new Date().toISOString(), gave: true }; keep(); done(false); writeAll(false); };
       clockStart(); writeAll(false);
     });
@@ -536,10 +557,12 @@
     const tabs = document.getElementById('tabs');
     [['all', 'Total']].concat(P.topics.map(t => [t.id, t.name])).forEach(([v, l]) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = l; b.className = v === tab ? 'on' : ''; b.onclick = () => leaderboard(v); tabs.appendChild(b); });
     document.getElementById('rf').onclick = () => { etag = null; leaderboard(tab); };
+    fire('arena:screen', { name: 'leaderboard', topic: null, mode: null, item: null, tab });
     if (login) await writeAll(true);
     try {
       const rows = (await readBoard()).map(r => ({ ...r, p: tab === 'all' ? r.total : (r.topics[tab] || 0) })).filter(r => r.p > 0).sort((a, b) => b.p - a.p || a.ts - b.ts).slice(0, 50);
-      document.getElementById('lb').innerHTML = rows.length ? '<table class="lb"><tr><th>#</th><th>nickname</th><th class="p">points</th></tr>' + rows.map((r, i) => '<tr' + (login && r.key === login.key ? ' class="mine"' : '') + '><td>' + (i + 1) + '</td><td>' + esc(r.nick) + '</td><td class="p">' + r.p + '</td></tr>').join('') + '</table>' : 'No scores yet.';
+      document.getElementById('lb').innerHTML = '<span class="fun" data-fun="lb-top"></span>' + (rows.length ? '<table class="lb"><tr><th>#</th><th>nickname</th><th class="p">points</th></tr>' + rows.map((r, i) => '<tr' + (login && r.key === login.key ? ' class="mine"' : '') + '><td>' + (i + 1) + '</td><td>' + esc(r.nick) + '</td><td class="p">' + r.p + '</td></tr>').join('') + '</table>' : 'No scores yet.');
+      fire('arena:board', { tab, rows });
     } catch (e) { document.getElementById('lb').innerHTML = '<span class="bad">Could not load the leaderboard (' + esc(e.message || 'offline') + '). Try again in a minute.</span>'; }
   }
   function start() {
@@ -552,5 +575,19 @@
   window.addEventListener('pagehide', () => writeAll(true));
   if (login) pullProgress().then(() => { const tt = document.getElementById('tot'); if (tt) tt.textContent = score(); }).catch(() => {});
   start();
-  window.MicroPractice = { version: 2, session: SESSION, score, pointsNow: id => byId[id] && pointsNow(byId[id]), ladder: (id, k) => byId[id] && ladder(byId[id], k) };
+  let boardCache = null;
+  window.MicroPractice = { version: 2, session: SESSION, score, pointsNow: id => byId[id] && pointsNow(byId[id]), ladder: (id, k) => byId[id] && ladder(byId[id], k),
+    fun: { v: 1,
+      user: () => login ? { nick: login.nick, key: login.key } : null,
+      topics: () => P.topics.map(t => ({ id: t.id, name: t.name })),
+      items: id => (TOP[id] || []).map(pub),
+      done: () => JSON.parse(JSON.stringify(me.done || {})), wrong: () => JSON.parse(JSON.stringify(me.wrong || {})),
+      score, pointsNow: id => byId[id] ? pointsNow(byId[id]) : 0,
+      ladder: (level, k) => ladder({ level }, k), afterWrong: (value, w) => stepDown({}, value, w), floor: level => floorOf({ level }),
+      board: () => { if (boardCache && Date.now() - boardCache.t < 60000) return Promise.resolve(boardCache.rows);
+        return readBoard().then(rows => { const r = rows.map(x => ({ key: x.key, nick: x.nick, total: x.total, topics: Object.assign({}, x.topics) })); boardCache = { t: Date.now(), rows: r }; return r; }); },
+      get: name => ((me.fun || {})[name]), set: (name, value) => { if (!login || name === 'awards') return; me.fun = me.fun || {}; me.fun[name] = value; keep(); writeAll(false); },
+      award: name => { if (!login || !AWARDS[name]) return; me.fun = me.fun || {}; me.fun.awards = me.fun.awards || {}; if (me.fun.awards[name]) return;
+        me.fun.awards[name] = new Date().toISOString(); keep(); const tt = document.getElementById('tot'); if (tt) tt.textContent = score(); totalChanged(); writeAll(false); },
+      go: where => { leaveQuestion(); closeMenus(); where === 'leaderboard' ? leaderboard() : home(); } } };
 })();
