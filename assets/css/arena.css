@@ -2,7 +2,7 @@
    taken from Can (Slide master)'s midterm/index.html at 7ffd27e). The colours fall back when a page has no console-light variables. */
 .lbx { border: 1.5px solid var(--line, #e3e5e8); border-radius: 3px; background: #fff; padding: .8rem 1rem .9rem; margin: 0 0 1.2rem; }
 .lbx .lbh { font-size: .95rem; font-weight: 600; margin: 0 0 .5rem; }
-.lbx .tabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 .6rem; -webkit-mask-image: none; mask-image: none; padding-right: 0; }
+.lbx .tabs { display: flex; flex-wrap: wrap; overflow-x: visible; gap: 6px; margin: 0 0 .6rem; -webkit-mask-image: none; mask-image: none; padding-right: 0; }
 .lbx .tabs button { font: inherit; font-size: .82rem; padding: 3px 10px; border: 1px solid #d1d5db; border-radius: 999px; background: #fff; color: #374151; cursor: pointer; min-height: 0; }
 .lbx .tabs button.on { background: #2f5d8c; border-color: #2f5d8c; color: #fff; }
 .lbx ol { margin: 0; padding: 0; list-style: none; }
