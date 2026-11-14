@@ -50,7 +50,7 @@
     const fig = (v, label) => '<div><b>' + v + '</b><span class="fun-dim">' + label + '</span></div>';
     const row = r => '<div class="f10-row" data-topic="' + F.esc(r.id) + '">' + F.diagram(r.id, r.answered ? r.step : 0, { size: 36 }) +
       '<div class="f10-mid"><b>' + F.esc(r.name) + '</b><span class="fun-dim">' +
-      (r.answered ? r.m + ' of ' + r.n + ' types mastered · longest run ' + r.run : 'not started') + '</span></div>' +
+      (r.answered ? r.m + ' of ' + r.n + (r.n === 1 ? ' type' : ' types') + ' mastered · longest run ' + r.run : 'not started') + '</span></div>' +
       '<div class="f10-imp fun-dim">' + (r.halves ? r.halves[0] + '% → ' + r.halves[1] + '%' + (r.halves[1] > r.halves[0] ? ' <span class="f10-up">▲</span>' : '') : DASH) + '</div></div>';
     const next = nextStep(s);
     return '<div class="card f10-card" role="dialog" aria-modal="true" aria-labelledby="f10-title">' +
@@ -88,11 +88,15 @@
   };
   F.on('screen', () => {
     const api = F.api(), user = !!(api && api.user());
-    place('menu-top', user && '<button type="button" data-f="f10" class="f10-open">My progress</button>');
     place('home-top', user && '<p data-f="f10"><button type="button" class="f10-link f10-open">My progress</button></p>');
   });
+  F.on('menu', () => {   // the account menu is built when it opens
+    const api = F.api(), user = api && api.user && api.user();
+    place('menu-top', user && '<button type="button" data-f="f10" class="f10-open">My progress</button>');
+  });
   document.addEventListener('click', e => {
-    try { const b = e.target && e.target.closest && e.target.closest('.f10-open'); if (b) open(b); }
+    try { const b = e.target && e.target.closest && e.target.closest('.f10-open'); if (!b) return;
+      const menu = b.closest('.menu[data-for]'); open(b); if (menu) menu.remove(); }   // choosing the menu row closes the arena's menu
     catch (err) { if (window.console) console.warn('fun module f10', err); }
   });
 })();

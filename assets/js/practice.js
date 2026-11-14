@@ -47,7 +47,7 @@
   const typeOf = it => it.type || it.cat;
   const rightInType = (type, except) => Object.entries(me.done).filter(([id, d]) => id !== except && d.p > 0 && byId[id] && typeOf(byId[id]) === type).length;
   function pointsNow(it) { return stepDown(it, ladder(it, rightInType(typeOf(it), it.id) + 1), me.wrong[it.id] || 0); }
-  const AWARDS = { Q0: 2 };   // the only award (Oyun's f7, Can approved): counted in the total, in no topic
+  const AWARDS = {};   // awards counted in the total (Question 0 removed by Can 14.11: none now)
   const awardsTotal = () => Object.keys((me.fun && me.fun.awards) || {}).reduce((a, k) => a + (AWARDS[k] || 0), 0);
   const score = topic => Object.entries(me.done).reduce((a, [id, d]) => a + (byId[id] && (!topic || byId[id].topic === topic) ? (d.p || 0) : 0), 0) + (topic ? 0 : awardsTotal());
 
@@ -304,7 +304,7 @@
     const esc_ = e => { if (e.key === 'Escape') close(); };
     document.body.appendChild(box); box.onclick = e => { if (e.target === box) close(); };
     document.getElementById('howX').onclick = close; document.addEventListener('keydown', esc_);
-    fire('arena:screen', { name: 'how', topic: crumbTopic, mode: crumbMode, item: null });
+    fire('arena:screen', { name: 'how', topic: crumbTopic, mode: crumbMode, item: current ? pub(current.it) : null });
   }
   function tutorial() {   // once per account (Addition 8), dismissable
     if (!login || me.tut) return;
@@ -383,17 +383,27 @@
   }
   // ---------- a topic: Arena or Selection (Addition 9) ----------
   let sel = load('micro-arena-sel' + T, { sort: 'num', f: {} });
+  // subsections (Addition 18): only topics whose meta entry has "subs"; the choice is kept per topic on this device
+  const subsOf = id => ((P.topics.find(t => t.id === id) || {}).subs || []).filter(x => x.count > 0);
+  let subSel = load('micro-arena-sub' + T, {});
+  const topicItems = id => { const sub = subSel[id], all = TOP[id] || []; return sub && subsOf(id).some(x => x.id === sub) ? all.filter(it => it.sub === sub) : all; };
   function topic(id, mode) {
     leaveQuestion();
     if (!login) return loginScreen();
     mode = mode || MODE; MODE = mode; save('micro-arena-mode' + T, mode);
-    const all = TOP[id] || [], nDone = all.filter(it => me.done[it.id]).length;
+    const all = topicItems(id), nDone = all.filter(it => me.done[it.id]).length, subs = subsOf(id);
     history.replaceState(null, '', location.pathname + '?topic=' + encodeURIComponent(id) + (TQ ? '&test' : ''));
     window.scrollTo(0, 0);
     app.innerHTML = header(id, mode) + '<h2>' + esc(topicName(id)) + '</h2><p class="sub">' + esc(TX.dir[id] || '') + '</p>' +
       '<div class="tabs modes"><button type="button" id="mA" class="' + (mode === 'arena' ? 'on' : '') + '">Arena</button><button type="button" id="mS" class="' + (mode === 'select' ? 'on' : '') + '">Selection</button>' +
       (mode === 'select' ? '<select id="srt" aria-label="sort"><option value="num">by number</option><option value="pts">by points</option><option value="lvl">by difficulty</option></select>' : '') + '</div><div id="tb"></div>';
     document.getElementById('mA').onclick = () => topic(id, 'arena'); document.getElementById('mS').onclick = () => topic(id, 'select');
+    if (subs.length > 1) {   // All · Equations only · With words
+      const row = document.createElement('div'); row.className = 'subs'; row.setAttribute('role', 'group'); row.setAttribute('aria-label', 'subsection');
+      [['', 'All']].concat(subs.map(x => [x.id, x.name])).forEach(([v, l]) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'pill' + ((subSel[id] || '') === v ? ' on' : ''); b.dataset.sub = v; b.textContent = l;
+        b.onclick = () => { if (v) subSel[id] = v; else delete subSel[id]; save('micro-arena-sub' + T, subSel); topic(id, mode); }; row.appendChild(b); });
+      document.querySelector('.modes').after(row);
+    }
     wire(id); tutorial();
     const tb = document.getElementById('tb');
     if (mode === 'arena') {   // Start first (Oyun): the button, a grey status line, the rule as small grey text
@@ -445,7 +455,7 @@
   // after a wrong answer the same type again; a level that has run out gives the next level up, else down
   function arenaState(id) { me.arena = me.arena || {}; return me.arena[id] = me.arena[id] || { level: 'easy', streak: 0, retry: null }; }
   function arenaNext(id) {
-    const a = arenaState(id), open = (TOP[id] || []).filter(it => !me.done[it.id]);
+    const a = arenaState(id), open = topicItems(id).filter(it => !me.done[it.id]);
     if (!open.length) return null;
     const order = [a.level].concat(LV.slice(LV.indexOf(a.level) + 1), LV.slice(0, LV.indexOf(a.level)).reverse());
     let pool = [];
@@ -560,9 +570,9 @@
     fire('arena:screen', { name: 'leaderboard', topic: null, mode: null, item: null, tab });
     if (login) await writeAll(true);
     try {
-      const rows = (await readBoard()).map(r => ({ ...r, p: tab === 'all' ? r.total : (r.topics[tab] || 0) })).filter(r => r.p > 0).sort((a, b) => b.p - a.p || a.ts - b.ts).slice(0, 50);
+      const allRows = (await readBoard()).map(r => ({ ...r, p: tab === 'all' ? r.total : (r.topics[tab] || 0) })).filter(r => r.p > 0).sort((a, b) => b.p - a.p || a.ts - b.ts), rows = allRows.slice(0, 50);
       document.getElementById('lb').innerHTML = '<span class="fun" data-fun="lb-top"></span>' + (rows.length ? '<table class="lb"><tr><th>#</th><th>nickname</th><th class="p">points</th></tr>' + rows.map((r, i) => '<tr' + (login && r.key === login.key ? ' class="mine"' : '') + '><td>' + (i + 1) + '</td><td>' + esc(r.nick) + '</td><td class="p">' + r.p + '</td></tr>').join('') + '</table>' : 'No scores yet.');
-      fire('arena:board', { tab, rows });
+      fire('arena:board', { tab, rows: allRows });   // every row with points (the staircase draws the whole class); the table shows 50
     } catch (e) { document.getElementById('lb').innerHTML = '<span class="bad">Could not load the leaderboard (' + esc(e.message || 'offline') + '). Try again in a minute.</span>'; }
   }
   function start() {

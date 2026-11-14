@@ -9,30 +9,18 @@
   F.style('f1', '.fun-f1-card{grid-template-columns:minmax(0,1fr) auto;column-gap:12px}.fun-f1-card>*{grid-column:1}' +
     '.fun-f1-line{grid-column:1}.fun-f1-pic{grid-column:2;grid-row-start:1;align-self:center}');
 
-  // {m: mastered types, n: types, step: 0…3} of one topic
-  const progress = (items, done) => {
-    const types = {}; let f = 0;
-    items.forEach(it => {
-      const t = types[it.type] = types[it.type] || { all: 0, first: 0 }, d = done[it.id];
-      t.all++;
-      if (d && d.p > 0 && d.w === 0) { t.first++; f++; }
-    });
-    const list = Object.values(types), n = list.length, m = list.filter(t => t.first >= Math.min(2, t.all)).length;
-    return { m, n, step: f === 0 ? 0 : m === n ? 3 : m / n >= 0.5 ? 2 : 1 };
-  };
-
   F.on('screen', () => {
     const slots = F.slots('cat');
     slots.forEach(el => { el.innerHTML = ''; if (el.parentElement) el.parentElement.classList.remove('fun-f1-card'); });
     const A = F.api();
     if (!slots.length || !A || !A.user()) return;
-    const done = A.done() || {}, seen = A.get('f1') || {};
+    const got = A.get('f1'), seen = got && typeof got === 'object' ? got : {};
     let changed = false;
     slots.forEach(el => {
-      const topic = el.dataset.topic, card = el.parentElement, p = progress(A.items(topic) || [], done);
+      const topic = el.dataset.topic, card = el.parentElement, p = F.mastery(A, topic);   // the same definition as in My progress
       const svg = p.n && card ? F.diagram(topic, p.step, { size: 44, animate: p.step > (seen[topic] || 0), label: 'Progress picture: step ' + p.step + ' of 3' }) : '';
       if (!svg) return;
-      el.innerHTML = '<span class="fun-dim fun-f1-line">' + p.m + ' of ' + p.n + ' question types mastered</span>' +
+      el.innerHTML = '<span class="fun-dim fun-f1-line">' + p.m + ' of ' + p.n + (p.n === 1 ? ' question type' : ' question types') + ' mastered</span>' +
         '<span class="fun-f1-pic" style="grid-row-end:span ' + card.children.length + '">' + svg + '</span>';   // the picture spans all rows of the card
       card.classList.add('fun-f1-card');
       if (seen[topic] !== p.step) { seen[topic] = p.step; changed = true; }
