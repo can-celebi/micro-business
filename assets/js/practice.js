@@ -146,7 +146,8 @@
     const sha = await getRefObj(ACCT + nick.toLowerCase());
     if (!sha) return null;
     const rec = await readBlob(sha);
-    return rec && rec.hash && (await pbkdf2(pw, rec.salt, rec.iter || ITER)) === rec.hash ? rec : false;
+    const it = rec && Number.isInteger(rec.iter) && rec.iter >= 1000 && rec.iter <= 1000000 ? rec.iter : ITER;   // a forged huge count must not freeze the page (Utku)
+    return rec && rec.hash && /^[0-9a-f]{32}$/.test(rec.salt || '') && (await pbkdf2(pw, rec.salt, it)) === rec.hash ? rec : false;
   }
   // progress: the newer/first right answer per question is kept, never lost; wrong counts take the larger
   function merge(remote) {
@@ -229,6 +230,7 @@
       if (!NICK_RE.test(nick)) return say('That is not a nickname this page makes (2 to 16 letters, digits, - or _).', true);
       busy(true); say('Checking…');
       try { const rec = await checkLogin(nick, pw); if (!rec) { busy(false); return say(rec === null ? 'No account with that nickname. Make one on the right.' : 'Wrong password for ' + nick + '.', true); }
+        if (rec.must_change) return newPassword(rec, nick.toLowerCase());   // a reset by the lecturer (practice_reset.py): choose your own now
         login = { nick: rec.nick, key: nick.toLowerCase() }; save(KEY_LOGIN, login); loadMe(); try { await pullProgress(); } catch (e2) {} start();
       } catch (err) { busy(false); say('Could not reach the server (' + (err.message || 'offline') + '). Try again in a minute.', true); }
     };
@@ -241,6 +243,25 @@
       try { const r = await createAccount(nick, pw); if (r === 'taken') { busy(false); return say('The nickname ' + nick + ' is taken. If it is yours, log in on the left; otherwise pick another.', true); }
         login = { nick, key: nick.toLowerCase() }; save(KEY_LOGIN, login); loadMe(); start();
       } catch (err) { busy(false); say('Could not reach the server (' + (err.message || 'offline') + '). Try again in a minute.', true); }
+    };
+  }
+  // after a password reset: the temporary password worked; the student picks a new one, progress stays as it is
+  function newPassword(rec, key) {
+    app.innerHTML = header() + '<h2>Choose a new password</h2><p class="sub">Your password was reset. Pick a new one for ' + esc(rec.nick) + ' (at least 6 characters, used nowhere else). Your progress and points are kept.</p>' +
+      '<form class="card" id="fpw"><label>new password <input type="password" id="q1" autocomplete="new-password" required></label><label>new password again <input type="password" id="q2" autocomplete="new-password" required></label>' +
+      '<button class="go" type="submit">Save my new password</button></form><p class="msg" id="lm"></p>';
+    document.getElementById('fpw').onsubmit = async e => {
+      e.preventDefault(); const a = document.getElementById('q1').value, b = document.getElementById('q2').value, m = document.getElementById('lm');
+      if (a.length < 6) { m.innerHTML = '<span class="bad">At least 6 characters.</span>'; return; }
+      if (a !== b) { m.innerHTML = '<span class="bad">The two passwords are not the same.</span>'; return; }
+      app.querySelector('#fpw button').disabled = true; m.textContent = 'Saving…';
+      try {
+        const salt = hex(crypto.getRandomValues(new Uint8Array(16)));
+        const blob = await newBlob({ v: 1, nick: rec.nick, salt, iter: ITER, hash: await pbkdf2(a, salt, ITER), created: rec.created || '' });
+        const r = await fetch(API + '/git/refs/' + ACCT + key, { method: 'PATCH', headers: H(), body: JSON.stringify({ sha: blob, force: true }) });
+        if (!r.ok) throw new Error('GitHub answered ' + r.status);
+        login = { nick: rec.nick, key }; save(KEY_LOGIN, login); loadMe(); try { await pullProgress(); } catch (e2) {} start();
+      } catch (err) { app.querySelector('#fpw button').disabled = false; m.innerHTML = '<span class="bad">Could not save (' + esc(err.message || 'offline') + '). Try again in a minute.</span>'; }
     };
   }
   async function logout() { await writeAll(true); login = null; try { localStorage.removeItem(KEY_LOGIN); } catch (e) {} me = { done: {}, wrong: {}, pending: [] }; loginScreen('You are logged out on this device.'); }
