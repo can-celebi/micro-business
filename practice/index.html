@@ -6,6 +6,7 @@
 <meta name="color-scheme" content="light">
 <title>Microeconomics · midterm practice</title>
 <link rel="stylesheet" href="../vendor/katex/katex.min.css">
+<link rel="stylesheet" href="../assets/css/arena.css?v=20261115a">
 <style>
   @font-face { font-family: "Inter"; font-weight: 400; font-display: swap; src: url(../assets/fonts/inter-latin-400-normal.woff2) format("woff2"); }
   @font-face { font-family: "Inter"; font-weight: 600; font-display: swap; src: url(../assets/fonts/inter-latin-600-normal.woff2) format("woff2"); }
@@ -44,11 +45,10 @@
   button.link { border: 0; background: none; color: var(--accent); padding: 0; font-size: .85rem; text-decoration: underline; }
   input[type=text] { font: inherit; padding: 8px 10px; border: 1px solid #c9ced6; border-radius: 8px; width: 14em; max-width: 100%; }
   .cats { display: grid; gap: 10px; }
-  .cat { text-align: left; padding: 12px 14px; display: grid; gap: 2px; }
-  .cat .n { font-weight: 600; } .cat .d { font-size: .85rem; color: var(--dim); }
   .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
   .qmeta { font-size: .8rem; color: var(--dim); margin-bottom: 6px; display: flex; gap: 10px; flex-wrap: wrap; }
   .qtext { margin: 0 0 10px; }
+  .nw { white-space: nowrap; }
   .stmts { list-style: none; padding: 0; margin: 4px 0 8px; } .stmts li { display: grid; grid-template-columns: 2.2em 1fr; } .stmts .r { color: var(--dim); }
   .opts { display: grid; gap: 8px; margin: 10px 0 4px; }
   .opt { text-align: left; padding: 10px 12px; display: flex; gap: 10px; align-items: baseline; }
@@ -100,6 +100,8 @@
   .card.qq .qlab { font-size: .72rem; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--dim); margin-bottom: 4px; }
   .card.qq .qtext + .stmts + .qtext, .card.qq .qtext:last-of-type { font-weight: 600; }
   @media (max-width: 420px) { .qpart { padding: 10px 12px; } }
+  .fbk { margin-top: 8px; font-size: .85rem; } #fbp { margin-top: 6px; display: grid; gap: 4px; } .fbo { display: flex; gap: 6px; align-items: center; color: var(--ink); }
+  #fbp textarea { font: inherit; font-size: .85rem; border: 1px solid #c9ced6; border-radius: 6px; padding: 5px 7px; resize: vertical; width: 100%; } .fbr { display: flex; gap: 10px; align-items: center; }
   h3.lvh { font-size: .88rem; font-weight: 600; margin: 12px 0 6px; color: var(--ink); }
   .modal { position: fixed; inset: 0; background: rgba(20, 24, 30, .35); display: flex; align-items: flex-start; justify-content: center; padding: 6vh 12px; overflow-y: auto; z-index: 10; }
   .modal .fine { margin-top: .5rem; }
@@ -121,7 +123,33 @@
   @media (max-width: 560px) { .filters, .subs { flex-wrap: wrap; overflow-x: visible; } }
   .tabs { -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent); padding-right: 32px; }
   .crumbs { min-width: 0; }
-  .cat .n { white-space: normal; overflow-wrap: anywhere; }
+  .topic .tt { display: block; white-space: normal; overflow-wrap: anywhere; } .topic .x { display: block; }
+  /* ---------- one visual system with /midterm/ (Can 14.11; Oyun): its colours, its dark thin rectangles with 3 px corners,
+     its headings and its pill tabs. Placed last in this style block: it only overrides colours, borders, corners and a few sizes. ---------- */
+  :root { --bg: #fdfdfb; --ink: #111111; --dim: #777777; --edge: #222222; }
+  main { max-width: 760px; }
+  h2 { font-size: .95rem; margin: 1.6rem 0 .6rem; }
+  .bar { background: var(--bg); }
+  /* rectangles: every card and every card-like button */
+  .card, .cat, .opt, .qex, .modal .card, .menu { border: 1.5px solid var(--edge); border-radius: 3px; }
+  .qdef, .qpart, .sol, .fig svg.figsvg { border-radius: 3px; }
+  .qex { border-left: 4px solid var(--accent); }
+  .menu { box-shadow: none; } .menu a, .menu button { border-radius: 2px; }
+  .cat { padding: .9rem 1rem; } .cat .n { font-size: 1rem; } .cat .d { font-size: .82rem; }
+  .cat:hover, .opt:hover:not(:disabled) { background: #E6F5E6; }
+  .opt.right { border-color: var(--ok); } .opt.wrong { border-color: var(--no); }
+  /* buttons: the same rectangle; the main action keeps the blue fill */
+  button { border: 1.5px solid var(--edge); border-radius: 3px; }
+  button.go { border-color: var(--accent); }
+  button.link, button.crumb, .modal .x, .menu button { border: 0; }
+  /* tabs, filters and mode buttons: the pills of the /midterm/ leaderboard */
+  .tabs button, .filters .pill, .subs .pill { border: 1px solid #d1d5db; border-radius: 999px; font-size: .82rem; padding: 3px 10px; color: #374151; background: #fff; }
+  .tabs button.on, .filters .pill.on, .subs .pill.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+  /* the question chips in Selection: the small chips of the /midterm/ resources */
+  .qc, .qc.done { border: 1.5px solid var(--edge); border-radius: 2px; } .qc.done { background: #E6F5E6; }
+  input, select { border: 1.5px solid var(--edge) !important; border-radius: 3px !important; }
+  /* the shared box and tiles from arena.css take their frame from --line, which is pale in the arena: give them the dark frame too */
+  .lbx, .topic { border-color: var(--edge); }
 </style>
 </head>
 <body>
@@ -135,17 +163,18 @@
 <script src="topics/pc.js?v=13"></script>
 <script src="topics/pref.js?v=13"></script>
 <script src="topics/rc.js?v=13"></script>
+<script src="../assets/js/arena-board.js?v=20261115c"></script>
 <!-- Oyun's fun modules (assets/js/fun/): before practice.js, they only add listeners -->
-<script src="../assets/js/fun/core.js?v=20261114e"></script>
-<script src="../assets/js/fun/f1-diagram.js?v=20261114e"></script>
-<script src="../assets/js/fun/f2-verdict.js?v=20261114e"></script>
-<script src="../assets/js/fun/f3-staircase.js?v=20261114e"></script>
-<script src="../assets/js/fun/f4-next-rank.js?v=20261114e"></script>
-<script src="../assets/js/fun/f5-primes.js?v=20261114e"></script>
-<script src="../assets/js/fun/f6-curve.js?v=20261114e"></script>
-<script src="../assets/js/fun/f8-run.js?v=20261114e"></script>
-<script src="../assets/js/fun/f9-strip.js?v=20261114e"></script>
-<script src="../assets/js/fun/f10-progress.js?v=20261114e"></script>
-<script src="../assets/js/practice.js?v=20261114z"></script>
+<script src="../assets/js/fun/core.js?v=20261115b"></script>
+<script src="../assets/js/fun/f1-diagram.js?v=20261115b"></script>
+<script src="../assets/js/fun/f2-verdict.js?v=20261115b"></script>
+<script src="../assets/js/fun/f3-staircase.js?v=20261115b"></script>
+<script src="../assets/js/fun/f4-next-rank.js?v=20261115b"></script>
+<script src="../assets/js/fun/f5-primes.js?v=20261115b"></script>
+<script src="../assets/js/fun/f6-curve.js?v=20261115b"></script>
+<script src="../assets/js/fun/f8-run.js?v=20261115b"></script>
+<script src="../assets/js/fun/f9-strip.js?v=20261115b"></script>
+<script src="../assets/js/fun/f10-progress.js?v=20261115b"></script>
+<script src="../assets/js/practice.js?v=20261115g"></script>
 </body>
 </html>

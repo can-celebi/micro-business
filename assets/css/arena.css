@@ -1,0 +1,21 @@
+/* One style for the open leaderboard and the topic tiles, shared by practice/ and midterm/ (Can 14.11: "make it apparent everywhere";
+   taken from Can (Slide master)'s midterm/index.html at 7ffd27e). The colours fall back when a page has no console-light variables. */
+.lbx { border: 1.5px solid var(--line, #e3e5e8); border-radius: 3px; background: #fff; padding: .8rem 1rem .9rem; margin: 0 0 1.2rem; }
+.lbx .lbh { font-size: .95rem; font-weight: 600; margin: 0 0 .5rem; }
+.lbx .tabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 .6rem; -webkit-mask-image: none; mask-image: none; padding-right: 0; }
+.lbx .tabs button { font: inherit; font-size: .82rem; padding: 3px 10px; border: 1px solid #d1d5db; border-radius: 999px; background: #fff; color: #374151; cursor: pointer; min-height: 0; }
+.lbx .tabs button.on { background: #2f5d8c; border-color: #2f5d8c; color: #fff; }
+.lbx ol { margin: 0; padding: 0; list-style: none; }
+.lbx li { display: grid; grid-template-columns: 2em 1fr auto; gap: 8px; align-items: baseline; padding: 4px 0; border-bottom: 1px solid #f0f1f3; font-size: .98rem; }
+.lbx li:last-child { border-bottom: none; }
+.lbx .rk { color: #6b6f76; font-variant-numeric: tabular-nums; } .lbx .pt { font-weight: 600; font-variant-numeric: tabular-nums; }
+.lbx li.me { background: #f2f7fc; }
+.lbx .you { margin-top: .5rem; font-size: .9rem; color: #1d1d1f; } .lbx .msg { color: #6b6f76; font-size: .9rem; }
+.lbx .full { margin-top: .4rem; font-size: .85rem; }
+.topics { display: grid; grid-template-columns: 1fr 1fr; gap: .7rem; margin-top: .4rem; }
+.topic { display: block; text-align: left; font: inherit; color: #1d1d1f; border: 1.5px solid var(--line, #e3e5e8); border-radius: 3px; background: #fff; padding: .9rem 1rem; cursor: pointer; }
+.topic:hover { background: var(--p-green, #e8f5e9); } .topic:disabled { opacity: .55; cursor: default; }
+.topic .n { color: #6b6f76; font-size: .78rem; } .topic .tt { font-weight: 600; font-size: 1rem; margin: .15rem 0 .25rem; } .topic .x { color: #6b6f76; font-size: .82rem; }
+@media (max-width: 600px) { .topics { grid-template-columns: 1fr; } }
+@media (pointer: coarse) { .lbx .tabs button { min-height: 40px; } }
+.lbx .full a { color: #2f5d8c; }
