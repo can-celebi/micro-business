@@ -413,7 +413,9 @@
     if (mode === 'arena') {   // Start first (Oyun): the button, a grey status line, the rule as small grey text
       const a = arenaState(id), open = all.length - nDone, started = Object.keys(me.done).some(k => byId[k] && byId[k].topic === id);
       tb.innerHTML = '<span class="fun" data-fun="arena-top"></span>' + (open ? '<p class="startrow"><button class="go big" type="button" id="go">' + (started ? 'Continue' : 'Start') + '</button>' : '<p>You have answered every question here. Well done.</p><p class="startrow">') +
-        '<span class="sub">Level: ' + a.level + ' · ' + nDone + ' of ' + all.length + ' done · ' + score(id) + ' points</span></p><p class="fine">' + esc(ARENA_RULE) + '</p>';
+        '<span class="sub" id="ast"></span>' + (open ? '<span class="alv" id="alv"></span></p><p class="alvn" id="alvn" hidden>' : '') + '</p><p class="fine">' + esc(ARENA_RULE) + '</p>';
+      const status = () => { document.getElementById('ast').textContent = 'Level: ' + arenaState(id).level + ' · ' + nDone + ' of ' + all.length + ' done · ' + score(id) + ' points'; };
+      status(); arenaLevelUI(id, null, status);
       const g = document.getElementById('go'); if (g) g.onclick = () => { const it = arenaNext(id); if (it) ask(it, 'arena'); else topic(id, 'arena'); };
       fire('arena:screen', { name: 'topic', topic: id, mode, item: null, level: a.level });
       return;
@@ -457,26 +459,67 @@
   }
   // the arena's next question: the current level, then the question type where the student is weakest (fewest right, then slowest);
   // after a wrong answer the same type again; a level that has run out gives the next level up, else down
-  function arenaState(id) { me.arena = me.arena || {}; return me.arena[id] = me.arena[id] || { level: 'easy', streak: 0, retry: null }; }
+  // the level is seen and can be asked for (Can, Addition 17; Oyun's specs 11): state = level, streak (right first tries in a row),
+  // miss (wrong first tries in a row), retry (the kind to repeat), asked (Easier / Harder was pressed since the last new question)
+  function arenaState(id) { me.arena = me.arena || {}; return me.arena[id] = me.arena[id] || { level: 'easy', streak: 0, miss: 0, retry: null, asked: false }; }
+  const arenaOrder = l => [l].concat(LV.slice(LV.indexOf(l) + 1), LV.slice(0, LV.indexOf(l)).reverse());   // the level, then up, else down
+  // the level the next question will have (the open question exceptId does not count); null when nothing is left
+  function arenaComing(id, exceptId) {
+    const open = topicItems(id).filter(it => !me.done[it.id] && it.id !== exceptId);
+    return arenaOrder(arenaState(id).level).find(l => open.some(it => it.level === l)) || null;
+  }
+  // Easier / Harder: the level for the NEXT question; the streaks start again. The answer to the question that is open when it is
+  // pressed does not move the level, so the next question has the level the line promises.
+  function arenaAsk(id, level) {
+    const a = arenaState(id); if (!LV.includes(level) || level === a.level) return;
+    a.level = level; a.streak = 0; a.miss = 0; a.asked = true; keep();
+  }
+  // fills #alv (Level, three squares, Easier ↓ / Harder ↑) and the grey line #alvn under it; onChange runs after a press
+  function arenaLevelUI(id, exceptId, onChange) {
+    const box = document.getElementById('alv'), line = document.getElementById('alvn'); if (!box) return;
+    const a = arenaState(id), n = LV.indexOf(a.level), coming = arenaComing(id, exceptId);
+    box.innerHTML = '<span>Level</span><span class="alv-sq" role="img" aria-label="' + a.level + '">' + LV.map((l, i) => '<i' + (i <= n ? ' class="on"' : '') + '></i>').join('') + '</span>' +
+      '<button type="button" class="link" id="alvd"' + (n <= 0 ? ' disabled' : '') + '>Easier ↓</button><button type="button" class="link" id="alvu"' + (n >= LV.length - 1 ? ' disabled' : '') + '>Harder ↑</button>';
+    if (line) {
+      const t = coming && coming !== a.level ? 'No ' + a.level + ' questions left: the next question will be ' + coming + '.' : coming && a.asked ? 'The next question will be ' + a.level + '.' : '';
+      line.textContent = t; line.hidden = !t;
+    }
+    const press = (bid, d) => { document.getElementById(bid).onclick = () => {
+      arenaAsk(id, LV[n + d]); arenaLevelUI(id, exceptId, onChange);
+      const again = document.getElementById(bid), other = document.getElementById(bid === 'alvd' ? 'alvu' : 'alvd'); (again.disabled ? other : again).focus();   // the keyboard stays on the buttons
+      if (onChange) onChange();
+    }; };
+    press('alvd', -1); press('alvu', 1);
+    box.onkeydown = e => { if (e.key === 'Enter' || e.key.length === 1) e.stopPropagation(); };   // a key on these buttons is not an answer key or "Next"
+  }
   function arenaNext(id) {
     const a = arenaState(id), open = topicItems(id).filter(it => !me.done[it.id]);
     if (!open.length) return null;
-    const order = [a.level].concat(LV.slice(LV.indexOf(a.level) + 1), LV.slice(0, LV.indexOf(a.level)).reverse());
+    a.asked = false;   // a new question: the "next question will be …" line has done its job
     let pool = [];
-    for (const l of order) { pool = open.filter(it => it.level === l); if (pool.length) break; }
+    for (const l of arenaOrder(a.level)) { pool = open.filter(it => it.level === l); if (pool.length) break; }
     if (a.retry) { const same = pool.filter(it => typeOf(it) === a.retry); if (same.length) pool = same; }
     const stat = t => { const ds = Object.entries(me.done).filter(([k, d]) => byId[k] && typeOf(byId[k]) === t && d.p > 0); return [ds.length, ds.filter(([, d]) => d.fast).length]; };
     const types = [...new Set(pool.map(typeOf))].map(t => [t, ...stat(t)]).sort((x, y) => x[1] - y[1] || x[2] - y[2]);
     const weakest = types[0][0], cands = pool.filter(it => typeOf(it) === weakest);
     return cands[Math.floor(Math.random() * cands.length)];
   }
+  // after an answer: up one level after 2 right first tries in a row (a fast one counts as two), down one level after 2 wrong first
+  // tries in a row; every level change starts the streaks again. Returns 'up', 'down' or null.
   function arenaAfter(it, right, fast, firstTry) {
-    const a = arenaState(it.topic);
-    if (!right) { a.retry = typeOf(it); a.streak = 0; keep(); return; }
-    if (!firstTry) { keep(); return; }   // right after a wrong try: the same kind comes next (Utku round 3: the rule says so)
-    a.retry = null; a.streak += speedOn && fast ? 2 : 1;
-    if (a.streak >= 2 && a.level !== 'hard') { a.level = LV[LV.indexOf(a.level) + 1]; a.streak = 0; }
-    keep();
+    const a = arenaState(it.topic), from = a.level;
+    if (!firstTry) { keep(); return null; }   // right after a wrong try: the same kind comes next (Utku round 3: the rule says so)
+    if (a.asked) { a.retry = right ? null : typeOf(it); keep(); return null; }   // asked for a level while this question was open: it stands
+    if (!right) {
+      a.retry = typeOf(it); a.streak = 0; a.miss = (a.miss || 0) + 1;
+      if (a.miss >= 2 && a.level !== 'easy') a.level = LV[LV.indexOf(a.level) - 1];
+    } else {
+      a.retry = null; a.miss = 0; a.streak += speedOn && fast ? 2 : 1;
+      if (a.streak >= 2 && a.level !== 'hard') a.level = LV[LV.indexOf(a.level) + 1];
+    }
+    const change = a.level === from ? null : LV.indexOf(a.level) > LV.indexOf(from) ? 'up' : 'down';
+    if (change) { a.streak = 0; a.miss = 0; }
+    keep(); return change;
   }
   // ---------- Definition / Example cards (Can, Addition 19; Oyun's e-cards spec) ----------
   const INFO_KEY = 'micro-arena-info' + T;
@@ -512,8 +555,7 @@
     const hasParts = !!(it.info || it.example);
     app.innerHTML = header(it.topic, mode) + partsHTML(it) + '<div class="card' + (hasParts ? ' qq' : '') + '" data-id="' + esc(it.id) + '">' + (hasParts ? '<div class="qlab">Question</div>' : '') + '<div class="qmeta"><span class="lvl">' + (DOTS[it.level] || '') + ' ' + esc(LEVEL[it.level] || it.level) + '</span><span id="pn" class="pts">' +
       (d ? (d.gave ? 'solution seen' : 'done: ' + d.p + ' points') : pointsNow(it) + ' points') + '</span>' +
-      (!d && speedOn && !(me.wrong[it.id] > 0) ? '<span id="fb">fast: ' + fastOf(pointsNow(it)) + ' within ' + mmss(limitOf(it)) + ' · <span id="clk">0:00</span></span>' : '') + '<span class="fun" data-fun="qmeta"></span></div>' +
-      partsHTML(it) +
+      (!d && speedOn && !(me.wrong[it.id] > 0) ? '<span id="fb">fast: ' + fastOf(pointsNow(it)) + ' within ' + mmss(limitOf(it)) + ' · <span id="clk">0:00</span></span>' : '') + '<span class="fun" data-fun="qmeta"></span>' + (mode === 'arena' ? '<span class="alv" id="alv"></span></div><p class="alvn" id="alvn" hidden></p>' : '</div>') +
       '<p class="qtext">' + tex(it.text) + '</p>' + (it.stem_figure ? '<div class="fig" id="sfig"></div>' : '') +
       (it.statements ? '<ul class="stmts">' + it.statements.map((s, i) => '<li><span class="r">' + ['I.', 'II.', 'III.', 'IV.', 'V.'][i] + '</span>' + tex(s) + '</li>').join('') + '</ul>' : '') +
       (it.question ? '<p class="qtext">' + tex(it.question) + '</p>' : '') +
@@ -522,7 +564,12 @@
     wire(it.topic);
     putFig(document.getElementById('sfig'), it.stem_figure);
     const btns = [...app.querySelectorAll('.opt')], bar = document.getElementById('abar'), verdict = document.getElementById('verdict'), abtn = document.getElementById('abtn');
-    let right = -1, solOpen = false;
+    let right = -1, solOpen = false, lvChange = null;   // lvChange: what this answer did to the arena level ('up', 'down' or null)
+    const levelUI = () => { if (mode === 'arena') arenaLevelUI(it.topic, it.id); };
+    // after the verdict, grey, on its own line (it goes with the verdict's text at the next answer)
+    const tellLevel = () => { if (!lvChange) return; const s = document.createElement('span'); s.className = 'lvmsg'; s.textContent = 'Level ' + lvChange + ': ' + arenaState(it.topic).level + '.'; verdict.appendChild(s); };
+    const lvNow = () => mode === 'arena' ? arenaState(it.topic).level : undefined;
+    levelUI();
     Promise.all(it.options.map(o => sha(P.salt + it.id + '\n' + o))).then(hs => { right = hs.indexOf(it.h); if (d) done(true); });
     const solution = () => '<div class="sol"><div class="solh">Solution</div>' + (Array.isArray(it.solution) && it.solution.length ? '<ol class="steps">' + it.solution.map(s => '<li>' + tex(s) + '</li>').join('') + '</ol>'
       : it.solution ? tex(it.solution) : '') + (it.figure ? '<div class="fig" id="solfig"></div>' : '') + (it.explanation ? '<p class="expl">' + tex(it.explanation) + '</p>' : '') +
@@ -545,12 +592,13 @@
         : again ? 'Done: ' + dd.p + ' points.'
         : dd.p ? 'Correct: +' + dd.p + ' points' + (dd.fast ? ' (fast)' : '') + '.'
         : 'Correct, but after three wrong tries this question gives no points.';
+      if (!again) { tellLevel(); levelUI(); }
       abtn.innerHTML = '<button type="button" id="ss">Show solution</button>' + (mode === 'arena' ? '<button class="go" type="button" id="nx">Next question</button>' : '<button class="go" type="button" id="nx">Back to the questions</button>');
       bar.hidden = false;
       document.getElementById('ss').onclick = toggleSol; document.getElementById('nx').onclick = goNext;
       if (dd.gave && !solOpen) toggleSol();
       const tt = document.getElementById('tot'); if (tt) tt.textContent = score();
-      if (!again) { fire('arena:answer', { item: pub(it), ok: !dd.gave, attempt: (dd.w || 0) + 1, points: dd.p, worthNow: 0, mode }); totalChanged(); }
+      if (!again) { fire('arena:answer', { item: pub(it), ok: !dd.gave, attempt: (dd.w || 0) + 1, points: dd.p, worthNow: 0, mode, level: lvNow(), levelChange: lvChange }); totalChanged(); }
     }
     keyH = e => {
       if (!document.body.contains(bar)) { document.removeEventListener('keydown', keyH); return; }   // only on its own question (Utku round 4)
@@ -573,16 +621,17 @@
       const fast = ok && speedOn && w0 === 0 && secs <= limitOf(it), bonus = fast ? fastOf(worth) - worth : 0;   // worth + bonus is one prime
       me.pending.push({ ts: new Date().toISOString(), client: dev.cid, nick: login.nick, run: RUNID, item: it.id, template: it.cat, slot: it.slot || null, mirrors: null, topic: it.topic, type: typeOf(it),
         level: it.level, mode, points: ok ? worth + bonus : 0, bonus, attempt: w0 + 1, seconds: Math.min(CAP, secs), capped: secs >= CAP, correct: ok, fast, lecturer });
-      if (mode === 'arena' && (ok || w0 === 0)) arenaAfter(it, ok, fast, w0 === 0);
+      lvChange = mode === 'arena' && (ok || w0 === 0) ? arenaAfter(it, ok, fast, w0 === 0) : null;
       if (ok) { current = null; me.done[it.id] = { p: worth + bonus, b: bonus, fast, w: w0, at: new Date().toISOString() }; keep(); done(false); writeAll(false); return; }
       me.wrong[it.id] = w0 + 1; keep();
       clearInterval(ticker); const fb = document.getElementById('fb'); if (fb) fb.remove();
       b.classList.add('wrong'); b.disabled = true;
       document.getElementById('pn').textContent = pointsNow(it) + ' points';
       verdict.className = 'verdict no'; verdict.textContent = 'Incorrect. Now worth ' + pointsNow(it) + ' points.';
+      tellLevel(); levelUI();
       abtn.innerHTML = '<button class="link" type="button" id="give">show the solution (0 points)</button>'; bar.hidden = false;
-      fire('arena:answer', { item: pub(it), ok: false, attempt: w0 + 1, points: 0, worthNow: pointsNow(it), mode });
-      document.getElementById('give').onclick = () => { current = null; me.done[it.id] = { p: 0, b: 0, w: me.wrong[it.id] || 0, at: new Date().toISOString(), gave: true }; keep(); done(false); writeAll(false); };
+      fire('arena:answer', { item: pub(it), ok: false, attempt: w0 + 1, points: 0, worthNow: pointsNow(it), mode, level: lvNow(), levelChange: lvChange });
+      document.getElementById('give').onclick = () => { lvChange = null; current = null; me.done[it.id] = { p: 0, b: 0, w: me.wrong[it.id] || 0, at: new Date().toISOString(), gave: true }; keep(); done(false); writeAll(false); };
       clockStart(); writeAll(false);
     });
   }

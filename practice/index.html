@@ -76,6 +76,12 @@
   .bad { color: var(--no); }
   .dir { margin: .2rem 0 .3rem; } .rule { font-size: .9rem; background: #eef4fb; border-radius: 8px; padding: 8px 10px; }
   .modes button { padding: 6px 16px; font-size: .92rem; }
+  /* the Arena level (Can, Addition 17; Oyun's specs 11): Level, three 8-px squares 2 px apart, Easier / Harder; a grey line under it */
+  .alv { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 4px 10px; margin-left: auto; color: var(--dim); font-size: .8rem; }
+  .alv-sq { display: inline-flex; gap: 2px; } .alv-sq i { width: 8px; height: 8px; background: var(--line); } .alv-sq i.on { background: var(--ink); }
+  .alv button.link:disabled { color: var(--dim); text-decoration: none; cursor: default; }
+  .alvn { color: var(--dim); font-size: .8rem; margin: 0 0 6px; } .startrow .alv { margin-left: 0; }
+  .verdict .lvmsg { display: block; color: var(--dim); font-weight: 400; }
   .startrow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; } @media (max-width: 560px) { .startrow .go { width: 100%; } }
   button.big { font-size: 1.05rem; padding: 12px 22px; }
   .filters { display: flex; flex-wrap: nowrap; overflow-x: auto; gap: 6px; align-items: center; margin: 6px 0 6px; padding-bottom: 2px; scrollbar-width: none; } .filters::-webkit-scrollbar { display: none; }
