@@ -8,6 +8,9 @@ Written by Ali (Main coder)."""
 import base64, csv, io, json, subprocess, sys, urllib.request, urllib.error
 
 REPO = "can-celebi/micro-business-data"
+def cell(v):   # a text that starts like a spreadsheet formula (= + - @, or a tab/CR) gets a leading ' (Utku: "=HYPERLINK(…)")
+    v = str(v)
+    return "'" + v if v[:1] in ("=", "+", "-", "@", "\t", "\r") else v
 LABEL = {"text": "the text is confusing", "math": "the math or the answer seems wrong", "hard": "too hard for me"}
 
 def api(path, token):
@@ -37,7 +40,7 @@ def main(argv):
     if "--csv" in argv:
         buf = io.StringIO(); w = csv.writer(buf)
         w.writerow(["item", "topic", "nick", "time", "text confusing", "math or answer wrong", "too hard", "free text"])
-        for r in rows: w.writerow([r["item"], r["topic"], r["nick"], r["ts"], int("text" in r["opts"]), int("math" in r["opts"]), int("hard" in r["opts"]), r["text"]])
+        for r in rows: w.writerow([cell(r["item"]), cell(r["topic"]), cell(r["nick"]), cell(r["ts"]), int("text" in r["opts"]), int("math" in r["opts"]), int("hard" in r["opts"]), cell(r["text"])])
         text = buf.getvalue()
     else:
         text = "".join(json.dumps(r, ensure_ascii=False) + "\n" for r in rows)

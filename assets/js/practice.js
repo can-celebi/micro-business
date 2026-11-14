@@ -376,16 +376,17 @@
     leaveQuestion();
     if (!login) return loginScreen();
     history.replaceState(null, '', location.pathname + TQ);
-    app.innerHTML = header() + '<p class="sub">Pick a topic. Play it in the arena (one question after another, harder as you go) or pick the questions yourself.</p><span class="fun" data-fun="home-top"></span><div class="cats" id="cats"></div>' +
+    app.innerHTML = header() + '<p class="sub">Pick a topic. Play it in the arena (one question after another, harder as you go) or pick the questions yourself.</p><div id="lbx"></div><span class="fun" data-fun="home-top"></span><div class="topics cats" id="cats"></div>' +
       '<p class="fine">For practice only: nothing here counts towards your grade. The leaderboard is just for fun; only your nickname and scores are stored. Time per question is recorded anonymously to improve the course.</p>';
     const box = document.getElementById('cats');
     P.topics.forEach(t => {
       const all = TOP[t.id] || [], done = all.filter(it => me.done[it.id]).length;
-      const b = document.createElement('button'); b.type = 'button'; b.className = 'cat'; b.disabled = !all.length;
-      b.innerHTML = '<span class="n">' + esc(t.name) + '</span><span class="d">' + (all.length ? done + ' of ' + all.length + ' done · ' + score(t.id) + ' points' : 'questions coming soon') + '</span><span class="fun" data-fun="cat" data-topic="' + t.id + '"></span>';
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'cat topic'; b.disabled = !all.length;
+      b.innerHTML = '<div class="n">Topic ' + (P.topics.indexOf(t) + 1) + '</div><span class="tt">' + esc(t.name) + '</span><span class="d x">' + (all.length ? done + ' of ' + all.length + ' done · ' + score(t.id) + ' points' : 'questions coming soon') + '</span><span class="fun" data-fun="cat" data-topic="' + t.id + '"></span>';
       b.onclick = () => topic(t.id); box.appendChild(b);
     });
     wire(); tutorial();
+    if (window.ArenaBoard) ArenaBoard.mount(document.getElementById('lbx'), { top: 5, tab: 'all', full: true });   // the open board (Can 14.11)
     fire('arena:screen', { name: 'home', topic: null, mode: null, item: null }); totalChanged();
   }
   // ---------- a topic: Arena or Selection (Addition 9) ----------
@@ -410,7 +411,7 @@
     const all = topicItems(id), nDone = all.filter(it => me.done[it.id]).length, subs = subsOf(id);
     history.replaceState(null, '', location.pathname + '?topic=' + encodeURIComponent(id) + (TQ ? '&test' : ''));
     window.scrollTo(0, 0);
-    app.innerHTML = header(id, mode) + '<h2>' + esc(topicName(id)) + '</h2><p class="sub">' + esc(TX.dir[id] || '') + '</p>' +
+    app.innerHTML = header(id, mode) + '<h2>' + esc(topicName(id)) + '</h2><p class="sub">' + esc(TX.dir[id] || '') + '</p><div id="lbx"></div>' +
       '<div class="tabs modes"><button type="button" id="mA" class="' + (mode === 'arena' ? 'on' : '') + '">Arena</button><button type="button" id="mS" class="' + (mode === 'select' ? 'on' : '') + '">Selection</button>' +
       (mode === 'select' ? '<select id="srt" aria-label="sort"><option value="num">by number</option><option value="pts">by points</option><option value="lvl">by difficulty</option></select>' : '') + '</div><div id="tb"></div>';
     document.getElementById('mA').onclick = () => topic(id, 'arena'); document.getElementById('mS').onclick = () => topic(id, 'select');
@@ -421,6 +422,7 @@
       document.querySelector('.modes').after(row);
     }
     wire(id); tutorial();
+    if (window.ArenaBoard) ArenaBoard.mount(document.getElementById('lbx'), { top: 5, tab: id, full: true });   // the open board, this topic first
     const tb = document.getElementById('tb');
     if (mode === 'arena') {   // Start first (Oyun): the button, a grey status line, the rule as small grey text
       const a = arenaState(id), open = all.length - nDone, started = Object.keys(me.done).some(k => byId[k] && byId[k].topic === id);
