@@ -66,9 +66,9 @@
 <script src="../assets/js/config.js?v=20261014a"></script>
 <script>
   // a logged-in student's progress under each topic (Oyun, Celebi 14.11): read from the arena's own browser storage, nothing sent.
-  // The same test-session rule as interactive.js: ?test, or a page served from this computer, uses the '-test' keys and keeps ?test in the links.
+  // The arena's test-session rule (Ali): ?test, or a page served from this computer, uses the '-test' keys; ?test is kept in the links.
   (function () {
-    const LOCAL = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname) && !/[?&]live\b/.test(location.search);
+    const LOCAL = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);   // the arena's rule: no ?live override
     const TEST = /[?&]test\b/.test(location.search) || LOCAL, T = TEST ? '-test' : '';
     if (/[?&]test\b/.test(location.search)) document.querySelectorAll('a[href^="../practice/"]').forEach(a => { a.href += (a.href.includes('?') ? '&' : '?') + 'test'; });
     const get = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
