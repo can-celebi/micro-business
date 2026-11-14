@@ -38,7 +38,7 @@
     let you = '';
     if (mine >= 0) {
       const mid = Math.max(X0 + 9, Math.min(X0 + W - 9, (x(mine) + x(mine + 1)) / 2));
-      const near = mine > 0 && mid < x(1) + 64 && y(mine) < y(0) + 22;   // next to the "price maker" label: "you" goes under its own step
+      const near = mine > 0 && mid < x(1) + 24 && y(mine) < y(0) + 22;   // next to the "1st" label: "you" goes under its own step
       you = '<path d="M' + x(mine) + ' ' + y(mine) + 'H' + x(mine + 1) + '" fill="none" stroke="' + YOU + '" stroke-width="4"/>' +
         '<text class="you" x="' + r2(mid) + '" y="' + r2(near ? y(mine) + 11 : Math.max(8, y(mine) - 5)) + '" text-anchor="middle">you</text>';
     }
@@ -47,7 +47,7 @@
     return '<div data-f="f3" class="fun-f3"><svg viewBox="0 0 320 96" role="img" aria-label="' + F.esc(label) + '">' +
       '<path d="M14 8V84H312" fill="none" stroke="#9aa0a8" stroke-width="1"/>' +
       '<path class="st' + (anim ? ' fun-draw' : '') + '" d="' + path + '" fill="none" stroke-width="1.6" pathLength="1"/>' + you +
-      '<text x="' + r2(x(1) + 4) + '" y="' + r2(mine === 0 ? y(0) + 16 : y(0) + 6) + '">price maker</text></svg>' +
-      '<p class="fun-dim">1 price maker · ' + (N - 1) + ' price takers</p></div>';
+      '<text x="' + r2(x(1) + 4) + '" y="' + r2(mine === 0 ? y(0) + 16 : y(0) + 6) + '">1st</text></svg>' +
+      '<p class="fun-dim">' + N + ' students, from the 1st to the ' + F.ord(N) + '</p></div>';
   }
 })();

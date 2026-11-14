@@ -58,7 +58,7 @@
           list.forEach(x => { const m = x.ref.slice(('refs/' + BOARD).length).match(/^(\d+)--([a-z0-9_-]{2,16})--([A-Za-z0-9_-]{2,16})--(\d{1,7})--([\w.]*)$/); if (!m) return;
             const row = { ts: +m[1], key: m[2], nick: m[3], total: +m[4], topics: Object.fromEntries(m[5].split('_').filter(Boolean).map(p => p.split('.')).map(([c, v]) => [c, +v])) };
             if (!latest[row.key] || latest[row.key].ts < row.ts) latest[row.key] = row; });
-          const rows = Object.values(latest).map(r => ({ key: r.key, nick: r.nick, total: r.total, topics: r.topics })); cache = { t: Date.now(), rows }; return rows; });
+          const rows = Object.values(latest).map(r => ({ ts: r.ts, key: r.key, nick: r.nick, total: r.total, topics: r.topics }));   // ts: a tie goes to the earlier (Utku round 8) cache = { t: Date.now(), rows }; return rows; });
     },
     go: where => { location.href = '../practice/' + (where === 'leaderboard' ? '?board' : '') + (T ? (where === 'leaderboard' ? '&test' : '?test') : ''); }
   };

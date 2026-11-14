@@ -411,9 +411,9 @@
     const all = topicItems(id), nDone = all.filter(it => me.done[it.id]).length, subs = subsOf(id);
     history.replaceState(null, '', location.pathname + '?topic=' + encodeURIComponent(id) + (TQ ? '&test' : ''));
     window.scrollTo(0, 0);
-    app.innerHTML = header(id, mode) + '<h2>' + esc(topicName(id)) + '</h2><p class="sub">' + esc(TX.dir[id] || '') + '</p><div id="lbx"></div>' +
+    app.innerHTML = header(id, mode) + '<h2>' + esc(topicName(id)) + '</h2><p class="sub">' + esc(TX.dir[id] || '') + '</p>' +
       '<div class="tabs modes"><button type="button" id="mA" class="' + (mode === 'arena' ? 'on' : '') + '">Arena</button><button type="button" id="mS" class="' + (mode === 'select' ? 'on' : '') + '">Selection</button>' +
-      (mode === 'select' ? '<select id="srt" aria-label="sort"><option value="num">by number</option><option value="pts">by points</option><option value="lvl">by difficulty</option></select>' : '') + '</div><div id="tb"></div>';
+      (mode === 'select' ? '<select id="srt" aria-label="sort"><option value="num">by number</option><option value="pts">by points</option><option value="lvl">by difficulty</option></select>' : '') + '</div><div id="tb"></div><div id="lbx"></div>';   // the open board last on a topic page (Oyun 14.11), first on the home page
     document.getElementById('mA').onclick = () => topic(id, 'arena'); document.getElementById('mS').onclick = () => topic(id, 'select');
     if (subs.length > 1) {   // All · Equations only · With words
       const row = document.createElement('div'); row.className = 'subs'; row.setAttribute('role', 'group'); row.setAttribute('aria-label', 'subsection');
@@ -422,7 +422,7 @@
       document.querySelector('.modes').after(row);
     }
     wire(id); tutorial();
-    if (window.ArenaBoard) ArenaBoard.mount(document.getElementById('lbx'), { top: 5, tab: id, full: true });   // the open board, this topic first
+    if (window.ArenaBoard) ArenaBoard.mount(document.getElementById('lbx'), { top: 5, tab: id, full: true });   // the open board, this topic's tab
     const tb = document.getElementById('tb');
     if (mode === 'arena') {   // Start first (Oyun): the button, a grey status line, the rule as small grey text
       const a = arenaState(id), open = all.length - nDone, started = Object.keys(me.done).some(k => byId[k] && byId[k].topic === id);
@@ -721,7 +721,6 @@
   document.addEventListener('visibilitychange', () => { if (document.hidden) writeAll(true); });
   window.addEventListener('pagehide', () => writeAll(true));
   if (login) pullProgress().then(() => { const tt = document.getElementById('tot'); if (tt) tt.textContent = score(); }).catch(() => {});
-  start();
   let boardCache = null;
   window.MicroPractice = { version: 2, session: SESSION, score, pointsNow: id => byId[id] && pointsNow(byId[id]), ladder: (id, k) => byId[id] && ladder(byId[id], k),
     fun: { v: 1,
@@ -737,4 +736,5 @@
       award: name => { if (!login || !AWARDS[name]) return; me.fun = me.fun || {}; me.fun.awards = me.fun.awards || {}; if (me.fun.awards[name]) return;
         me.fun.awards[name] = new Date().toISOString(); keep(); const tt = document.getElementById('tot'); if (tt) tt.textContent = score(); totalChanged(); writeAll(false); },
       go: where => { leaveQuestion(); closeMenus(); where === 'leaderboard' ? leaderboard() : home(); } } };
+  start();   // after the bridge, so the first board uses the arena's own rows (Utku round 8)
 })();

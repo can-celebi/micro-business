@@ -15,6 +15,7 @@
   F.on = (evt, fn) => document.addEventListener('arena:' + evt, e => { try { fn(e.detail || {}); } catch (err) { if (window.console) console.warn('fun module', evt, err); } });
   F.isPrime = n => { if (!Number.isInteger(n) || n < 2) return false; for (let d = 2; d * d <= n; d++) if (n % d === 0) return false; return true; };
   F.factors = n => { const out = []; if (!Number.isInteger(n) || n < 2) return out; for (let d = 2; d * d <= n; d++) while (n % d === 0) { out.push(d); n /= d; } if (n > 1) out.push(n); return out; };
+  F.ord = n => { const t = n % 100, u = n % 10; return n + (t >= 11 && t <= 13 ? 'th' : u === 1 ? 'st' : u === 2 ? 'nd' : u === 3 ? 'rd' : 'th'); };   // 1st, 2nd, 3rd, 4th, 11th, 21st
   F.num = n => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');   // 1 487 with a narrow space
 
   // ---------- mastery: the one definition every module uses ----------

@@ -1,6 +1,6 @@
 // f9 · the leaderboard strip (Oyun, 14.11.2026; Can's Additions 15 and 16).
-// Slot `strip`, directly under the top bar on every screen: the top three with their points and "you: rank N", always in sight
-// (Can: the leaderboard is visible without a tap). Inside a question: the leader and "you: rank N" in one line.
+// Slot `strip`, directly under the top bar, inside a question only: the leader with points and "you: rank N" in one line
+// (Can: the leaderboard is in sight without a tap). On every other screen the arena itself shows the open leaderboard box.
 // A tap opens a small panel: tabs (Total, the six topics), the top 10 and the student's own row.
 // Reads the bridge only inside handlers; total and topic points come from board() and score(), nothing is computed here.
 // Offline, rejected board, missing slot or bridge: nothing is shown and nothing is thrown.
@@ -85,7 +85,7 @@
     const my = ++turn, api = F.api(), s = F.slot('strip');
     open = false; tab = 'all'; cur = { slot: s, q: d.name === 'question' };
     if (s) { s.innerHTML = ''; s.onclick = null; s.onkeydown = null; }
-    if (!api || !s || d.name === 'login') return;
+    if (!api || !s || d.name !== 'question') return;   // only inside a question: on every other screen the arena shows its own open leaderboard box
     draw();                                          // the rows from before, at once: the strip does not jump in later
     if (cur.q && rows) return;                       // on a question: no new call when there are rows
     Promise.resolve().then(() => api.board()).then(got => {

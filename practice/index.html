@@ -123,6 +123,32 @@
   .tabs { -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent); padding-right: 32px; }
   .crumbs { min-width: 0; }
   .topic .tt { display: block; white-space: normal; overflow-wrap: anywhere; } .topic .x { display: block; }
+  /* ---------- one visual system with /midterm/ (Can 14.11; Oyun): its colours, its dark thin rectangles with 3 px corners,
+     its headings and its pill tabs. Placed last in this style block: it only overrides colours, borders, corners and a few sizes. ---------- */
+  :root { --bg: #fdfdfb; --ink: #111111; --dim: #777777; --edge: #222222; }
+  main { max-width: 760px; }
+  h2 { font-size: .95rem; margin: 1.6rem 0 .6rem; }
+  .bar { background: var(--bg); }
+  /* rectangles: every card and every card-like button */
+  .card, .cat, .opt, .qex, .modal .card, .menu { border: 1.5px solid var(--edge); border-radius: 3px; }
+  .qdef, .qpart, .sol, .fig svg.figsvg { border-radius: 3px; }
+  .qex { border-left: 4px solid var(--accent); }
+  .menu { box-shadow: none; } .menu a, .menu button { border-radius: 2px; }
+  .cat { padding: .9rem 1rem; } .cat .n { font-size: 1rem; } .cat .d { font-size: .82rem; }
+  .cat:hover, .opt:hover:not(:disabled) { background: #E6F5E6; }
+  .opt.right { border-color: var(--ok); } .opt.wrong { border-color: var(--no); }
+  /* buttons: the same rectangle; the main action keeps the blue fill */
+  button { border: 1.5px solid var(--edge); border-radius: 3px; }
+  button.go { border-color: var(--accent); }
+  button.link, button.crumb, .modal .x, .menu button { border: 0; }
+  /* tabs, filters and mode buttons: the pills of the /midterm/ leaderboard */
+  .tabs button, .filters .pill, .subs .pill { border: 1px solid #d1d5db; border-radius: 999px; font-size: .82rem; padding: 3px 10px; color: #374151; background: #fff; }
+  .tabs button.on, .filters .pill.on, .subs .pill.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+  /* the question chips in Selection: the small chips of the /midterm/ resources */
+  .qc, .qc.done { border: 1.5px solid var(--edge); border-radius: 2px; } .qc.done { background: #E6F5E6; }
+  input, select { border: 1.5px solid var(--edge) !important; border-radius: 3px !important; }
+  /* the shared box and tiles from arena.css take their frame from --line, which is pale in the arena: give them the dark frame too */
+  .lbx, .topic { border-color: var(--edge); }
 </style>
 </head>
 <body>
@@ -136,18 +162,18 @@
 <script src="topics/pc.js?v=13"></script>
 <script src="topics/pref.js?v=13"></script>
 <script src="topics/rc.js?v=13"></script>
-<script src="../assets/js/arena-board.js?v=20261115a"></script>
+<script src="../assets/js/arena-board.js?v=20261115b"></script>
 <!-- Oyun's fun modules (assets/js/fun/): before practice.js, they only add listeners -->
-<script src="../assets/js/fun/core.js?v=20261114e"></script>
-<script src="../assets/js/fun/f1-diagram.js?v=20261114e"></script>
-<script src="../assets/js/fun/f2-verdict.js?v=20261114e"></script>
-<script src="../assets/js/fun/f3-staircase.js?v=20261114e"></script>
-<script src="../assets/js/fun/f4-next-rank.js?v=20261114e"></script>
-<script src="../assets/js/fun/f5-primes.js?v=20261114e"></script>
-<script src="../assets/js/fun/f6-curve.js?v=20261114e"></script>
-<script src="../assets/js/fun/f8-run.js?v=20261114e"></script>
-<script src="../assets/js/fun/f9-strip.js?v=20261114e"></script>
-<script src="../assets/js/fun/f10-progress.js?v=20261114e"></script>
-<script src="../assets/js/practice.js?v=20261115d"></script>
+<script src="../assets/js/fun/core.js?v=20261115a"></script>
+<script src="../assets/js/fun/f1-diagram.js?v=20261115a"></script>
+<script src="../assets/js/fun/f2-verdict.js?v=20261115a"></script>
+<script src="../assets/js/fun/f3-staircase.js?v=20261115a"></script>
+<script src="../assets/js/fun/f4-next-rank.js?v=20261115a"></script>
+<script src="../assets/js/fun/f5-primes.js?v=20261115a"></script>
+<script src="../assets/js/fun/f6-curve.js?v=20261115a"></script>
+<script src="../assets/js/fun/f8-run.js?v=20261115a"></script>
+<script src="../assets/js/fun/f9-strip.js?v=20261115a"></script>
+<script src="../assets/js/fun/f10-progress.js?v=20261115a"></script>
+<script src="../assets/js/practice.js?v=20261115f"></script>
 </body>
 </html>
