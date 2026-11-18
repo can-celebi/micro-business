@@ -188,9 +188,9 @@
     { id: 'finish', t: 'Were you able to finish in time?', o: [['y', 'Yes'], ['a', 'Almost'], ['n', 'No']] },
     { id: 'points', t: 'How many points do you expect in total (out of 100, plus up to 14 bonus)?', o: [['1', 'Under 50'], ['2', '50–59'], ['3', '60–69'], ['4', '70–79'], ['5', '80–89'], ['6', '90–100'], ['7', 'Over 100']] },
     { id: 'time', t: 'How much time did the exam take you?', o: [['1', 'Under 45 min'], ['2', '45–59 min'], ['3', '60–74 min'], ['4', '75–90 min'], ['5', 'I needed more']] },
-    { id: 'hard', t: 'How hard was the exam?', o: L5, ends: ['1 very easy', '5 very hard'] },
+    { id: 'difficulty', t: 'How hard was the exam?', o: L5, ends: ['1 very easy', '5 very hard'] },
     { id: 'clear', t: 'How clear were the exam questions?', o: L5, ends: ['1 very unclear', '5 very clear'] },
-    { id: 'hardest', t: 'Which question was the hardest?', o: Array.from({ length: 24 }, (_, k) => [String(k + 1), String(k + 1)]), grid: true },
+    { id: 'hard', t: 'Which questions did you find hard? (select all that apply)', o: Array.from({ length: 24 }, (_, k) => [String(k + 1), String(k + 1)]), grid: true, multi: true },   // Addition 175: packed as a 24-bit hex mask (6 digits)
     { id: 'surprise', t: 'Did any questions surprise you?', o: [['n', 'No, everything was from the practice page, problem sets or lectures'], ['y', 'Yes, some questions surprised me']] },
     { id: 'theme', t: 'Did you enjoy having a theme for the exam (this time: generations)?', o: L5, ends: ['1 not at all', '5 very much'] },
     { id: 'final', t: 'Would you like themes like this in the final?', o: [['y', 'Yes'], ['n', 'No'], ['d', 'No preference']] },
@@ -246,7 +246,11 @@
       const o = document.createElement('div'); o.className = 'o' + (q.grid ? ' grid' : '');
       q.o.forEach(([c, l]) => {
         const b = document.createElement('button'); b.type = 'button'; b.textContent = l;
-        b.addEventListener('click', () => { ans[q.id] = c; o.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); d.classList.remove('missing'); showOnly(); });
+        b.addEventListener('click', () => {
+          if (q.multi) { const set = new Set((ans[q.id] || '').split(',').filter(Boolean)); set.has(c) ? set.delete(c) : set.add(c); b.classList.toggle('on', set.has(c)); b.setAttribute('aria-pressed', set.has(c) ? 'true' : 'false'); if (set.size) ans[q.id] = [...set].join(','); else delete ans[q.id]; }
+          else { ans[q.id] = c; o.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); }
+          d.classList.remove('missing'); showOnly();
+        });
         o.appendChild(b);
       });
       d.appendChild(o);
@@ -266,7 +270,8 @@
     need.forEach(q => $('sq-' + q.id).classList.toggle('missing', !ans[q.id]));
     if (missing.length) { $('svmsg').textContent = 'Please answer every question (' + missing.length + ' missing, marked in red).'; $('sq-' + missing[0].id).scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
     const btn = $('svgo'); if (btn.disabled) return; btn.disabled = true;   // no double records from a double tap
-    const code = SV.map(q => ans[q.id] || '-').join('.');
+    const pack = q => q.multi ? ans[q.id].split(',').reduce((m, v) => m | (1 << (+v - 1)), 0).toString(16).padStart(6, '0') : ans[q.id];   // 24 bits: bit k-1 = question k
+    const code = SV.map(q => ans[q.id] ? pack(q) : '-').join('.');
     $('svmsg').textContent = 'Sending…';
     try {
       await anonSubmit(POLL, code, n => { $('svmsg').textContent = 'Busy, retrying (' + n + ')…'; });
@@ -276,12 +281,14 @@
   async function results() {
     view('results'); $('rn').textContent = 'loading…';
     const data = await window.MicroPoll.results(POLL);
-    const rows = data.responses.map(r => String(r.value).split('.')).filter(p => p.length === SV.length);
+    const ok = p => p.length === SV.length && SV.every((q, k) => q.multi ? /^[0-9a-f]{6}$/.test(p[k]) && p[k] !== '000000' : (p[k] === '-' ? !!q.only : q.o.some(o => o[0] === p[k])));
+    const rows = data.responses.map(r => String(r.value).split('.')).filter(ok);   // only well-formed records (13 fields, known codes, a 6-digit hex mask)
     $('rn').textContent = 'n = ' + rows.length + ' students' + (data.session ? ' · session ' + data.session : '');
     $('rs').innerHTML = SV.map((q, k) => {
       const got = rows.filter(r => r[k] !== '-'), n = got.length || 1;
-      return '<div class="rq"><h3>' + (k + 1) + '. ' + q.t + (q.only ? ' (asked only after "yes" on 11)' : '') + '</h3>' + q.o.map(([c, l]) => {
-        const m = got.filter(r => r[k] === c).length;
+      const has = (r, c) => q.multi ? ((parseInt(r[k], 16) >> (+c - 1)) & 1) === 1 : r[k] === c;   // multi: each question counted on its own
+      return '<div class="rq"><h3>' + (k + 1) + '. ' + q.t + (q.only ? ' (asked only after "yes" on 11)' : '') + (q.multi ? ' (share of students who chose it)' : '') + '</h3>' + q.o.map(([c, l]) => {
+        const m = got.filter(r => has(r, c)).length;
         return '<div class="rbar"><span>' + l + '</span><span class="tr"><span class="fl" style="display:block;width:' + (100 * m / n).toFixed(1) + '%"></span></span><span class="c">' + m + ' · ' + Math.round(100 * m / n) + '%</span></div>';
       }).join('') + '</div>';
     }).join('');
