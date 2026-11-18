@@ -7,26 +7,32 @@
 <title>Midterm questions and solutions · Microeconomics</title>
 <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
 <style>
-  :root { --bg: #fcfcfa; --ink: #1a1a1a; --dim: #6b6b6b; --edge: #d9d9d4; --card: #ffffff; --accent: #2e5d8a; --ok: #2f7a4f; --okbg: #eaf5ee; --sol: #f6f3ea; --grey: #f0f0ee; }
+  :root { --bg: #fcfcfa; --ink: #1a1a1a; --dim: #6b6b6b; --edge: #d9d9d4; --card: #ffffff; --accent: #2e5d8a; --ok: #2f7a4f; --okbg: #eaf5ee; --sol: #f1f2f4; --grey: #f1f2f4; --frame: #222222; }
   * { box-sizing: border-box; }
   html, body { margin: 0; background: var(--bg); color: var(--ink); }
-  body { font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  @font-face { font-family: "Inter"; font-weight: 400; font-display: swap; src: url(../../assets/fonts/inter-latin-400-normal.woff2) format("woff2"); }
+  @font-face { font-family: "Inter"; font-weight: 500; font-display: swap; src: url(../../assets/fonts/inter-latin-500-normal.woff2) format("woff2"); }
+  @font-face { font-family: "Inter"; font-weight: 600; font-display: swap; src: url(../../assets/fonts/inter-latin-600-normal.woff2) format("woff2"); }
+  @font-face { font-family: "Inter"; font-weight: 400; font-display: swap; unicode-range: U+0370-03FF; src: url(../../assets/fonts/inter-greek-400-normal.woff2) format("woff2"); }
+  @font-face { font-family: "Inter"; font-weight: 600; font-display: swap; unicode-range: U+0370-03FF; src: url(../../assets/fonts/inter-greek-600-normal.woff2) format("woff2"); }
+  body { font: 16px/1.5 Inter, system-ui, -apple-system, "Segoe UI", sans-serif; }   /* Gozde R115: student pages use Inter */
   main { max-width: 760px; margin: 0 auto; padding: 16px 16px 40px; }
   h1 { font-size: 1.25rem; margin: .2rem 0 .1rem; }
   .s { color: var(--dim); font-size: .88rem; margin: 0 0 .9rem; }
   .crumbs { font-size: .88rem; margin-bottom: .6rem; } .crumbs a { color: var(--accent); }
+  @media (pointer: coarse) { .crumbs a { display: inline-block; padding: 12px 0; } }
   .jump { display: flex; flex-wrap: wrap; gap: 4px; margin: 0 0 14px; }
-  .jump button { min-width: 2.1rem; height: 2.1rem; border: 1px solid var(--edge); background: var(--card); border-radius: 6px; font: inherit; font-size: .85rem; cursor: pointer; color: var(--ink); }
+  .jump button { min-width: 2.1rem; height: 2.1rem; border: 1.5px solid var(--frame); background: var(--card); border-radius: 2px; font: inherit; font-size: .85rem; cursor: pointer; color: var(--ink); }
   .jump button.on { background: var(--ink); color: #fff; border-color: var(--ink); }
-  .jump button.b { border-style: dashed; }
-  .card { background: var(--card); border: 1px solid var(--edge); border-radius: 10px; padding: 16px; }
+  .jump button.b { border-style: dashed; }   /* bonus chips keep their dashed line */
+  .card { background: var(--card); border: 1.5px solid var(--frame); border-radius: 3px; padding: 16px; }
   .qhead { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: .5rem; }
   .qhead b { font-size: 1.05rem; } .qhead span { color: var(--dim); font-size: .88rem; white-space: nowrap; }
-  .ctx { background: var(--grey); border-radius: 8px; padding: 10px 12px; margin: 0 0 .8rem; font-size: .95rem; }
+  .ctx { background: var(--grey); border-radius: 3px; padding: 10px 12px; margin: 0 0 .8rem; font-size: .95rem; }
   .ctx p:first-child, .stem p:first-child { margin-top: 0; }
   .stem p, .ctx p, .sol p { margin: 0 0 .6rem; }
   .stem h3 { font-size: 1.05rem; margin: .2rem 0 .2rem; } .stem .dek { color: var(--dim); font-style: italic; } .stem .article { margin-left: 0; }
-  .explain { background: var(--grey); border-radius: 8px; padding: 10px 12px; margin: .4rem 0 .7rem; }
+  .explain { background: var(--grey); border-radius: 3px; padding: 10px 12px; margin: .4rem 0 .7rem; }
   .figs { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin: .4rem 0 .8rem; }
   .figs svg { max-width: 100%; height: auto; flex: 1 1 260px; }
   .figs.one svg { flex: 0 1 auto; max-width: min(100%, 460px); }
@@ -37,36 +43,37 @@
   ol.opts li .l { font-weight: 600; min-width: 1.2rem; }
   ol.opts li.right { background: var(--okbg); border-color: var(--ok); }
   .btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 14px 0 0; }
-  .btns button { height: 3rem; border-radius: 8px; font: inherit; font-weight: 600; cursor: pointer; border: 1px solid var(--accent); }
-  .show { background: var(--card); color: var(--accent); }
+  .btns button { height: 3rem; border-radius: 3px; font: inherit; font-weight: 600; cursor: pointer; border: 1px solid var(--accent); }
+  .show { background: var(--card); color: var(--accent); border: 1.5px solid var(--frame) !important; }
+  .show[aria-pressed="true"] { border-color: var(--accent) !important; }
   .show[aria-pressed="true"] { background: var(--accent); color: #fff; }
   .nav { grid-column: span 2; display: grid; grid-template-columns: 1fr 2fr; gap: 8px; }
-  .prev { background: var(--card); color: var(--ink); border-color: var(--edge) !important; }
+  .prev { background: var(--card); color: var(--ink); border: 1.5px solid var(--frame) !important; }
   .next { background: var(--accent); color: #fff; }
   button:disabled { opacity: .35; cursor: default; }
-  .box { margin-top: 12px; border-radius: 8px; padding: 12px 14px; overflow-x: auto; }
+  .box { margin-top: 12px; border-radius: 3px; padding: 12px 14px; overflow-x: auto; }
   .ans { background: var(--okbg); border: 1px solid var(--ok); }
   .sol { background: var(--sol); border: 1px solid var(--edge); } .sol p:last-child { margin-bottom: 0; } .sol ul, .sol ol { padding-left: 1.2rem; margin: .2rem 0 .6rem; }
   .box h3 { margin: 0 0 .3rem; font-size: .8rem; letter-spacing: .06em; text-transform: uppercase; color: var(--dim); }
-  .qrbtn { margin-top: 18px; background: none; border: 1px solid var(--edge); border-radius: 8px; padding: .5rem .8rem; font: inherit; font-size: .88rem; cursor: pointer; color: var(--ink); }
+  .qrbtn { margin-top: 18px; background: none; border: 1.5px solid var(--frame); border-radius: 3px; padding: .5rem .8rem; font: inherit; font-size: .88rem; cursor: pointer; color: var(--ink); }
   .katex { font-size: 1.05em; } .katex-display { margin: .5rem 0; overflow-x: auto; overflow-y: hidden; }
   #qr { position: fixed; inset: 0; background: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2vh; padding: 3vh; z-index: 10; cursor: pointer; }
   #qr img { width: min(80vh, 90vw); height: auto; image-rendering: pixelated; }
   #qr p { margin: 0; font-size: clamp(1rem, 3vh, 2rem); text-align: center; } #qr small { color: var(--dim); font-size: clamp(.8rem, 2vh, 1.2rem); }
-  .sq { background: var(--card); border: 1px solid var(--edge); border-radius: 10px; padding: 12px 14px; margin: 0 0 10px; }
+  .sq { background: var(--card); border: 1.5px solid var(--frame); border-radius: 3px; padding: 12px 14px; margin: 0 0 10px; }
   .sq .t { font-weight: 500; margin-bottom: .5rem; } .sq .n { color: var(--dim); margin-right: .3rem; }
   .sq .o { display: flex; flex-wrap: wrap; gap: 6px; }
-  .sq .o button { font: inherit; font-size: .92rem; min-height: 2.6rem; min-width: 2.6rem; padding: .35rem .75rem; background: var(--card); color: var(--ink); border: 1px solid var(--edge); border-radius: 8px; cursor: pointer; text-align: left; }
+  .sq .o button { font: inherit; font-size: .92rem; min-height: 2.6rem; min-width: 2.6rem; padding: .35rem .75rem; background: var(--card); color: var(--ink); border: 1.5px solid var(--frame); border-radius: 3px; cursor: pointer; text-align: left; }
   .sq .o.grid button { min-width: 2.6rem; padding: .35rem 0; text-align: center; flex: 0 0 calc((100% - 30px) / 6); }
-  .sq .o button.on { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .sq .o button.on { background: #111111; color: #fff; border-color: #111111; }
   .sq .ends { display: flex; justify-content: space-between; color: var(--dim); font-size: .78rem; margin-top: .3rem; gap: 8px; }
   .sq.missing { border-color: #b3261e; } .sq.missing .t { color: #b3261e; }
-  .send { width: 100%; height: 3.2rem; margin-top: 6px; border-radius: 8px; font: inherit; font-weight: 600; background: var(--accent); color: #fff; border: 1px solid var(--accent); cursor: pointer; }
+  .send { width: 100%; height: 3.2rem; margin-top: 6px; border-radius: 3px; font: inherit; font-weight: 600; background: var(--accent); color: #fff; border: 1px solid var(--accent); cursor: pointer; }
   .send:disabled { opacity: .5; cursor: default; }
   .svmsg { margin: .7rem 0 0; font-size: .92rem; }
   .rq { margin: 0 0 14px; } .rq h3 { font-size: .95rem; margin: 0 0 .35rem; font-weight: 600; }
   .rbar { display: grid; grid-template-columns: minmax(6rem, 40%) 1fr 4.2rem; gap: 8px; align-items: center; font-size: .85rem; margin: 3px 0; }
-  .rbar .tr { background: var(--grey); border-radius: 4px; height: 14px; overflow: hidden; } .rbar .fl { background: var(--accent); height: 100%; }
+  .rbar .tr { background: var(--grey); border-radius: 2px; height: 14px; overflow: hidden; } .rbar .fl { background: var(--accent); height: 100%; }
   .rbar .c { color: var(--dim); text-align: right; white-space: nowrap; }
   [hidden] { display: none !important; }
 </style>
@@ -91,6 +98,7 @@
   <nav class="crumbs"><a href="../">← Midterm</a></nav>
   <h1>Midterm: questions and solutions</h1>
   <p class="s">040184 Microeconomics, group 1 · 19.11.2026 · Type A · 24 questions · 100 points + 14 bonus</p>
+  <p class="s">Options and letters as in Type A. In Types B and C the same options appear in a different order.</p>
   <div class="jump" id="jump" aria-label="Go to question"></div>
   <section class="card" aria-live="polite">
     <div class="qhead"><b id="qn"></b><span id="qp"></span></div>
@@ -107,7 +115,7 @@
     <div class="box ans" id="ans" hidden><h3>Answer</h3><div id="anst"></div></div>
     <div class="box sol" id="sol" hidden><h3>Solution</h3><div id="solt"></div><div class="figs" id="sfigs" hidden></div></div>
   </section>
-  <div class="btns"><div class="nav"><button class="prev" id="prev" type="button">Previous</button><button class="next" id="next" type="button">Next question</button></div></div>
+  <div class="btns"><div class="nav"><button class="prev" id="prev" type="button">Previous question</button><button class="next" id="next" type="button">Next question</button></div></div>
   <button class="qrbtn" id="bqr" type="button">QR code for this page</button>
 </main>
 <div id="qr" hidden role="dialog" aria-label="QR code"><img src="qr.svg" alt="QR code: https://can-celebi.github.io/micro-business/midterm/exam/"><p>Scan for the midterm questions and solutions</p><small>https://can-celebi.github.io/micro-business/midterm/exam/</small></div>
@@ -164,7 +172,7 @@
   $('bsol').addEventListener('click', () => setShow($('bsol'), $('sol'), $('sol').hidden));
   $('next').addEventListener('click', () => { go(i + 1); window.scrollTo(0, 0); });
   $('prev').addEventListener('click', () => { go(i - 1); window.scrollTo(0, 0); });
-  const qr = on => { $('qr').hidden = !on; };
+  const qr = on => { $('qr').hidden = !on; $('bqr').hidden = on; };
   $('bqr').addEventListener('click', () => qr(true)); $('qr').addEventListener('click', () => qr(false));
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') qr(false);
@@ -177,23 +185,59 @@
   const POLL = 'MT1-survey', DONE = 'micro-mt1-survey-sent';
   const L5 = ['1', '2', '3', '4', '5'].map(v => [v, v]);
   const SV = [
-    { id: 'finish', t: 'Were you able to finish in time?', o: [['y', 'yes'], ['a', 'almost'], ['n', 'no']] },
-    { id: 'points', t: 'How many points do you expect in total (out of 100, plus up to 14 bonus)?', o: [['1', 'under 50'], ['2', '50–59'], ['3', '60–69'], ['4', '70–79'], ['5', '80–89'], ['6', '90–100'], ['7', 'over 100']] },
-    { id: 'time', t: 'How much time did the exam take you?', o: [['1', 'under 45 min'], ['2', '45–60'], ['3', '60–75'], ['4', '75–90'], ['5', 'I needed more']] },
+    { id: 'finish', t: 'Were you able to finish in time?', o: [['y', 'Yes'], ['a', 'Almost'], ['n', 'No']] },
+    { id: 'points', t: 'How many points do you expect in total (out of 100, plus up to 14 bonus)?', o: [['1', 'Under 50'], ['2', '50–59'], ['3', '60–69'], ['4', '70–79'], ['5', '80–89'], ['6', '90–100'], ['7', 'Over 100']] },
+    { id: 'time', t: 'How much time did the exam take you?', o: [['1', 'Under 45 min'], ['2', '45–59 min'], ['3', '60–74 min'], ['4', '75–90 min'], ['5', 'I needed more']] },
     { id: 'hard', t: 'How hard was the exam?', o: L5, ends: ['1 very easy', '5 very hard'] },
     { id: 'clear', t: 'How clear were the exam questions?', o: L5, ends: ['1 very unclear', '5 very clear'] },
     { id: 'hardest', t: 'Which question was the hardest?', o: Array.from({ length: 24 }, (_, k) => [String(k + 1), String(k + 1)]), grid: true },
     { id: 'surprise', t: 'Did any questions surprise you?', o: [['n', 'No, everything was from the practice page, problem sets or lectures'], ['y', 'Yes, some questions surprised me']] },
     { id: 'theme', t: 'Did you enjoy having a theme for the exam (this time: generations)?', o: L5, ends: ['1 not at all', '5 very much'] },
-    { id: 'final', t: 'Would you like themes like this in the final?', o: [['y', 'yes'], ['n', 'no'], ['d', "don't mind"]] },
-    { id: 'hours', t: 'About how many hours did you study for the midterm?', o: [['1', 'under 5'], ['2', '5–10'], ['3', '10–20'], ['4', 'over 20']] },
-    { id: 'practice', t: 'Did you use the midterm practice page?', o: [['y', 'yes'], ['n', 'no']] },
+    { id: 'final', t: 'Would you like themes like this in the final?', o: [['y', 'Yes'], ['n', 'No'], ['d', 'No preference']] },
+    { id: 'hours', t: 'About how many hours did you study for the midterm?', o: [['1', 'Under 5 hours'], ['2', '5–9 hours'], ['3', '10–19 hours'], ['4', '20 hours or more']] },
+    { id: 'practice', t: 'Did you use the midterm practice page?', o: [['y', 'Yes'], ['n', 'No']] },
     { id: 'useful', t: 'How useful was the practice page?', o: L5, ends: ['1 not useful at all', '3 neither useful nor useless', '5 very useful'], only: () => ans.practice === 'y' },
-    { id: 'classes', t: 'If you have 100% from the midterm, do you plan to come to the classes?', o: [['y', 'yes'], ['s', 'sometimes'], ['n', 'no']] },
+    { id: 'classes', t: 'If you have 100% from the midterm, do you plan to come to the classes?', o: [['y', 'Yes'], ['s', 'Sometimes'], ['n', 'No']] },
   ];
   const ans = {};
   const store = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
   const load = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+  // ANONYMOUS FOR REAL (Ulutin, Celebi 18.11): the survey never uses the deck's device id (micro-cid), which the sign-in keeps
+  // next to the encrypted name. It writes its ref itself, with the same format and retry rules as interactive.js submit(), but
+  // under its own random id: made once on this device for this survey only (so a re-send replaces, not doubles, the record)
+  // and stored under its own key. Nothing else is sent.
+  function surveyId() {
+    let id = load('micro-mt1-survey-id');
+    if (!id) { const a = new Uint8Array(8); crypto.getRandomValues(a); id = [...a].map(b => b.toString(16).padStart(2, '0')).join(''); store('micro-mt1-survey-id', id); }
+    return id;
+  }
+  async function anonSubmit(poll, value, onRetry) {
+    const cfg = window.MICRO_CONFIG || {}, GH = cfg.github || {};
+    const TOKEN = (GH.tokenParts || []).length ? atob(GH.tokenParts.join('')) : '';
+    if (!TOKEN) throw new Error('no token');
+    const LOCAL = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname) && !/[?&]live\b/.test(location.search);
+    const SESSION = /[?&]test\b/.test(location.search) || LOCAL ? 'test' : (cfg.session || 'default');   // as interactive.js
+    const API = 'https://api.github.com/repos/' + GH.owner + '/' + GH.repo;
+    const headers = { 'Authorization': 'Bearer ' + TOKEN, 'Accept': 'application/vnd.github+json' };
+    const safe = v => String(v).replace(/[^A-Za-z0-9.-]/g, '_').replace(/\.+$/, '').slice(0, 40);
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+    const ref = 'refs/heads/v/' + SESSION + '/' + poll + '/' + Date.now() + '--' + surveyId() + '--' + safe(value);
+    let base = null;
+    for (let attempt = 0; attempt < 10; attempt++) {
+      try {
+        if (!base) { const b = await fetch(API + '/git/ref/heads/' + (GH.branch || 'main'), { headers: headers, cache: 'no-store' }); if (b.ok) base = (await b.json()).object.sha; }
+        if (base) {
+          const r = await fetch(API + '/git/refs', { method: 'POST', headers: headers, body: JSON.stringify({ ref: ref, sha: base }) });
+          if (r.status === 201) return;
+          if (r.status === 422) { const g = await fetch(API + '/git/' + ref, { headers: headers, cache: 'no-store' }); if (g.status === 200) return; }
+          const ra = r.headers.get('retry-after'); if (ra) await sleep(1000 * Number(ra));
+        }
+      } catch (e) { /* network hiccup: retry */ }
+      if (onRetry) onRetry(attempt + 1);
+      await sleep(Math.min(30000, 800 * 2 ** attempt) * (0.5 + Math.random()));
+    }
+    throw new Error('could not save');
+  }
   function buildSurvey() {
     const box = $('sv');
     SV.forEach((q, k) => {
@@ -211,7 +255,10 @@
     });
     showOnly();
   }
-  function showOnly() { SV.forEach(q => { if (q.only) { const on = q.only(); $('sq-' + q.id).hidden = !on; if (!on) delete ans[q.id]; } }); }
+  function showOnly() {
+    SV.forEach(q => { if (q.only) { const on = q.only(); $('sq-' + q.id).hidden = !on; if (!on) delete ans[q.id]; } });
+    let k = 0; SV.forEach(q => { const d = $('sq-' + q.id); if (!d.hidden) d.querySelector('.n').textContent = (++k) + '.'; });   // Oyun: no jump from 11 to 13
+  }
   function view(which) { ['survey', 'results', 'exam'].forEach(v => { $(v).hidden = v !== which; }); window.scrollTo(0, 0); }
   async function send() {
     const need = SV.filter(q => !q.only || q.only());
@@ -222,7 +269,7 @@
     const code = SV.map(q => ans[q.id] || '-').join('.');
     $('svmsg').textContent = 'Sending…';
     try {
-      await window.MicroPoll.submit(POLL, code, n => { $('svmsg').textContent = 'Busy, retrying (' + n + ')…'; });
+      await anonSubmit(POLL, code, n => { $('svmsg').textContent = 'Busy, retrying (' + n + ')…'; });
       store(DONE, '1'); view('exam');
     } catch (e) { $('svmsg').textContent = 'Not sent (offline?). Please try again.'; btn.disabled = false; }
   }
