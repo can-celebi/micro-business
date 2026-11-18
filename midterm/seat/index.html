@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<meta name="robots" content="noindex">
+<title>Midterm check-in · Microeconomics</title>
+<style>
+  /* the look of the class pages: off-white, near-black ink, dark thin frames with 3 px corners, Inter */
+  :root { --bg: #fdfdfb; --ink: #111111; --dim: #777777; --edge: #222222; --line: #e3e5e8; --accent: #2f5d8c; --you: #D9480F; --ok: #1b7f3b; --no: #a12f2f; --paper: #ffffff; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.5 Inter, system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 560px; margin: 0 auto; padding: 20px 16px 64px; }
+  h1 { font-size: 1.3rem; font-weight: 600; margin: 0; }
+  .s { color: var(--dim); font-size: .85rem; margin: .3rem 0 1.4rem; }
+  h2 { font-size: .95rem; font-weight: 600; margin: 1.6rem 0 .6rem; }
+  .card { background: var(--paper); border: 1.5px solid var(--edge); border-radius: 3px; padding: .9rem 1rem; }
+  .steps { display: flex; gap: 6px; margin: 0 0 1.2rem; padding: 0; list-style: none; font-size: .8rem; color: var(--dim); }
+  .steps li { flex: 1; border-top: 3px solid var(--line); padding-top: 4px; }
+  .steps li.on { border-color: var(--edge); color: var(--ink); font-weight: 600; } .steps li.done { border-color: var(--edge); }
+  button { font: inherit; cursor: pointer; border: 1.5px solid var(--edge); border-radius: 3px; background: #fff; color: var(--ink); padding: 10px 16px; min-height: 44px; }
+  button.go { background: var(--accent); border-color: var(--accent); color: #fff; width: 100%; font-weight: 600; }
+  button:disabled { opacity: .45; cursor: default; }
+  button.link { border: 0; background: none; padding: 0; min-height: 0; color: var(--accent); text-decoration: underline; font-size: .88rem; }
+  /* step 1: the check-in questions */
+  .q { padding: .7rem 0; border-top: 1px solid var(--line); } .q:first-of-type { border-top: 0; padding-top: 0; }
+  .q p { margin: 0 0 .5rem; }
+  .yn { display: flex; gap: 8px; } .yn button { flex: 1; padding: 8px 10px; }
+  .yn button[aria-pressed="true"] { background: var(--ink); color: #fff; }
+  .note { font-size: .88rem; margin: .45rem 0 0; } .note.ok { color: var(--ok); } .note.no { color: var(--no); }
+  .agree { display: flex; gap: 10px; align-items: flex-start; margin: 1rem 0; } .agree input { width: 22px; height: 22px; margin: 1px 0 0; accent-color: var(--ink); flex: none; }
+  /* step 2: the student ID */
+  label.f { display: block; font-size: .85rem; color: var(--dim); margin-bottom: 4px; }
+  input.id { font: inherit; font-size: 1.5rem; letter-spacing: .12em; font-variant-numeric: tabular-nums; width: 100%; padding: 10px 12px; border: 1.5px solid var(--edge); border-radius: 3px; background: #fff; color: var(--ink); }
+  .err { color: var(--no); font-size: .9rem; margin: .6rem 0 0; }
+  /* step 3: the boarding pass */
+  .pass { background: var(--paper); border: 1.5px solid var(--edge); border-radius: 3px; position: relative; }
+  .pass .top { padding: .7rem 1rem .6rem; border-bottom: 1.5px solid var(--edge); display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+  .pass .top b { font-size: .8rem; letter-spacing: .14em; } .pass .top span { font-size: .8rem; color: var(--dim); }
+  .pass .body { padding: .9rem 1rem .4rem; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: .9rem .8rem; }
+  .f2 { grid-column: span 2; } .f3 { grid-column: span 3; }
+  .k { font-size: .66rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--dim); }
+  .v { font-size: 1.05rem; font-weight: 600; font-variant-numeric: tabular-nums; } .v.big { font-size: 2rem; line-height: 1.15; } .v.you { color: var(--you); }
+  .tear { border-top: 1.5px dashed var(--edge); margin: .7rem 0 0; position: relative; }
+  .tear::before, .tear::after { content: ""; position: absolute; top: -9px; width: 16px; height: 16px; border-radius: 50%; background: var(--bg); border: 1.5px solid var(--edge); }
+  .tear::before { left: -9.5px; clip-path: inset(0 0 0 50%); } .tear::after { right: -9.5px; clip-path: inset(0 50% 0 0); }
+  .stub { padding: .7rem 1rem .8rem; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+  .stub p { margin: 0; font-size: .82rem; color: var(--dim); }
+  .bars { height: 34px; flex: none; }
+  /* the hall plan: Ali's replica of HS 1 goes here; the classes .seat, .seat.you and .rowlab are the contract */
+  .hall { background: var(--paper); border: 1.5px solid var(--edge); border-radius: 3px; padding: .8rem .6rem 1rem; overflow-x: auto; }
+  .front { text-align: center; font-size: .7rem; letter-spacing: .1em; text-transform: uppercase; color: var(--dim); border: 1px solid var(--line); border-radius: 2px; padding: 3px 0; margin: 0 12% .7rem; }
+  .row { display: flex; justify-content: center; align-items: center; gap: 3px; margin: 3px 0; }
+  .rowlab { width: 1.6em; font-size: .62rem; color: var(--dim); text-align: center; flex: none; font-variant-numeric: tabular-nums; }
+  .row.you .rowlab { color: var(--you); font-weight: 600; }
+  .seat { width: 11px; height: 11px; border: 1px solid #b9bec6; border-radius: 2px; flex: none; }
+  .seat.free { border-style: dotted; border-color: #d9dce1; } .aisle { width: 12px; flex: none; }
+  .seat.you { background: var(--you); border-color: var(--you); outline: 2px solid var(--you); outline-offset: 2px; }
+  .legend { font-size: .8rem; color: var(--dim); margin: .6rem 0 0; display: flex; gap: 14px; flex-wrap: wrap; align-items: center; } .legend .seat { display: inline-block; vertical-align: -1px; margin-right: 5px; }
+  .fine { font-size: .78rem; color: var(--dim); margin-top: 1.6rem; }
+  .sn { width: 11px; flex: none; font-size: .62rem; color: var(--dim); text-align: center; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  @media (min-width: 520px) { .sn { width: 13px; } }
+  .seat { font-size: 7px; line-height: 9px; text-align: center; font-weight: 600; color: transparent; }
+  .seat.occ { background: #9aa0a6; border-color: #9aa0a6; color: #fff; }
+  .seat.you { color: #fff; }
+  @media (min-width: 520px) { .seat { font-size: 8px; line-height: 11px; } }
+  .rules ul { margin: 0; padding-left: 1.1rem; } .rules li { margin: .45rem 0; line-height: 1.4; }
+  [hidden] { display: none !important; }
+  @media (min-width: 520px) { .seat { width: 13px; height: 13px; } }
+  @media (prefers-reduced-motion: no-preference) { .pass { animation: in .35s ease-out; } @keyframes in { from { opacity: 0; transform: translateY(6px); } } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Midterm check-in</h1>
+  <p class="s">040184 Microeconomics, group 1 · Thursday 19.11.2026 · HS 1 · 18:30</p>
+  <ol class="steps" aria-label="Steps"><li id="s1" class="on">1 · Rules</li><li id="s2">2 · Student ID</li><li id="s3">3 · Boarding pass</li></ol>
+
+  <!-- step 1 -->
+  <section id="p1">
+    <h2>Before you board</h2>
+    <div class="card rules"><ul>
+      <li><b>Bring</b> one blue or black pen and one non-programmable calculator: they are all you may use.</li>
+      <li><b>Bring</b> your u:card or a photo ID: you must be able to show a photo ID.</li>
+      <li><b>Not allowed at your seat:</b> mobile phones, smartwatches, smart glasses and AI assistants. They stay switched off in your bag.</li>
+      <li><b>Leaving the room:</b> you cannot leave the room during the 90 minutes unless you have a doctor&#8217;s note.</li>
+    </ul></div>
+    <button class="go" id="to2" type="button" style="margin-top:1rem">I agree</button>
+    <p class="note no" id="hint1" hidden></p>
+  </section>
+
+  <!-- step 2 -->
+  <section id="p2" hidden>
+    <h2>Your student ID</h2>
+    <div class="card">
+      <label class="f" for="mid">Student ID (Matrikelnummer), 8 digits</label>
+      <input class="id" id="mid" inputmode="numeric" autocomplete="off" maxlength="8" placeholder="00000000" aria-describedby="e2">
+      <p class="err" id="e2" hidden></p>
+    </div>
+    <p style="margin:1rem 0 0"><button class="go" id="to3" type="button">Find my seat</button></p>
+  </section>
+
+  <!-- step 3 -->
+  <section id="p3" hidden>
+    <h2>Your boarding pass</h2>
+    <div class="pass" id="pass" role="group" aria-label="Boarding pass"></div>
+    <h2>Your seat in HS 1</h2>
+    <div class="hall" id="hall"></div>
+    <p class="legend"><span><span class="seat you"></span>your seat</span><span><span class="seat occ">A</span>other students, with their exam type (A, B or C)</span><span><span class="seat"></span>empty seats</span></p>
+    <p class="fine" style="margin-top:.5rem">Row 1 is the short front row. Seats are counted from the left as you face the front; the labels in the hall may differ.</p>
+    <p style="margin:1.2rem 0 0"><button class="link" id="again" type="button">Look up another student ID</button></p>
+  </section>
+
+  <p class="fine">This page shows a seat for a student ID. It stores nothing and shows no names.</p>
+</main>
+<script>
+(function () {
+  'use strict';
+  const $ = id => document.getElementById(id);
+  // ---------- step 1: the check-in questions (the wording and the facts are for Can and Celebi to confirm) ----------
+  // want: the answer that lets the passenger through; ok / no: the line shown after the answer
+  const show = k => { [1, 2, 3].forEach(j => { $('p' + j).hidden = j !== k; $('s' + j).className = j === k ? 'on' : j < k ? 'done' : ''; }); window.scrollTo(0, 0); };
+  $('to2').addEventListener('click', () => { show(2); $('mid').focus(); });   // Can, Addition 167: I agree -> student ID
+
+  // ---------- the made-up data of this mock; Ali's real file replaces both ----------
+  // HALL: rows from the front to the back; each row a list of blocks (seats per block), an aisle between blocks
+  const HALL = [[13], [21], [21], [21], [21], [21], [21], [21], [21], [21], [21], [21], [21], [21], [21], [21], [21], [21], [21]];   // HS 1 from the university's plan (Kapazitaet 391 + 8): row 1 nearest the lecturer
+  // no names, no student numbers: each entry is found and opened only with a key derived from the typed number (see build_lookup.py)
+  const OCC = {"10-10":"B","10-12":"C","10-14":"A","10-16":"B","10-18":"C","10-2":"A","10-20":"A","10-4":"B","10-6":"C","10-8":"A","12-10":"B","12-12":"C","12-14":"A","12-16":"B","12-18":"C","12-2":"A","12-20":"A","12-4":"B","12-6":"C","12-8":"A","14-10":"B","14-12":"C","14-14":"A","14-16":"B","14-18":"C","14-2":"A","14-20":"A","14-4":"B","14-6":"C","14-8":"A","16-10":"B","16-12":"C","16-14":"A","16-16":"B","16-18":"C","16-2":"A","16-20":"A","16-4":"B","16-6":"C","16-8":"A","18-10":"B","18-12":"C","18-14":"A","18-2":"A","18-4":"B","18-6":"C","18-8":"A","2-10":"B","2-12":"C","2-14":"A","2-16":"B","2-18":"C","2-2":"A","2-20":"A","2-4":"B","2-6":"C","2-8":"A","4-10":"B","4-12":"C","4-14":"A","4-16":"B","4-18":"C","4-2":"A","4-20":"A","4-4":"B","4-6":"C","4-8":"A","6-10":"B","6-12":"C","6-14":"A","6-16":"B","6-18":"C","6-2":"A","6-20":"A","6-4":"B","6-6":"C","6-8":"A","8-10":"B","8-12":"C","8-14":"A","8-16":"B","8-18":"C","8-2":"A","8-20":"A","8-4":"B","8-6":"C","8-8":"A"};   // taken seats and their exam types (Can 18.11); no numbers, no names
+  const SALT = 'uRs0ORNhnxvwkcsNhjcJzA==', ITER = 200000;
+  const SEATS = {"c23da17ffce284513f296513e33f7282":"kXpYVw2fDnOzqJW4.mnVEChyHUCvpsfHYhXE57FexH8655UlbBGjjBbcUFAIjBEA3uIhWTexEX1fc0JxjSoCw","ea63ebea951e45d661e821ac6f4ee7c0":"OXYDFFczjMJPWWTz.d9h2IIVyDg9lHkCEx+uvuCafxMv5groymtZkFfpgkbFALFfyqEAhpBgqUFVHL0iUiqS4","56a5d787d6e53187937c1ee145e1f8da":"U5ohWpdF94ceHFbM.loiqk7MJOm6MgVm8UafYzC5HQkyEfWKOcillrS8H3PeZVITYCdBngIesHxhROI+HMGw=","d3a4232337b9126bad290712dbf5b4a8":"GlluWBCzuOaeWOTk.3OiDG5s5dqRyNLpYW6Vtt/Paq1IKbvXj70CxJVwvr5tzgk762BkHsDr9822qC7TpeK/30Q==","9f5ff758ea41cb14ce786c2d7197a820":"AAcwHQ62Pc57IY9G.YWYtPQ33HBB5jTkxGkOYy5fmd0h9eGzO3jOtcYReOGYyMtcFH6oTg4sIibwpKeO8rqtEDQ==","3408eb1310221748a16a7b3bd91a6bcc":"HncdGuqXiZjaqnxK.guyd4WB0/QrNzRBW1H4MpoRkgnmkhLWP0wJJ+gRYIpWJMxUQFIahjqqkJBRqNjhawiOq1A==","323544d60d943efe766d1c8a705f76eb":"pRHtvXCirFhMRhKS./ISzDJf8pNteOKXQN5WRIdl762EcwOX/FDJWaE5Psdobc3WIsHZulWEZsADSmX52uFIb","dbc2e3e62aa39bd73a99b3051df6d01c":"4TaR1eBQ06z1SoJU.uTTv2S6sBChC5MZf3dj+lILzqb3g3arIYXLN0wIsLpT6I2D2IgtQxqVQYkDoT21Hs3aI","24cedaf5582ff04c2730caeb2672ddb7":"J9qouZpp5OjvSpIo.QP1kW/jtBkT/PXpj8+s2WMfAhSgUh1Ob4k9XwnUsV+zMxC9lSAFue62hvrML6lkWemgm","e64f979709db62d1681b68c8b22b37c1":"aTWcfHq+S/FV0u/8.tQCSUcWmLM2LM0sv7ZlDG3DSK7EwnumQhJm4SmStRQx7F2nyTOAVLTwPOeE14jKKYPvT","f714b4b0d0dffdccae77025e0885871a":"UZWljN/wF80M/7R2.CxgEZN2FMXa2kdGF+nV0s7Vqb4q+smsvKmNFjUBL4xB92KSe51pmR/zQHmT4SUtJQ9Yj","89501f04d58aeb8824f58745b8f5cdc6":"COeMFxylbymmmznx.6X4z31Vn/bOpHaOyfl+fRxdh7zdFBRleI0T8KXAzGakrsAaNDgJwfMt94wW82qEM9OG+","e8bfa7d3b7a4e4c82d266922513bb281":"//hB8WPTuxGfbS94.OF7HzBxeTrkcSR/r/7UHuR3XPNEMnkXObydQgmJEdgNyxyK2OVpz9DfoNetR9bsoXgxK","581b79f26d1395d3e2bd9e0660e4827d":"+d3v1TexG2LArmA0.v2d+RdevDIQvmWRrYxiVO1pN6WRJSN9D2BgfE3lk+kGQ+xWLjfZ1QpUDcR9uqGfWLAo8","1ebba6e116180bbe038680b590c1bd58":"CuEvbZ3bMqsdI3BG.6bFHrGmHAmQSi9IYnnL74/cgWzngC1q4gTes5xD/7PcdrbFi6WgoDvi83kNqET0rnxC/","e254bc711fd421c095096470e3e44bf8":"Z0kwEq2MRD4njLIx.FK0pVI05Gz6+1TzaTq3zq3mkQkXY9tkZ8DX6hVo+wMsFQF1Jy/+3is8p0ItYHrqEmIw0","043028f4c8b65549addcbfcbdf23cb6b":"3nReostrKYZDUD6j.TD3IGI33FqHynJ+a96Dg3T2MrixBSCALGnNLggreOJuAC1Foy0cVEdDDl21eqGCkhDhqTQ==","8f54985a76f92e306434b76af92d2124":"0kVPuX6bjxiNVYdX.oB+eyZkgQsoq+44Kxq6N0YAKZCkZ5jy1ALQKaDrhLrqHN/JKm4af4b4Rm2KQqJ4c6QCv","9ca41d97794e1537f5700b94eb7e9ffe":"svQEO4QfBdI0iIj1.1NJLvwK8VZWzc77ndxMV0ZYAMMpyQExWQUeOcgL2iZY9q/RYg+YcM8T0/j26+vQJdOISXA==","0db2e829dd04ba3a4d51f8b4f848e952":"ft+HlfNmv9CHYSQ7.IxmlQgATueYlNYlqFHyTH93ZZz1t0CzWlPBLaIbGXsQX5U1ZwkUAIjQYih+DwQyFavQQ","4a30c5e0c8ebb120cdb453a42f100a55":"UQw2eTRvsuWAkAaX.cEo4JCTaAy0LzWaagjmhYEP5Kk5fK3TGWKKCAoKxZduZ0kmQIu48I0Dk8K/gaz+vV+s=","2bbd2bf595d71d393e6b57535125acf1":"v0JuBRtF0rTO0nbF.3GVha7CDjpXDxRn1l/bopwiOnrBKutPo9+3G+JKsSs3Dvcwj4QPkZa8FgIWaTDPj814=","fe1d07201596de006e99dab99937d4d7":"/pxoxtmNu4oiUf+6.TAFRWtpkcblv++48O0Vxnfg39EFJEWizObgT5Zp4H1BfugRJ3LzdW7TIxG0lfHOls1F+","bfc128a38dff565333e31c0cb20decbb":"fVhvhJQpTLgXg08q.ViMDCNSAoSxaO+RRP7NOwtZsGQ5SCoQs66EQvgbjzlGErB9Nd4PrCMVyVjnlVliboEM=","92a1d016a5cbc366b6c91277649b79c0":"36Z1OxYGzifRE5KL.+HZpg5PHvDbCOADnemQiZqHzMpQDa7pjbd1/vrY2DmhOVHyfRqnBPRmI0OIaYYoeid97","dc353e70f9f40867d4baaf32cfe10f35":"Od7e47oywiKvZz1A.pi1g09CLJqKHWfg59x3WnpOdJbolMxKlUmiN3ZHLbmcTV3+3ynMzu6KyiYmTZf61agbr","b920d9e709028ebd0bcbb1012940aeaa":"lxh90WwP7EDjjaAs.BMWd5sOvUnUY4tpCLRO0wZY5uzRyNG8Dlzc4Iy7IHN0QQcW3iYGeJb5L4dbAFPsMu520yA==","d284a489be8349da01c444668a5efbd7":"mv2fdjV7D3Jj1qqq.RQGv/bC4lLzloQBN0lwFr0KfzRkHY3XxhJIpRv2agYxwJ5ZVy2h6KDmsIyfHl3T9AQU=","7bcf66b7a4a6d12f1a2aab0bfbf86faa":"3h6cicC3J7P+Mvjm./H19qq/eVm4D5h6G43KZcKss7yVajyLRjlek5HpRhVfJo96rHpROSsWiV277J1EXXn/4TA==","a2b6e3d75e59e39012c1d5b060b15e7d":"kE6aaNx+OajkHY1v.bc/RKENv2NdUYiLij6T1pUYeyk7Amwit9uTKw/9WEzLBfB/HrhtQCb0hT5691CPjMcg=","166f28f22b1b1f01da6c8608f233dca9":"DxNBNgI3gj0wjy0f./+ZoD5MRk6FpeDcPsp19dvgKnSzmPnxyes3ggmAxVcL6uaoIgXQNWLO+HKRtEjpndKJq","44b7d628af11bc454828a9452f967cdd":"hlWarDl4vz4vapUH.SfnC+D4vQaf5qwn6gS6FaNGlzgVFbTOJG4ipd1GEjs3X+2y7rEjIqgSNTOaSNppsd3po","484cba7b47058561841b6f6e0ac209e3":"tc/FCpfw9UOSQ+N5.KgEOSlBq9koHFnQhd8MZxlXdNn8eAOfcXBwK/iVXAoDRbQB2EhoezUWjoqFY/eggCPgT","6e9cb7be83ca8448c7f7769c88b223ca":"0FZuPKk/O+OFK52V.VDe65c+ekFEU8nDOnd3o15PjQyOrkG+82c7nP0atkjBluWnX/bLXDegFDLeNoBBZK8g=","022724700b45972ea15e712c9ce755c9":"1/rkERZWzf0d8KO1.1ZdwyrEGOewNVuU/aCnMyfh6Z1sqIelWSpG1/OBKJ+CxXAbrUUJaWYx+I/ej6/TdhxGtRQ==","bc648affaf87717a3d6b817850ca3ce3":"1NXg/4Cd4PxqK6l0.Y0lV8D+wrT+paiSF95/npcJpjfyorSTFB+yQHQJTWlatCAE66bYEB0oLyKs2oi10JKQq","73c640cb5e2a5707f0a0a8fb2dadf6ba":"lQ95TIe+mN9uU2yW.QCi8Jvowehsfyyyp/vn5IzI/8ihTbD5GWSSELaxTHr3D92unjzuZeZLlrlmCis0m+ZJ0kQ==","d69618c5b1fa5b4ef35766473d824ba6":"ybz/Ra9lAfn6BkBj.VCWEqr2+NlbUubUBd7aXGl4LiyeWwT6fneU45KPzgPErj5eXu1XS60rRI/HO0CxcuexC","dc286bd50ae42e888843c0c94dd3e052":"QG6K6tXB4qnE/4Jc.RHgwzQAqvKSU2o4w3pHmGrY9ICOpQLILEOyTUSZi/agtTAB0L5v2RGxfUxZBQ3BJyRgn","1ad1c38ce5f07c6c3b722ceb4452b82d":"3VAJXxc2n7vML5Pf.CUmHA95OVtXiIituV3m+8hKtXVUqZ8CHB0trjdRWxHi7kHrNwLDUxvw89aKcyfP0UVEp","9c3953acc5b753ea147e8167fd077051":"dE4JwcC4SRlkf1Ve.Ru/Pt8MPHnff258j2YSQNyPanCsJldhae8umdrExnRpKyDefZqnzFs4FgB5RGyoDSlk=","1575221c5a361a9b266f97bd165cf50b":"8oFOe2rUk6DMbDQj./SwT2LYFqOMDKLPWWSPzUg+K0g4EgFpoU33AYODV7Onhya9DISlss4S7Kz7dMAcmEGbr","417e2aa5b1f39966c359e74c82e9e11c":"WMOcollq5cGvpAsE.t2JabD7ehxR4dnwMqJexVdF4hpwN/tClCrTVcdcaM1mCS7vtK9Z0LtTrnAGjbhcuBcY=","4013af93b63682b8853c65a833dd66a9":"yXW96bCpZ7doxqsk.8oWfqNMHoqIxeQadWINSfFRP6pwFmUdtCuS0eafvZHHqfcNbDSMa0L235wZskY9Fdgc=","66db77b06122c86a3ef696ea9166c852":"cLqhg4jUoNPkBjh6./OI77eCzglzU/ArxCBj4JJqZV9KWeomsEjlHVl2AzbQrqzTG+MOSa6s57uBFaRaN+oXO","903f01fd2e4ccc1da66d1b82f0c69596":"jOzSAqPwANKC+Ten.w5BHkW3rimmVwkRHFXkU4a6Pd36tj79QYO/o2OCGr0nHUvl2UrhhsqdmhtG+YpkpSMKD0Q==","46004743da69eabe0f700aaa4adbd09a":"MkDtx+hQIgrYKbo/.IGwyGev4vGJgBedRkHiJCuwwZnZ2BXTEsey2qK47w8QKRYX7+AcwjdB/YJib+N+H2zQ+","cb9d3d1081d9fced1aae28ec839c4e48":"8bcEov6PzzNOdRni.eL0rzm8ih1DBqrhxyKdpPYORfMDvfQZd+i8ArrbfCRx3CU1iEhBO53srenTFS/a5RQz+","e5e59306bdee9af94b09c15422c1981d":"Kb6EALrXWt7q0WUd.9LMeSs4td+vEqEF0MRuEFQpynSu6rky9zWAaZMzM0UwzkJajX85aKqNIUy6sOYwdo3ImnQ==","65df2c2cb556d481b972e19cba924cb3":"V0v6miXloux+tLJw.k4y5/H8ouL0Ux77+s7g4yUfze2v0IR8qF19fgSbWL+DUIDUw1eo1nxGP381M+1pKnYWK","8c85914f044f1ef82b39083bbd30ba7c":"rLINEB8V/8+TmJle.q8nhDp8fWVtszmTuJ2xj9+9VJE5q4NIEFfeKc1J3xNsh5iHKWFuwwZw3mC/DFF49JK9y","3c89004d95b22ec58cdaf64b439910bf":"4Fvl1X8Vpsmnig5y./LPAmzfw6tF9eCY8FrQu4WFLtMgYWXRGLPrA0aZamicIZh/PdOkDB9z8QnvYgzVpPuEJgA==","789b0a0e2eb0716c4464ee87f565ebb1":"iCy0PI+7/bs5Y9nK.OFY5WTC3kE1FvDwaPDutHK7MogknI60Qvlyz5x6vwuRQoc8EH1yIzlcpOtfCSP/YMyOcjQ==","445d74a85bf903ed39323dfcc34de781":"nktdiSvZzqbqwD4b.i2ePq+MDkaGdP/4+ET5N3nozOE1tndDMKIJF4zW4w/pFX86glrWCZF1PqigmbO9l0cs+bQ==","80c23cfcb45dfe650e46f172e18841b2":"+AGccLGsMnemhVtO.BtQhZleey3RXpIF7Uo3Me0VGnlPi40O3+8eyCg4bk5EoiPSTltFUX22m6c87CWmSH3tNuQ==","cf1d6fc3407b4a35e2c6713ae498b82b":"RPgSw7E9fZVgIUHW.UnAVEsbE5bQ47vPkwwPfBsgIy3JFiOv5ktEaaXOWhpkq0HdRZP9IvOX8nuGjTTQM5HupPw==","ac4d16389d2d1b765b94e46400998d16":"UvkhHUDscLxAXROR.6TpRpSXCzym0hTBJtRwqlwpJlCnfaHhyc3d8V/RP5P4z+fC7Yd5OTTKvF4hMJBHPYWZEJA==","d92e554e82627de299632bd62e221ec6":"DPaCZaVJLas9HuNh.ASGv8eZCOnOc1rMaRf3Bu0JNZAugdalIxrHOYbo76u9NWAXNNf0xKJHSXrn/FZIU/uU=","8da965c4087065e0c3d83a76792c0d01":"V/Hfej+kq/FL4y0q.74eS4YkrezfrZwTrUv1CKGbhIFy8U6se4SRWnWdkZYoO1DJ3YKIs45ZbH4cRRGNK4K+b","39663d9db23a5a534fb9adf18e32d2d2":"0I5RemzQ2/cAf8I6.2cu5Vw1cspsUrzaSuc0urvXccz07MvGjPXLesDSbsjJ8zx5tD+BUD9h/oN+7SoFiSH/NAw==","443e81e91e8fdb28628dec2da7721efd":"0MQ1e7WItRIjLSLr.v05A/lBfMIt0dG1yhu+PY17WCJMnagsWrZIZOmOQ/uz537iaKlZ/rJhVr7DEIUAB4ZdE","dd4614acfe5a199bb2d35d449afae960":"73yaHHVrvkNacmcn.BuKP3i34Vw+RBK8TPh7to3vM70ZXMgHqPjR/BIK93bVBqUkuwU92IUlnpiqQKvJRznE=","d10d626a8c3c77896e7ccf3843dd5b72":"u0FEmsnHxumoAW7g.JGlEGLfOPAYpLtt1oVO142tVQcdR+mUJm8/pL4gygkCZssPGXZDHhi4PxtgaI1glmRLU","a47fa206a1ecb5849d2082988a21613d":"rYOpfc5yw+zH2LX4.XlBsStyg4E6ZrQMwoTVYmsosQQzRFlUTdEruXOjNpDrBNQxcBHLFdN0Iqq7ZpK1r8MeNYw==","1bd986e453e46eb972e981f4c3efda19":"DNO61sWKzxlopHKJ.462qrxuXShnOhUOHL3bidKf2hZOSmgIdGLTYFC+kNBeDd6chGj9yQ1XaBrXQ/VQEM1TLxw==","3cd220ce0f42d863b3eadaa20b94cf44":"FmaTalJVicvp52fm.V6IpBd/PB35tlJ6nOFHOkapUdSWah68HCQKSS0U1OKeXIBBdYG+Bt5ynwssE0zGPjFCP","764367b68e13b7a27fe0185d4410e05a":"vkIvboq7DwRvXLdJ.7bktNs2ARhHsnzno6XEZdEZ2EITiywA8VBfk903I+/7Pc/ueP2oSlRV5dUw41RRtblRyEQ==","646fe25d20ff05d7f5a1bc94824b9b98":"CJqQjXk5zE1LOjGt.0Cn+xrQA/Ipve6sySNbwS9X0TUqOi/Jojjl6uzpwkSdwVF10vPVMuu3LMAB7OD18N9/P","dba461bf2993e7b4483abffaa5782445":"rX0e4l7QeZw3F2IZ.oCxazv37z3+gTQ4uLZ3h2Mj7DTisUBNpb9nSc1xeNv2MrEOYOW0+FgZL4aae4BLs4/0qjA==","e39100d6114d6642a5723290c3c649a2":"dnf93yTugmFNKuv3.AzcKWOniK8IqwF6iaIOXOodfnrXo//Vp8SKZdR6lP8SlE3JIWrK/u2D/Zo7dozw9A10=","0dbe833f3f4992c088a1aac023c0d502":"SpsVkj68sqSks0qz.81tMZwxab7z3fjHpkDRvIpOqeqskeClMw3GTQuVxCUX3zXHI563Sky0XrubKXatJP2ES","264d1c163cbb5e1cc233521bb8c30a75":"3Lj5Jn7ufslFY4d+.s0C9pZ6ZKQOHxp/bX3/u5iiqTB0/1I5pF3D+wDMLNy7RsrkLjYbO+kyLsOQDD7oMqIQ=","f30d4c018c5e4159d4825a9fe78ff88c":"Zz26oE0EmS8Vn65N.6Fgx1glWX4hKxhqCn/ymA1ZZauS8Q1wdJ9LrU0BCG8D95NRwsmc7XmuLjTRPNn0VoZum","e47ac3e2e1bd0682222089b98cc5a4f8":"Hnw2OCpmdRR6Cly9.9bB4ur1tOsnRrP0py7BY4Al1/362qVGcl5ciARt78N0Ao//AN1Hf8+TzwTt1lkzIs848","6e063ed711196840d3d73462c66128ec":"g5bcZUyUy0keljoB.e9yEj0k6L4946s+32t9ZiD6Ialw3wrQGTUIUNX3eqQ0IyH+udhAIPu5YqPBY6ZUW2H9ZXg==","c06228e203447424d0bc47f00005ec51":"JX/B09TJ1ccntZI9.E62MGYMb2tUVKp2KQsEEA1dzrJ7V1bVoz9BMr9V9onq20tXBu7wzs2uywMrQ3a0vTHKi","817d1fe1dc961ddae158ef0a774071f0":"ujmdPZmJenlYIb4v.UDAmWISVEpR0LyNPCLQRMW6P6zxTJVJRAePq1cla4EuNMhtIZYv/NSt0weVf7fJB2i+u5A==","1443a00d1d791940a099659851d1b491":"zezH0pdG3DW615Wx.FOXL7iTtafjKh0QSx6ld4sEZRlVjC3gcrg2kVhHD5wT9Kc/jH4wkQBVDtCR0soNOXcSzVQ==","b4018449ac0d867b38d029d617c3538b":"EWULfz3aYSjnmEX3.DQhxAsVxUBTP0YuyPttOKaNObr1FCYjpghrwM5iD9zWznjd1tPQZ3AN8Obdum/TaNMbV","48827936e916ac5ee7a5cd4c3ed3891c":"mhrNX2ZWuycN5GvX.jm4k6thb/nHXgG9Bz8+inx+w4K/2EZ6A7raVrQRiuOWwn7ThHouQPgk3LVsNUV2xkoMAzA==","eaac6ac3d1906041e68c2e9e6b405ecf":"A3LtL68bGbXkWlMd.O7ldmSLE5MokY0NLVqJbWor5NgCL/t6isADAegelLUJyAnE0+mxSzN9yyHHn7zy/e9k=","1be38dc3ea1ab30b0fe3ce8b70fb8510":"GYuXwhVb7wASQ91g.FEk74SaVesQoiQzj/D1TsfOPfpM9Dr9htfoOQON3W/QlhwK1wcRLEC+oM5nsYCH70Pw=","f62ec5e588016059e39f9dd0172a2cb3":"H8HRmxgOzVJJY7Ai.tEyuqZMQUawUVgmUwboLryhkgCnDsMWhw/omyGLmQWzxOAXwz+0ms8+hgAmBb+d2nbeS","bdd307c855455ba512bd6a24fb85b754":"nEF+hHf7RFeW6npI.pOD698TnKjOqeJWTJ7BHdNRIl3CRgDMS8jmgMGBl7QgDOlcpBFFmMjDgHRBTYDzi+ApO","3ccda7150b39e0dba0d8e59706a90ab9":"A8/lKh1s9N2JQra0.9yZPKrRSVbsdm9gjsWSxpf7viy3XI6qH/KQWT5qZOaMxd0wacge145TDLSotffQuODTi","92581da690d08beb326beff128e1e291":"rzh09G4XACBQdEI9.VFJX9bKSPf2OsqSi+Y9rUszrPFxfMloKzVIcP6EOITv+7pOGiV4Qxg7LqvO0BgsYE6B+iQ==","a637e8b459d55f4298792324a18bbfa5":"qL5+a+5xy/z77lpY.Iu67KwW4cPiADEEZGteaatmxxtb5O4mEjsNdNeEgjt3B1koqMGuPjIH9JN9Z6jJeq4F6"};
+  const ub = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+  async function findSeat(id) {
+    const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(id), 'PBKDF2', false, ['deriveBits']);
+    const bits = new Uint8Array(await crypto.subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', salt: ub(SALT), iterations: ITER }, base, 384));
+    const look = Array.from(bits.slice(0, 16), b => b.toString(16).padStart(2, '0')).join(''), e = SEATS[look];
+    if (!e) return null;
+    const [n, c] = e.split('.'), key = await crypto.subtle.importKey('raw', bits.slice(16), 'AES-GCM', false, ['decrypt']);
+    try { return JSON.parse(new TextDecoder().decode(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: ub(n) }, key, ub(c)))); } catch (x) { return null; }
+  }
+
+  // ---------- step 2 ----------
+  const digits = s => String(s).replace(/\D/g, '');
+  $('mid').addEventListener('input', () => { $('mid').value = digits($('mid').value).slice(0, 8); $('e2').hidden = true; });
+  $('mid').addEventListener('keydown', e => { if (e.key === 'Enter') $('to3').click(); });
+  $('to3').addEventListener('click', async () => {
+    const id = digits($('mid').value), e = $('e2');
+    if (id.length !== 8) { e.hidden = false; e.textContent = 'A student ID has 8 digits. Please check the number.'; return; }
+    $('to3').disabled = true; e.hidden = false; e.textContent = 'Checking your boarding pass…';
+    const s = await findSeat(id); $('to3').disabled = false; e.hidden = true;
+    if (!s) { e.hidden = false; e.textContent = 'There is no seat for this student ID. Please check the digits. If they are right, come to the front of HS 1 before the exam starts.'; return; }
+    pass(id, s); hall(s); show(3);
+  });
+  $('again').addEventListener('click', () => { $('mid').value = ''; show(2); $('mid').focus(); });
+
+  // ---------- step 3 ----------
+  const two = n => String(n).padStart(2, '0');
+  function bars(id) {   // a strip of bars from the digits: decoration only, it encodes nothing a scanner could read
+    let x = 0, r = '';
+    digits(id).split('').forEach(d => { const w = 1 + (+d % 3); r += '<rect x="' + x + '" y="0" width="' + w + '" height="34"/>'; x += w + 2 + (+d % 2); });
+    return '<svg class="bars" viewBox="0 0 ' + x + ' 34" width="' + Math.min(96, x * 2) + '" height="34" aria-hidden="true" fill="#111">' + r + '</svg>';
+  }
+  function pass(id, s) {
+    const f = (k, v, cls, span) => '<div' + (span ? ' class="' + span + '"' : '') + '><div class="k">' + k + '</div><div class="v' + (cls ? ' ' + cls : '') + '">' + v + '</div></div>';
+    $('pass').innerHTML = '<div class="top"><b>BOARDING PASS</b><span>Microeconomics midterm</span></div><div class="body">' +
+      f('Passenger (student ID)', id.slice(0, 4) + '&#8239;' + id.slice(4), '', 'f2') + f('Flight', '040184 · 1') +
+      f('Gate', 'HS 1') + f('Boarding', '18:15') + f('Departure', '18:30') +
+      f('Row', two(s.row), 'big') + f('Seat', two(s.seat), 'big you') + f('Exam type', s.type, 'big') +
+      f('Date', '19.11.2026') + f('Duration', '90 minutes') + f('Class', 'Economy') + '</div>' +
+      '<div class="tear"></div><div class="stub"><p>Hand luggage: one blue or black pen, one non-programmable calculator, your u:card or a photo ID. Boarding closes at 18:30.</p>' + bars(id) + '</div>';
+  }
+  function hall(s) {
+    let html = '<div class="front">Front · lecturer</div>';
+    const seatNums = blocks => {
+      const tot = blocks.reduce((p, q) => p + q, 0); let n = 0, x = '<div class="row seatnums" aria-hidden="true"><span class="rowlab">seat</span>';
+      blocks.forEach((b, bi) => { if (bi) x += '<span class="aisle"></span>'; for (let i = 0; i < b; i++) { n++; x += '<span class="sn">' + (n === 1 ? n : '') + '</span>'; } });
+      return x + '<span class="rowlab" style="text-align:left;white-space:nowrap">seat ' + tot + '</span></div>';   // "seat 21" (Oyun)
+    };
+    HALL.forEach((blocks, r) => {
+      if (r === 1) html += seatNums(blocks);
+      let n = 0;
+      html += '<div class="row' + (r + 1 === s.row ? ' you' : '') + '"><span class="rowlab">' + two(r + 1) + '</span>' + blocks.map((b, bi) => {
+        let x = bi ? '<span class="aisle"></span>' : '';
+        for (let i = 0; i < b; i++) { n++; const you = r + 1 === s.row && n === s.seat, t = OCC[(r + 1) + '-' + n];
+          x += '<span class="seat' + (you ? ' you' : t ? ' occ' : '') + '"' + (you ? ' aria-label="Your seat: row ' + s.row + ', seat ' + s.seat + '"' : ' aria-hidden="true"') + '>' + (t ? t : '') + '</span>'; }
+        return x;
+      }).join('') + '<span class="rowlab">' + two(r + 1) + '</span></div>';
+    });
+    $('hall').innerHTML = html;
+  }
+})();
+</script>
+</body>
+</html>
