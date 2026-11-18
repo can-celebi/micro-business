@@ -101,6 +101,7 @@
   <h1>Midterm: questions and solutions</h1>
   <p class="s">040184 Microeconomics, group 1 · 19.11.2026 · Type A · questions 4–24 · 100 points + 14 bonus</p>
   <p class="s">Options and letters as in Type A. In Types B and C the same options appear in a different order.</p>
+  <p class="s">The correct answer is highlighted in green.</p>
   <div class="jump" id="jump" aria-label="Go to question"></div>
   <section class="card" aria-live="polite">
     <div class="qhead"><b id="qn"></b><span id="qp"></span></div>
@@ -110,7 +111,6 @@
     <ol class="st" id="st" hidden></ol>
     <div class="qline" id="qline" hidden></div>
     <ol class="opts" id="opts"></ol>
-    <div class="box ans" id="ans"><h3>Answer</h3><div id="anst"></div></div>
     <div class="btns one"><button class="show" id="bsol" type="button" aria-pressed="false">Show solution</button></div>
     <div class="box sol" id="sol" hidden><h3>Solution</h3><div id="solt"></div><div class="figs" id="sfigs" hidden></div></div>
   </section>
@@ -158,8 +158,6 @@
     $('st').innerHTML = q.statements.map((s, k2) => '<li><span class="r">' + ROMAN[k2] + '.</span><span>' + s + '</span></li>').join(''); math($('st')); $('st').hidden = !q.statements.length;
     put($('qline'), q.question);
     $('opts').innerHTML = q.options.map(o => '<li data-l="' + o[0] + '"><span class="l">' + o[0] + ')</span><span>' + o[1] + '</span></li>').join(''); math($('opts'));
-    const right = q.options.find(o => o[0] === q.key);
-    $('anst').innerHTML = '<b>' + q.key + ')</b> <span>' + right[1] + '</span>'; math($('anst'));
     $('solt').innerHTML = q.solution; math($('solt')); figs($('sfigs'), q.solution_figures);
     setShow($('bsol'), $('sol'), false); mark(true);
     [...jump.children].forEach((b, k2) => b.classList.toggle('on', k2 === i));
