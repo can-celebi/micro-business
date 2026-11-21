@@ -28,6 +28,9 @@
   const API = 'https://api.github.com/repos/' + GH.owner + '/' + GH.repo;
   const FB = 'tags/fb/' + SESSION + '/';   // feedback per question (Addition 20)
   const BOARD = 'heads/v/' + SESSION + '/arena/', ACCT = 'tags/acct/' + SESSION + '/', PROG = 'tags/prog/' + SESSION + '/';
+  // the optional link to the exam result (Can, Midterm Addition 185): one blob per account, {v, key, enc, at}; enc = the student ID encrypted on
+  // this device with the course's public key (config.js namesKey, RSA-OAEP SHA-256, as the deck sign-in), so only the lecturer's key reads it
+  const LINK = 'tags/link/' + SESSION + '/';
   const T = SESSION === 'test' ? '-test' : '';
   const KEY_LOGIN = 'micro-arena-login' + T, KEY_DEV = 'micro-arena-device' + T;
   const WRITE_EVERY = 120000, CAP = 900, ITER = 100000;
@@ -318,7 +321,7 @@
     const t = document.getElementById('tsw');
     if (t) t.onclick = () => menu(t, [['← Midterm practice', '../midterm/' + TQ, 'mrow-mid']].concat(P.topics.filter(x => (TOP[x.id] || []).length).map(x => [esc(x.name) + (x.id === crumbTopic ? ' ✓' : ''), () => { leaveQuestion(); topic(x.id); }]), [['All topics', () => { leaveQuestion(); home(); }]]));
     const m = document.getElementById('meb');
-    if (m) m.onclick = () => menu(m, [['<span class="fun" data-fun="menu-top"></span>', null, 'mrow-fun'], ['How points work', howPoints]].concat(login ? [['Leaderboard', () => { leaveQuestion(); leaderboard(); }], ['Log out', () => { leaveQuestion(); logout(); }]] : []));
+    if (m) m.onclick = () => menu(m, [['<span class="fun" data-fun="menu-top"></span>', null, 'mrow-fun'], ['How points work', howPoints]].concat(login ? [['Leaderboard', () => { leaveQuestion(); leaderboard(); }], ['Link my practice to my exam result', () => { leaveQuestion(); linkPage(); }], ['Log out', () => { leaveQuestion(); logout(); }]] : []));
   }
   // a question left before it was answered: one "skipped" record with its time (Hande's timing data keeps every visit), no points
   let current = null;
@@ -424,6 +427,56 @@
     };
   }
   async function logout() { await writeAll(true); login = null; try { localStorage.removeItem(KEY_LOGIN); } catch (e) {} me = { done: {}, wrong: {}, pending: [] }; loginScreen('You are logged out on this device.'); }
+  // ---------- "Link my practice to my exam result" (Can, Addition 185; Oyun's design, Hafize's text) ----------
+  async function encryptId(m) {
+    const der = Uint8Array.from(atob(CFG.namesKey), c => c.charCodeAt(0));
+    const key = await crypto.subtle.importKey('spki', der, { name: 'RSA-OAEP', hash: 'SHA-256' }, false, ['encrypt']);
+    const ct = await crypto.subtle.encrypt({ name: 'RSA-OAEP' }, key, new TextEncoder().encode(JSON.stringify({ m })));
+    return btoa(String.fromCharCode(...new Uint8Array(ct)));
+  }
+  const LINK_TEXT = '<p><b>What is linked:</b> your practice record (the questions you answered, your points and the time you spent) with your midterm result.</p>' +
+    '<p><b>Who sees it:</b> only me and the software I use for the analysis. Anything I share with the class is a group summary, never an individual result.</p>' +
+    '<p><b>It is optional:</b> linking or not linking has no effect on your grade.</p>' +
+    '<p><b>Changing your mind:</b> you can remove your student ID at any time with "Remove my student ID" here. The link is then removed from the course records; an encrypted copy that no one can read without my key may remain in the backup history for a while.</p>';
+  async function linkPage() {
+    if (!login) return start();
+    closeMenus();
+    app.innerHTML = header() + '<div class="card lk"><button type="button" class="x" id="lkx" aria-label="Close">×</button><h2>Link my practice to my exam result</h2><div id="lkb" class="msg">Loading…</div></div>';
+    document.getElementById('lkx').onclick = home;
+    const box = document.getElementById('lkb');
+    let rec = null; try { const sha = await getRefObj(LINK + login.key); if (sha) rec = await readBlob(sha); } catch (e) { box.textContent = 'Could not reach the server. Please try again.'; return; }
+    if (rec && rec.enc) {
+      const d = rec.at ? new Date(rec.at) : null, day = d ? String(d.getDate()).padStart(2, '0') + '.' + String(d.getMonth() + 1).padStart(2, '0') + '.' + d.getFullYear() : '';
+      box.className = '';
+      box.innerHTML = '<p><span class="ok">Shared on ' + esc(day) + '.</span> Only your lecturer and the analysis software can read it.</p><p>You can remove it at any time.</p>' +
+        '<button type="button" id="lkrm">Remove my student ID</button><p class="bad" id="lkm" hidden></p>';
+      document.getElementById('lkrm').onclick = async () => {
+        const b = document.getElementById('lkrm'); b.disabled = true;
+        try { const r = await fetch(API + '/git/refs/' + LINK + login.key, { method: 'DELETE', headers: H() }); if (r.status !== 204 && r.status !== 422 && r.status !== 404) throw new Error(r.status); linkPage(); }
+        catch (e) { b.disabled = false; const m = document.getElementById('lkm'); m.hidden = false; m.textContent = 'Not removed (offline?). Please try again.'; }
+      };
+      return;
+    }
+    box.className = '';
+    box.innerHTML = LINK_TEXT + '<label for="lksid">Your student ID (Matrikelnummer), 8 digits</label><input id="lksid" inputmode="numeric" autocomplete="off" maxlength="8" placeholder="00000000">' +
+      '<p class="bad" id="lkm" hidden></p><button class="go" type="button" id="lkgo">Share my student ID</button>' +
+      '<p class="fine">Your ID is encrypted on this device before it is sent. Other students and the leaderboard never see it.</p>';
+    const inp = document.getElementById('lksid'), msg = document.getElementById('lkm'), go = document.getElementById('lkgo');
+    inp.oninput = () => { inp.value = inp.value.replace(/\D/g, '').slice(0, 8); msg.hidden = true; };
+    inp.onkeydown = e => { if (e.key === 'Enter') go.click(); };
+    go.onclick = async () => {
+      const m = inp.value; if (!/^\d{8}$/.test(m)) { msg.hidden = false; msg.textContent = 'A student ID has 8 digits. Please check the number.'; return; }
+      if (!CFG.namesKey) { msg.hidden = false; msg.textContent = 'This page cannot encrypt the ID here. Please try again later.'; return; }
+      go.disabled = true;
+      try {
+        const blob = await newBlob({ v: 1, key: login.key, enc: await encryptId(m), at: new Date().toISOString() });   // the ID itself never leaves this device in plain form
+        let r = await fetch(API + '/git/refs', { method: 'POST', headers: H(), body: JSON.stringify({ ref: 'refs/' + LINK + login.key, sha: blob }) });
+        if (r.status === 422) r = await fetch(API + '/git/refs/' + LINK + login.key, { method: 'PATCH', headers: H(), body: JSON.stringify({ sha: blob, force: true }) });
+        if (r.status !== 201 && r.status !== 200) throw new Error(r.status);
+        linkPage();
+      } catch (e) { go.disabled = false; msg.hidden = false; msg.textContent = 'Not shared (offline?). Please try again.'; }
+    };
+  }
   function home() {
     leaveQuestion();
     if (!login) return loginScreen();
@@ -790,6 +843,7 @@
     if (!login) return loginScreen();
     if (t && P.topics.some(x => x.id === t)) { params.delete('topic'); return topic(t); }
     if (params.has('board')) { params.delete('board'); return leaderboard(); }   // the strip's "Full leaderboard" from /midterm/
+    if (params.get('account') === 'link') { params.delete('account'); return linkPage(); }   // the results page's "Open my practice account"
     home();
   }
   document.addEventListener('visibilitychange', () => { if (document.hidden) writeAll(true); });
