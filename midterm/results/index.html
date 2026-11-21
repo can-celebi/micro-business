@@ -144,7 +144,7 @@
       <div class="row"><span>Problem sets at the end of the course</span><b id="psend"></b></div>
       <div class="row"><span>Midterm (your effective score)</span><b id="mtv"></b></div>
       <table class="need" aria-live="polite"><tr><th>For grade</th><th>Final exam</th><th></th></tr><tbody id="need"></tbody></table>
-      <p class="dim" style="margin-top:.8rem">Total = 15% problem sets + 40% midterm + 45% final exam. The midterm counts with at most 100 points. Grade 1 is above 87%, grade 2 above 75%, grade 3 above 63%, grade 4 above 50% (exactly 50% is not yet a 4). To pass, the two exams must also average at least 50%, and you must take the final exam. The numbers are whole percentages of the final exam. This is a calculation with the numbers above, not an official grade.</p>
+      <p class="dim" style="margin-top:.8rem">Total = 15% problem sets + 40% midterm + 45% final exam. The midterm counts with at most 100 points. Grade 1 is above 87%, grade 2 above 75%, grade 3 above 63%, grade 4 above 50%. To pass, the two exams must also average at least 50%. The numbers are whole percentages of the final exam. This is a calculation with the numbers above, not an official grade.</p>
     </div>
   </section>
   <section id="link" hidden>
@@ -341,12 +341,12 @@
       const x = (c - RULES.w.ps * ps - RULES.w.mt * mt) / RULES.w.fin, byTotal = Math.max(0, Math.floor(x + 1e-9) + 1), need = Math.max(byTotal, exam);
       // three plain outcomes: a number (the smallest whole percent that is enough), "not reachable", "already reached"
       return '<tr><td class="g">Grade ' + g + '</td>' + (need > 100 ? '<td class="v w">not reachable</td><td class="why">it would need more than 100% in the final exam</td>'
-        : need === 0 ? '<td class="v w">already reached</td><td class="why">with the numbers above. You must still take the final exam to pass.</td>'
+        : need === 0 ? '<td class="v w">already reached</td><td class="why">with the numbers above.</td>'
         : '<td class="v">at least ' + need + '%</td><td class="why">' + (exam > byTotal ? 'set by the rule that the two exams average at least 50%' : '') + '</td>') + '</tr>'; }).join('');
   }
   function calcInit(s) {
     $('psnow').value = s.ps.avg; $('psnext').value = 100;
-    $('pshint').textContent = 'From the ' + s.ps.graded + ' problem sets graded so far; ' + s.ps.remaining + ' are still to come. You can change both numbers. The calculation assumes all ' + (s.ps.graded + s.ps.remaining) + ' problem sets count equally, with none dropped.';
+    $('pshint').textContent = 'From the ' + s.ps.graded + ' problem sets graded so far; ' + s.ps.remaining + ' are not yet counted. You can change both numbers. The calculation assumes all ' + (s.ps.graded + s.ps.remaining) + ' problem sets count equally, with none dropped.';
     const pills = [...document.querySelectorAll('.calc .pills button')], press = b => pills.forEach(x => x.setAttribute('aria-pressed', String(x === b)));
     pills.forEach(b => b.onclick = () => { $('psnext').value = b.dataset.v === 'same' ? $('psnow').value : b.dataset.v; press(b); calc(s); });
     $('psnow').oninput = () => { if (pills[1].getAttribute('aria-pressed') === 'true') $('psnext').value = $('psnow').value; calc(s); };
