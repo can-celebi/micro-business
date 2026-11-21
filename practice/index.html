@@ -153,6 +153,12 @@
   @media (pointer: coarse) { .fbo { min-height: 40px; display: flex; align-items: center; } }
   /* the shared box and tiles from arena.css take their frame from --line, which is pale in the arena: give them the dark frame too */
   .lbx, .topic { border-color: var(--edge); }
+/* "Link my practice to my exam result" (Can, Addition 185; Oyun's design 26_fun/06162748294d) */
+.lk { max-width: 460px; margin: 1rem 0; position: relative; } .lk h2 { font-size: 1rem; margin: 0 0 .5rem; padding-right: 34px; } .lk p { font-size: .92rem; margin: 0 0 .7rem; }
+.lk .x { position: absolute; top: 4px; right: 6px; border: 0; background: none; font-size: 1.4rem; line-height: 1; padding: 6px 10px; color: #777; min-height: 44px; cursor: pointer; }
+.lk label { display: block; font-size: .85rem; color: #777; margin: .3rem 0 4px; }
+.lk input { font: inherit; font-size: 1.2rem; letter-spacing: .1em; font-variant-numeric: tabular-nums; width: 100%; padding: 8px 10px; border: 1.5px solid #222; border-radius: 3px; }
+.lk button { min-height: 44px; } .lk .go { margin-top: .7rem; font-weight: 600; } .lk .ok { color: #1b7f3b; font-weight: 600; } .lk .bad { color: #a12f2f; font-size: .88rem; margin: .5rem 0 0; } .lk .fine { font-size: .8rem; color: #777; margin: .7rem 0 0; }
 </style>
 </head>
 <body>
@@ -178,6 +184,6 @@
 <script src="../assets/js/fun/f8-run.js?v=20261115b"></script>
 <script src="../assets/js/fun/f9-strip.js?v=20261115b"></script>
 <script src="../assets/js/fun/f10-progress.js?v=20261115b"></script>
-<script src="../assets/js/practice.js?v=20261115pg1"></script>
+<script src="../assets/js/practice.js?v=20261121link"></script>
 </body>
 </html>
