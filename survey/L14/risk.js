@@ -121,12 +121,18 @@
   let gameStart = 0;
   const startClock = () => { gameStart = performance.now(); };
   const stopClock = j => { secs[j] = Math.round((performance.now() - gameStart) / 1000); };
+  // Utku B1: a quick double tap must not answer the next screen. Taps are ignored for 400 ms after a screen (or new buttons)
+  // is drawn; the guard sits on #app in the capture phase, so it runs before any button's own handler.
+  let drawnAt = 0;
+  const fresh = () => { drawnAt = performance.now(); };
+  app.addEventListener('click', e => { if (performance.now() - drawnAt < 400) { e.stopPropagation(); e.preventDefault(); } }, true);
   function frame(title, body) {
+    fresh();
     app.innerHTML = '<h1>Risk Games</h1><p class="s">Anonymous · about 8 minutes · Microeconomics · Lecture 14</p><h2>' + title + '</h2>' + body +
       '<div class="msg" id="msg">' + (PREVIEW ? 'Preview: nothing is sent.' : '') + '</div>';
     window.scrollTo(0, 0);
   }
-  const say = h => { $('msg').innerHTML = h; };
+  const say = h => { $('msg').innerHTML = h; if (/<button/.test(h)) fresh(); };
 
   function opening() {
     frame('Before you start', '<p>Four short games about money and chance. The money is imaginary: nobody is paid. Choose what you would really choose. There are no right answers.</p>' +
@@ -230,34 +236,36 @@
   // ======================================================================================================
   // ?results: the phase (shared, set by the lecturer) and the charts
   // ======================================================================================================
-  // check hashes of the phase tags; a tag is the first 8 hex of sha256('micro-gate:<teacher code>:L14-risk-phase:<phase>'),
-  // made only on the lecturer's device (the code is never in the site). The latest valid tag sets the phase.
+  // The phase tags (Utku B2). A tag is the first 8 hex of sha256('micro-gate:<teacher code>:L14-risk-phase:<session>:<p>'),
+  // made only on the lecturer's device (the code is never in the site); the session is in the tag, so a tag from a test run
+  // cannot be replayed into the class session. Students see the HIGHEST valid phase ever set: replaying an old tag cannot take
+  // the view back. Tags dated before class (− 30 min) or more than 2 minutes in the future are ignored.
   const PHASE_CHECK = {
-    0: '760a736bf9ff72f6c401b18484d65c8e88d67109f71643361990ccc1b115b8e7',
-    1: '23c3263f0487f1c3833f02ce57c9ff952fde1bfe071c691ca3afe41bea542438',
-    2: 'ac69aee1cf0a684259969d06cf4c3d1f511f1cb48d09656e929591bb193242d0',
-    3: '32d4943cdbb33a57be8603eacf26ef2ffebd23fbb6ea55e28ebad3fd2e1580c8' };
+    ws26: { 1: 'b51dec083f6ef076abe74ffd524bc3385d06bd297e27be766cc72982b5350822', 2: '12ee9914c4a1952261e0f08d66db78f05118d56ea4386edb8dddf08e7b038336', 3: 'db446d81278879db970b7cb860118c062efc566c4c533224af48d3e01516246c' },
+    test: { 1: '650167762e0a9deb33cf353320a8126ee55755c1dc3c4eb3f4671a3a7ca6f22c', 2: '69180475a26f540b68ed461a4afda9ed5c4e3efe913360467cf8031f1147af8f', 3: '26df8e50cfcad20954cbe2bb3cd21fbd7feb62df108473f096caafa08fcd0a4d' } };
   async function sha(x) { const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(x)); return [...new Uint8Array(b)].map(v => v.toString(16).padStart(2, '0')).join(''); }
+  const window14 = () => { const w = P.classWindow && P.classWindow('L14'); return w ? [w[0] - 30 * 60000, w[1]] : null; };   // null in the test session
   async function sharedPhase() {
-    const all = (await P.allAnswers(PHASE_POLL + '/'))[PHASE_POLL] || [];
-    let best = null;
+    const all = (await P.allAnswers(PHASE_POLL + '/'))[PHASE_POLL] || [], chk = PHASE_CHECK[P.session] || {}, w = window14(), late = Date.now() + 2 * 60000;
+    let best = 0;
     for (const a of all) {
-      const m = /^([0-3])-([0-9a-f]{8})$/.exec(String(a.value));
-      if (m && await sha('micro-gate-check:' + m[2]) === PHASE_CHECK[m[1]] && (!best || a.ts > best.ts)) best = { ts: a.ts, phase: +m[1] };
+      const m = /^([1-3])-([0-9a-f]{8})$/.exec(String(a.value));
+      if (!m || +m[1] <= best || a.ts > late || (w && a.ts < w[0])) continue;
+      if (await sha('micro-gate-check:' + m[2]) === chk[m[1]]) best = +m[1];
     }
-    return best ? best.phase : 0;
+    return best;
   }
-  // class start (config.js L14, Vienna) minus 30 minutes: earlier records are previews. The test session counts all.
-  function fromTs() { const w = P.classWindow && P.classWindow('L14'); return w ? w[0] - 30 * 60000 : 0; }
-  async function loadRecords() {   // every record, as [device, ts, record]; the reading then takes the latest per device, then validates
-    const refs = (await P.tagRefs(POLL + '/')).filter(x => x.poll === POLL && x.ts >= fromTs()), out = [];
+  // records: from class start − 30 min on (earlier ones are previews: counted, not read). Later ones are read and counted apart.
+  async function loadRecords() {   // {rows: [device, ts, record], early, after}; the reading then takes the latest per device, then validates
+    const w = window14(), all = (await P.tagRefs(POLL + '/')).filter(x => x.poll === POLL);
+    const refs = all.filter(x => !w || x.ts >= w[0]), rows = [];
     for (let i = 0; i < refs.length; i += 8) {
-      out.push(...await Promise.all(refs.slice(i, i + 8).map(async x => {
+      rows.push(...await Promise.all(refs.slice(i, i + 8).map(async x => {
         let r = null; try { const j = await P.blob(x.sha); r = j && j.answers; } catch (e) {}
         return [x.client, x.ts, r];
       })));
     }
-    return out;
+    return { rows, early: all.length - refs.length, after: w ? refs.filter(x => x.ts > w[1]).length : 0 };
   }
 
   // a risk-premium range as in Hande's lines: €20–30, −€10–0, −€50–−20
@@ -295,7 +303,9 @@
       const at = Number(c.dataset.at), cols = c.querySelectorAll('.plot .col:not(.grey)'), v = c.querySelector('.vline');
       const a = cols[Math.floor(at)], b = cols[Math.ceil(at)];
       if (!a || !b || !v) return;
-      v.style.left = (at % 1 ? (a.offsetLeft + a.offsetWidth + b.offsetLeft) / 2 : a.offsetLeft + a.offsetWidth / 2) + 'px';
+      const x = at % 1 ? (a.offsetLeft + a.offsetWidth + b.offsetLeft) / 2 : a.offsetLeft + a.offsetWidth / 2, sp = v.querySelector('span');
+      v.style.left = x + 'px';
+      if (sp) { const right = x > c.querySelector('.plot').offsetWidth / 2; sp.style.left = right ? 'auto' : '4px'; sp.style.right = right ? '4px' : 'auto'; }
     });
   }
   window.addEventListener('resize', () => { const r = $('res'); if (r) placeLines(r); });
@@ -303,32 +313,55 @@
     const T = DEMO || !!(P && P.teacher);
     app.innerHTML = '<h1>Risk Games · class results</h1><p class="meta" id="rn">loading…</p>' +
       (T ? '<div class="phases" id="ph"></div>' : '') + '<div class="opts"><button class="opt" id="rf" type="button">Refresh</button></div><div id="res"></div>';
-    let phase = 0;
+    // the lecturer's device keeps the phase it tapped (Utku B2), so a replayed tag never moves the projector
+    const LKEY = 'micro-l14-phase-' + (P && P.session);
+    const LGET = () => { try { return Number(localStorage.getItem(LKEY)) || 0; } catch (e) { return 0; } };
+    let phase = T && !DEMO ? LGET() : 0, shared = 0, armed = null;
     const PH = ['0 · closed', '1 · counts', '2 · attitudes', '3 · staircase CE'];
     function phaseButtons() {
       if (!T) return;
-      $('ph').innerHTML = PH.map((l, j) => '<button class="opt' + (j === phase ? ' on' : '') + '" type="button" data-p="' + j + '">' + l + '</button>').join('');
+      $('ph').innerHTML = PH.map((l, j) => '<button class="opt' + (j === phase ? ' on' : '') + '" type="button" data-p="' + j + '">' + l + '</button>').join('') +
+        (DEMO ? '' : '<span class="meta" style="align-self:center">students see phase ' + shared + '</span>');
       $('ph').querySelectorAll('.opt').forEach(b => b.onclick = async () => {
-        if (DEMO) { phase = +b.dataset.p; phaseButtons(); draw(); return; }
-        const v = String(b.dataset.p), code = (() => { try { return localStorage.getItem('micro-teacher-code') || ''; } catch (e) { return ''; } })();
-        const tag = (await sha('micro-gate:' + code.trim() + ':L14-risk-phase:' + v)).slice(0, 8);
-        $('rn').textContent = 'saving phase ' + v + '…';
-        try { await P.submit(PHASE_POLL, v + '-' + tag); phase = +v; phaseButtons(); draw(); } catch (e) { $('rn').textContent = 'phase not saved: tap again'; }
+        const v = +b.dataset.p;
+        if (DEMO) { phase = v; phaseButtons(); draw(); return; }
+        // this device shows any phase; only a phase above the students' one is written, and that cannot be undone: tap twice
+        if (v > shared && armed !== v) { armed = v; $('rn').textContent = 'tap "' + PH[v] + '" again to open it for everyone (it cannot be closed again)'; return; }
+        armed = null; phase = v; try { localStorage.setItem(LKEY, String(v)); } catch (e) {}
+        if (v > shared) {
+          const code = (() => { try { return localStorage.getItem('micro-teacher-code') || ''; } catch (e) { return ''; } })();
+          const tag = (await sha('micro-gate:' + code.trim() + ':L14-risk-phase:' + P.session + ':' + v)).slice(0, 8);
+          $('rn').textContent = 'saving phase ' + v + '…';
+          try { await P.submit(PHASE_POLL, v + '-' + tag); shared = v; } catch (e) { $('rn').textContent = 'phase not saved: tap again'; return; }
+        }
+        phaseButtons(); if (phase >= 1 && !cv) await loadData(); else draw();
       });
     }
-    let cv = null, nRec = 0;
-    async function load() {
+    let cv = null, extra = { early: 0, after: 0 }, lastData = 0, dataPhase = -1;
+    async function loadData() {
+      if (DEMO) { cv = classView(demoRecords(Number((/[?&]demo=([0-9]+)/.exec(location.search) || [])[1] || 60))); draw(); return; }
+      const r = await loadRecords(); cv = classView(r.rows); extra = r; lastData = Date.now(); dataPhase = phase; draw();
+    }
+    // Utku B3 (one shared token, ~5000 calls an hour): a student's device reads only the phase, every 2 minutes, and downloads
+    // the records only from phase 1 on, when the phase changes or on Refresh (at most once a minute). The lecturer's device
+    // reads everything every 30 s (each record is downloaded once and then cached on the device).
+    async function load(manual) {
+      if (!T && manual && Date.now() - lastData < 60000) { $('rn').textContent = 'Refreshed a moment ago. Try again in a minute.'; return; }
       $('rn').textContent = 'loading…';
-      try { if (DEMO) { cv = classView(demoRecords(Number((/[?&]demo=([0-9]+)/.exec(location.search) || [])[1] || 60))); } else { phase = await sharedPhase(); const recs = await loadRecords(); nRec = recs.length; cv = classView(recs); } }
-      catch (e) { $('rn').textContent = 'could not load: tap Refresh again'; return; }
-      phaseButtons(); draw();
+      try {
+        if (!DEMO) shared = await sharedPhase();
+        if (!T) phase = shared;
+        if (T || (phase >= 1 && (manual || phase !== dataPhase))) await loadData(); else draw();
+      } catch (e) { $('rn').textContent = 'could not load: tap Refresh again'; return; }
+      phaseButtons();
     }
     function draw() {
       const res = $('res');
-      if (!cv) return;
+      if (phase === 0 || !cv) { res.innerHTML = phase === 0 ? '<p class="msg">Results open soon.</p>' : ''; $('rn').textContent = 'phase ' + phase + ' · ' + new Date().toLocaleTimeString(); if (phase === 0 && !T) return; if (!cv) return; }
       const C = cv.counts;
-      $('rn').textContent = C.devices + ' devices · ' + C.records + ' records' + (C.again ? ' (' + C.again + ' again)' : '') + (C.invalid ? ' · not read: invalid, ' + C.invalid : '') + ' · phase ' + phase + ' · ' + new Date().toLocaleTimeString();
-      if (phase === 0) { res.innerHTML = '<p class="msg">Results open soon.</p>'; return; }
+      $('rn').textContent = C.devices + ' devices · ' + C.records + ' records' + (C.again ? ' (' + C.again + ' again)' : '') + (C.invalid ? ' · not read: invalid, ' + C.invalid : '') +
+        (extra.early ? ' · ' + extra.early + ' before class, not counted' : '') + (extra.after ? ' · ' + extra.after + ' after Wednesday\'s class' : '') + ' · phase ' + phase + ' · ' + new Date().toLocaleTimeString();
+      if (phase === 0) return;
       const ok = cv._ok, n = ok.length, p2 = phase >= 2, p3 = phase >= 3;
       const fastTxt = (g, k) => k ? '<p class="meta">' + k + ' answered in under ' + FAST[g] + ' s</p>' : '';
       const wait = (title, m) => '<h2>' + title + '</h2><p class="meta">waiting for answers, n = ' + m + '</p>';
@@ -382,9 +415,9 @@
       placeLines(res);
       res.querySelectorAll('.col').forEach(c => { const show = () => { const t = $(c.closest('.chart').id + '-tip'); if (t) t.textContent = c.dataset.tip; }; c.onclick = show; c.onmouseenter = show; });
     }
-    $('rf').onclick = load;
-    await load();
-    setInterval(() => { if (!document.hidden) load(); }, 30000);
+    $('rf').onclick = () => load(true);
+    await load(false);
+    if (!DEMO) setInterval(() => { if (!document.hidden) load(false); }, T ? 30000 : 120000);
   }
 
   if (RESULTS) resultsView(); else opening();
