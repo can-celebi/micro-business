@@ -275,11 +275,12 @@
   // one vertical bar chart: bins [{lab, n, rp?}], an optional grey off-scale bar, a dashed line at bin index `at` (+.5 = between two bins)
   function chart(id, bins, opt) {
     const grey = opt.grey, all = bins.map(b => b.n).concat(grey ? [grey.n] : []), max = Math.max(1, ...all), tot = opt.total;
-    const col = (b, cls) => '<div class="col' + (cls || '') + '" data-tip="' + esc(b.lab) + ': ' + b.n + ' student' + (b.n === 1 ? '' : 's') + ' · ' + (tot ? Math.round(100 * b.n / tot) : 0) + '%"><div class="bb" style="height:' + (100 * b.n / max).toFixed(1) + '%"></div></div>';
+    const col = (b, cls) => '<div class="col' + (cls || '') + '" data-tip="' + esc(b.lab) + ': ' + esc(b.tip || (b.n + ' student' + (b.n === 1 ? '' : 's') + ' · ' + (tot ? Math.round(100 * b.n / tot) : 0) + '%')) + '"><div class="bb" style="height:' + (100 * b.n / max).toFixed(1) + '%"></div></div>';
+    const xlab = l => esc(l).replace(/–/g, '–<wbr>');   // a range label may wrap after its dash at 390 px
     // the dashed line is placed after drawing, on the real bar positions (placeLines): at a bar's centre, or between two bars (.5)
     let h = '<div class="chart" id="' + id + '" data-at="' + opt.at + '"><div class="plot">' + bins.map(b => col(b)).join('') + (grey ? '<div class="gap"></div>' + col(grey, ' grey') : '') +
       '<div class="vline"><span>' + esc(opt.lineLab) + '</span></div></div>' +
-      '<div class="xl">' + bins.map(b => '<span>' + esc(b.lab) + '</span>').join('') + (grey ? '<span class="gap"></span><span class="gl">' + esc(grey.lab) + '</span>' : '') + '</div>';
+      '<div class="xl">' + bins.map(b => '<span>' + xlab(b.lab) + '</span>').join('') + (grey ? '<span class="gap"></span><span class="gl">' + esc(grey.lab) + '</span>' : '') + '</div>';
     if (opt.rp) h += '<div class="xl rp">' + bins.map(b => '<span>' + esc(b.rp) + '</span>').join('') + '</div><div class="axis">second row: risk premium (€50 − CE)</div>';
     h += '<div class="axis">' + esc(opt.axis) + '</div>';
     if (opt.sides) h += '<div class="sides"><span>← ' + esc(opt.sides[0]) + '</span><span>' + esc(opt.sides[1]) + ' →</span></div>';
@@ -370,9 +371,13 @@
       const bs = ok.map(x => x.balloon), scored = bs.filter(b => !b.popped_all);
       if (n < 10) h += wait('Game 1 · Balloon', n);
       else {
-        const bins = range(0, 11).map(k => ({ lab: String(k), n: scored.filter(b => Math.floor(b.score) === k).length }));
+        const bins = range(0, 11).map(k => {
+          const inBin = scored.filter(b => Math.floor(b.score) === k), bin = { lab: k + '–' + k + '.9', n: inBin.length };
+          if (k === 6) bin.tip = inBin.length + ' student' + (inBin.length === 1 ? '' : 's') + ' · of which exactly 6: ' + inBin.filter(b => b.score === 6).length + ' (risk neutral)';
+          return bin;
+        });
         const md = lowerMedian(scored.map(b => b.score));
-        h += '<h2>Game 1 · Balloon</h2>' + chart('cb', bins, { total: n, grey: { lab: 'all 5 popped', n: bs.length - scored.length }, at: 6, lineLab: p2 ? 'risk neutral (6)' : 'most expected money (6)',
+        h += '<h2>Game 1 · Balloon</h2>' + chart('cb', bins, { total: n, grey: { lab: 'all 5 popped', n: bs.length - scored.length }, at: 5.5, lineLab: p2 ? 'risk neutral (6)' : 'most expected money (6)',
           axis: 'pumps on collected balloons (average)', sides: p2 ? ['risk averse', 'risk seeking'] : null }) +
           '<p class="meta">n = ' + n + (md !== null ? ' · median ' + md + ' pumps' : '') + '</p>' + fastTxt('balloon', cv.balloon.fast) + (p2 ? '<p class="reading">' + esc(cv.balloon.line) + '</p>' : '');
       }
