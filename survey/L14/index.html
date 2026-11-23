@@ -33,27 +33,44 @@
   .opt-note { font-size: .78rem; color: var(--dim); margin: .2rem 0 .3rem; }
   .opts.col { flex-direction: column; align-items: flex-start; }
   .m { font-family: "STIX Two Text", "Cambria Math", Georgia, serif; font-size: 1.05em; white-space: nowrap; } .m i { font-style: italic; } .m sub { font-size: .65em; vertical-align: -.25em; }
-  /* L14 risk games (Ali 23.11) */
+  /* L14 risk games (Ali 24.11; Carpenter's spec 85add7e2e90c, Hande's results spec) */
+  @media (pointer: coarse) { .opt, .go, .num { min-height: 44px; } }
   .game { border: 1.5px solid var(--line); border-radius: 2px; padding: 12px; background: #fff; margin: .6rem 0 1rem; }
-  .pot { font-size: 1.1rem; margin: .4rem 0; } .pot b { font-size: 1.3rem; }
-  .boxes { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; max-width: 360px; }
-  .box { aspect-ratio: 1; font-family: var(--mono); font-size: .9rem; background: #fff; border: 1.5px solid #bbb; border-radius: 2px; cursor: pointer; padding: 0; }
-  .box.on { background: var(--p-yellow); border-color: var(--line); }
+  .pot { font-size: 1rem; margin: .5rem 0; } .pot b { font-size: 1.2rem; }
+  .boxes { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; max-width: 330px; margin-bottom: .6rem; }
+  .box { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: .85rem; background: #f3efe6; border: 1.5px solid #bbb; border-radius: 2px; }
+  .box.on { background: var(--p-yellow); border-color: var(--line); } .box.bomb { background: var(--p-pink); border-color: var(--bad); font-weight: 600; }
+  .nums { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; max-width: 360px; }
+  .num { font-family: var(--mono); font-size: .9rem; background: #fff; border: 1.5px solid #bbb; border-radius: 2px; padding: 6px 0; cursor: pointer; }
+  .num.on { background: var(--p-green); border-color: var(--line); }
   .hl { width: 100%; border-collapse: collapse; font-size: .82rem; }
-  .hl td { border-top: 1px solid #ddd; padding: 6px 2px; vertical-align: middle; }
-  .hl .opt { padding: 6px 8px; font-size: .8rem; width: 100%; text-align: left; }
+  .hl td { border-top: 1px solid #ddd; padding: 5px 2px; vertical-align: middle; }
+  .hl td:first-child { white-space: nowrap; color: var(--dim); padding-right: 6px; }
+  .hl .opt { width: 100%; text-align: left; padding: 6px 8px; font-size: .8rem; }
   .hl tr.missing td:first-child { color: var(--bad); font-weight: 600; }
-  .bars { margin: .4rem 0 1.2rem; } .bar { display: flex; align-items: center; gap: 6px; font-size: .8rem; margin: 2px 0; }
-  .bar .l { width: 7.5em; text-align: right; color: var(--dim); flex: none; } .bar .b { height: 14px; background: var(--p-blue, #cfe3f5); border: 1px solid var(--line); }
-  .bar .n { color: var(--dim); } .bar.mark .l { color: var(--ink); font-weight: 600; }
-  .reading { display: none; border-left: 3px solid var(--p-yellow); padding: 2px 8px; margin: -.6rem 0 1rem; font-size: .85rem; } .revealed .reading { display: block; }
-  .revealed .bar.mark .b { background: var(--p-yellow); }
+  /* results */
+  .chart { margin: .3rem 0 .4rem; } .plot { position: relative; display: flex; align-items: flex-end; gap: 2px; height: 150px; border-bottom: 1.5px solid var(--line);
+    background: repeating-linear-gradient(to top, transparent 0 37px, #eee 37px 38px); }
+  .col { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; align-items: stretch; height: 100%; cursor: pointer; min-width: 0; }
+  .col .bb { background: var(--p-blue); border: 1px solid #7aa7cf; border-radius: 3px 3px 0 0; min-height: 0; }
+  .col.grey { flex: 2.2; } .col.grey .bb { background: #ddd; border-color: #aaa; } .gap { width: 10px; flex: none; }
+  .xl .gl { flex: 2.2; white-space: normal; line-height: 1.1; overflow: visible; }
+  .xl { display: flex; gap: 2px; font-size: .68rem; color: var(--dim); margin-top: 2px; } .xl span { flex: 1; text-align: center; min-width: 0; overflow: hidden; }
+  .xl .gap { width: 10px; } .xl.rp { color: var(--ink); }
+  .vline { position: absolute; top: 0; bottom: 0; border-left: 2px dashed var(--ink); pointer-events: none; }
+  .vline span { position: absolute; top: -2px; left: 4px; font-size: .68rem; white-space: nowrap; background: var(--bg); }
+  .axis { font-size: .75rem; color: var(--dim); text-align: center; margin-top: 2px; }
+  .sides { display: flex; justify-content: space-between; font-size: .8rem; margin-top: 3px; }
+  .meta { font-size: .78rem; color: var(--dim); margin: .2rem 0; } .tip { font-size: .8rem; min-height: 1.1em; }
+  .reading { border-left: 3px solid var(--p-yellow); padding: 2px 8px; margin: .4rem 0 1.4rem; font-size: .88rem; }
+  .same td, .same th { border: 1px solid #ccc; padding: 4px 8px; font-size: .8rem; text-align: center; } .same .dg { background: var(--p-green); }
+  .phases { display: flex; flex-wrap: wrap; gap: 6px; margin: .4rem 0; } .phases .on { background: var(--p-green); border-color: var(--line); }
 </style>
 </head>
 <body>
 <main id="app"></main>
-<script src="../../assets/js/config.js?v=20261014a"></script>
+<script src="../../assets/js/config.js?v=20261124a"></script>
 <script src="../../assets/js/interactive.js?v=20261029h"></script>
-<script src="risk.js?v=20261123a"></script>
+<script src="risk.js?v=20261124a"></script>
 </body>
 </html>
