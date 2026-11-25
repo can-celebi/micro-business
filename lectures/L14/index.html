@@ -165,7 +165,7 @@ html:root { --mono: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif; }
   .reveal section .poll .poll-results { max-width: 560px; font-size: 16px; margin-top: 0.6em; } .reveal section .poll .bar-row { font-size: 16px; line-height: 1.5; } .reveal section .poll .answered { font-size: 14px; }
   .reveal section .ans-wrap { margin-top: 1.2em; } .reveal .evg { margin: 0.6em 0 1.4em !important; } .reveal .evl3, .reveal .evl4 { margin-top: 0.6em !important; }
   .reveal .vnm-wrap, .reveal .sbpic { margin-top: 1em !important; }
-  .reveal section[data-sid^='L14-gam'] .sbpic img { height: 260px !important; } .reveal section .vnm-pic svg { max-height: 360px; } .reveal section .vnm-cond svg { max-height: 290px; } .reveal section[data-sid='L14-W1p'] .vnm-pic svg { max-height: 230px; } .reveal section[data-sid='L14-K3'] .vnm-cond svg { max-height: 230px; } .reveal section[data-sid='L14-A2'] .vnm-pic svg { max-height: 260px; } .reveal section[data-sid='L14-K4'] .vnm-cond svg { max-height: 220px; } .reveal section[data-sid='L14-M0'] .sbpic img { height: 250px !important; } .reveal section[data-sid='L14-U0b'] .sbpic img { height: 290px !important; width: auto !important; }
+  .reveal section[data-sid^='L14-gam'] .sbpic img { height: 260px !important; } .reveal section .vnm-pic svg { max-height: 360px; } .reveal section .vnm-cond svg { max-height: 290px; } .reveal section[data-sid='L14-W1p'] .vnm-pic svg { max-height: 230px; } .reveal section[data-sid='L14-K3'] .vnm-cond svg { max-height: 230px; } .reveal section[data-sid='L14-A2'] .vnm-pic svg { max-height: 260px; } .reveal section[data-sid='L14-K4'] .vnm-cond svg { max-height: 220px; } .reveal section[data-sid='L14-M0'] .sbpic img { height: 250px !important; } .reveal section[data-sid='L14-U0b'] .sbpic img { height: 270px !important; width: auto !important; }
   .reveal .evg .poll .bar-row:nth-of-type(n+3) { display: none !important; } .reveal .evg { row-gap: 0.6em !important; }
   .reveal .know-grid { display: grid; grid-template-columns: 1fr 1fr; column-gap: 2em; } .reveal .know-row { grid-template-columns: 12em 1fr !important; margin: 0.35em 0 !important; }
   .reveal section .rows + .vnm-wrap, .reveal section .rows + .sbpic, .reveal section .rows + .poll, .reveal section .lead-block + .vnm-wrap { margin-top: 1.2em !important; }
@@ -187,13 +187,13 @@ html:root { --mono: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif; }
   .reveal section[data-sid='L14-W1p'] .vnm-pic svg { max-height: 200px !important; }
   .reveal section[data-sid^='L14-MU'] .sbpic img { height: 380px !important; }
   .reveal section[data-sid='L14-X7p'] .vnm-pic svg, .reveal section[data-sid='L14-K2'] .vnm-cond svg, .reveal section[data-sid='L14-K4'] .vnm-cond svg { width: 100% !important; max-width: 100% !important; }
-  .reveal section[data-sid='L14-X7p'] .vnm-pic svg { max-height: 460px !important; } .reveal section[data-sid='L14-K2'] .vnm-cond svg { max-height: 330px !important; } .reveal section[data-sid='L14-K4'] .vnm-cond svg { max-height: 265px !important; }
+  .reveal section[data-sid='L14-X7p'] .vnm-pic svg { max-height: 460px !important; } .reveal section[data-sid='L14-K2'] .vnm-cond svg { max-height: 330px !important; } .reveal section[data-sid='L14-K4'] .vnm-cond svg { max-height: 220px !important; }
   .reveal .poll .btn:disabled { opacity: 0.45; cursor: not-allowed; }
   .reveal .live-res iframe { width: 100%; height: 430px; border: 1.5px solid #ddd; background: #fff; }
   html.mobile .reveal .sbpic svg { height: auto; width: 100%; }
 
 /* Oyun calm block (26_fun/L14/l14-calm.css), last */
-  /* ── L14 calm block (Oyun, Game-feel designer, 25.11, v2) · STYLE ONLY: no text, ids, order or behaviour changes.
+  /* ── L14 calm block (Oyun, Game-feel designer, 25.11, v3) · STYLE ONLY: no text, ids, order or behaviour changes.
         Paste LAST in the deck's <style>. Ink #111, grey #666, hairline #d1d5db, one accent: the deck's green #4f8a3c. No blue. ── */
 
   /* 1 · range sliders (the poll slider and the picture sliders): 28 px thumb, 8 px track, the value large beside it */
@@ -205,6 +205,11 @@ html:root { --mono: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif; }
   .reveal input[type=range]::-moz-range-thumb { width: 22px; height: 22px; border-radius: 50%; background: #4f8a3c; border: 3px solid #fff; box-shadow: 0 0 0 1.5px #4f8a3c, 0 1px 3px rgba(0,0,0,.25); }
   .reveal input[type=range]:focus { outline: none; } .reveal input[type=range]:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 1.5px #4f8a3c, 0 0 0 5px rgba(79,138,60,.25); }
   .reveal input.slider.untouched::-moz-range-progress { background: #d6d6d0; }
+  /* before the first touch (class .untouched, value "–"): a hollow grey thumb waits at the left, so the slider reads as a slider;
+        it turns solid green on the first move. Behaviour unchanged: an untouched slider still cannot be saved. */
+  .reveal .poll-input input.slider.untouched::-webkit-slider-thumb { opacity: 1; background: #fff; border: 2.5px solid #9a9a94; box-shadow: none; }
+  .reveal .poll-input input.slider.untouched::-moz-range-thumb { opacity: 1; background: #fff; border: 2.5px solid #9a9a94; box-shadow: none; width: 23px; height: 23px; }
+  .reveal .poll .poll-input input.slider.untouched ~ .slider-val { color: #9a9a94; font-weight: 400; }
   /* the poll slider row: ends small and grey, the chosen value large, [save] a normal button */
   .reveal .poll .poll-input:has(input.slider) { display: flex; flex-wrap: nowrap; align-items: center; gap: 0; }
   .reveal .poll .poll-input input.slider, .reveal section[data-sid='L14-T1'] input.slider { width: 480px; max-width: 60vw; flex: 0 1 480px; }
@@ -246,6 +251,8 @@ html:root { --mono: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif; }
   .reveal .tk-card { float: none; display: block; width: max-content; min-width: 9em; margin: 1em auto; background: #fff; border: 1.5px solid #222; border-radius: 3px; padding: 0.5em 1.1em 0.55em; font-size: 28px; line-height: 1.5; }
   .reveal .tk-card .tk-h { font-size: 16px; line-height: 1.3; color: #666; padding-bottom: 0.35em; margin-bottom: 0.35em; border-bottom: 1px solid #d1d5db; }
   .reveal .tk-card .tk-r { gap: 2.4em; font-weight: 600; font-variant-numeric: tabular-nums; }
+  /* the big centred ticket card (.tk-big): its three lines no longer touch */
+  .reveal .tk-big { line-height: 1.4; padding: 0.6em 1.2em 0.65em; border-width: 1.5px; border-radius: 6px; } .reveal .tk-big .tk-big-h { margin-bottom: 0.25em; }
   /* "indifferent": bold on a pale ground, the same size as the text around it, no capitals */
   .reveal .ind-legend { font-size: 25px; line-height: 1.5; margin: 0.3em 0 0.4em; color: #111; }
   .reveal .ind-legend b, .reveal .hl { font-size: inherit; font-weight: 600; letter-spacing: 0; text-transform: none; background: #FFF4C2; padding: 0.05em 0.3em; border-radius: 3px; }
@@ -490,15 +497,6 @@ html:root { --mono: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif; }
     function relabel() { document.querySelectorAll('.poll .poll-input .btn').forEach(function (b) { if (b.textContent === 'save') b.textContent = 'submit'; });
       if (window.MicroPoll && window.MicroPoll.teacher === true) document.documentElement.classList.add('is-teacher'); }
     relabel(); Reveal.on('ready', relabel); Reveal.on('slidechanged', relabel);
-    // the two poll sliders start at 50 with the thumb visible and the value shown (Celebi 25.11)
-    function startSliders() { [['L14-T1-pay', 50], ['L14-p', 50]].forEach(function (d) {
-        var r = document.querySelector('.poll[data-poll="' + d[0] + '"] input.slider');
-        if (r && r.classList.contains('untouched')) { r.value = d[1]; r.dispatchEvent(new Event('input', { bubbles: true }));
-          var b = r.parentNode && r.parentNode.querySelector('.btn'); if (b) { b.disabled = true; b.title = 'move the slider first'; } } }); }
-    // submit only after a real move (so 50 is not the default answer)
-    document.addEventListener('input', function (e) { var t = e.target; if (!e.isTrusted || !t || t.type !== 'range' || !t.closest('.poll')) return;
-      var b = t.parentNode && t.parentNode.querySelector('.btn'); if (b) { b.disabled = false; b.title = ''; } }, true);
-    Reveal.on('ready', startSliders); Reveal.on('slidechanged', startSliders); setTimeout(startSliders, 800);
     // X3: the ticket card follows the p slider (S with chance p, C with chance 1 − p)
     document.addEventListener('input', function (e) { var t = e.target; if (!t || t.type !== 'range') return;
       var sec = t.closest('section[data-sid="L14-X3"]'); if (!sec) return; var p = Math.round(+t.value);
