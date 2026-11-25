@@ -156,7 +156,7 @@ html.mobile .reveal .ppl { grid-template-columns: 1fr; }
 .reveal .asm-strip { margin: 0.1em 0 0.35em; padding: 0.2em 0.8em; border-left: 5px solid #e6b877; background: #FFFBEA; font-size: 21px; color: #111; display: inline-block; }
 .reveal .eu-grid { display: grid; grid-template-columns: auto 1fr; column-gap: 1.2em; row-gap: 0.8em; margin: 0.8em 0 0.6em; font-size: 28px; color: #111; align-items: baseline; }
 .reveal .eu-l { font-weight: 600; white-space: nowrap; }
-html.mobile .reveal .eu-grid { grid-template-columns: 1fr; }
+html.mobile .reveal .eu-grid { grid-template-columns: minmax(0, 1fr); } html.mobile .reveal .eu-l { white-space: normal; }
 .reveal section[data-sid=L14-X8b] .concl { font-size: 27px; margin-top: 0.7em; }
 /* titles keep their capitals (Can 25.11: vNM, proper names); all other titles are written lowercase already */
 .reveal h2 { text-transform: none !important; }
