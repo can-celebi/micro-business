@@ -59,7 +59,7 @@
       s.appendChild(el('circle', { cx: B, cy: y(5), r: 9, fill: ORANGE }));
       text(s, B + 22, y(5) - 12, '5', { fill: ORANGE, bold: true, size: 26 });
       s.appendChild(el('rect', { x: 345, y: y(5) - 64, width: 285, height: 128, rx: 8, fill: '#fff', stroke: ORANGE, 'stroke-width': 2 }));
-      text(s, 487, y(5) - 36, 'the ticket', { anchor: 'middle', bold: true });
+      text(s, 487, y(5) - 36, 'the lottery ticket', { anchor: 'middle', bold: true });
       text(s, 487, y(5) - 4, 'S 50%, C 50%', { anchor: 'middle' });
       text(s, 487, y(5) + 42, '½ · 10 + ½ · 0 = 5', { anchor: 'middle', fill: ORANGE, bold: true });
     }
@@ -81,22 +81,22 @@
       o = out(box); o.textContent = 'S ≻ H ≻ C: the same ranking';
     },
     rule: function (box) {
-      var s = frame(box, 250, 'numbers for S, H and C; the ticket is worth 5, halfway between C = 0 and S = 10'), o = null;
+      var s = frame(box, 250, 'numbers for S, H and C; the lottery ticket is worth 5, halfway between C = 0 and S = 10'), o = null;
       var r = slider(box, 'number for H', 2, 8, 1, 8, function (v, b) {
         b.textContent = v; ladder(s, v);
         if (!o) return;
         o.textContent = '';
         o.appendChild(h('div', '', 'the ranking stays S ≻ H ≻ C'));
-        o.appendChild(h('div', 'big ' + (v > 5 ? 'k' : v < 5 ? 't' : ''), v > 5 ? 'H: ' + v + ' > 5 → keep H' : v < 5 ? 'H: ' + v + ' < 5 → take the ticket' : 'H: 5 = 5 → indifferent'));
+        o.appendChild(h('div', 'big ' + (v > 5 ? 'k' : v < 5 ? 't' : ''), v > 5 ? 'H: ' + v + ' > 5 → keep H' : v < 5 ? 'H: ' + v + ' < 5 → take the lottery ticket' : 'H: 5 = 5 → indifferent'));
       });
       o = out(box); r.dispatchEvent(new Event('input'));
     },
     dial: function (box) {
-      var s = frame(box, 235, 'the ticket with chance p of S, and H on the scale from 0 to 1'), o = null;
+      var s = frame(box, 235, 'the lottery ticket with chance p of S, and H on the scale from 0 to 1'), o = null;
       function show(p, b) {
         b.textContent = p + '%';
         while (s.firstChild) s.removeChild(s.firstChild);
-        text(s, 20, 37, 'ticket', { bold: true });
+        text(s, 20, 28, 'lottery', { bold: true }); text(s, 20, 50, 'ticket', { bold: true });
         bar(s, 110, 12, 500, [[p / 100, GREEN, 'S ' + p + '%'], [1 - p / 100, GREY, 'C ' + (100 - p) + '%']]);
         text(s, 20, 97, '∼  H', { bold: true });
         s.appendChild(el('rect', { x: 110, y: 72, width: 500, height: 40, fill: SAND, stroke: INK }));
@@ -111,7 +111,7 @@
       o = out(box); r.dispatchEvent(new Event('input'));
     },
     swap: function (box) {
-      var s = frame(box, 250, 'lottery 1, H replaced by its ticket, compared with lottery 2'), o = null;
+      var s = frame(box, 250, 'lottery 1, H replaced by its lottery ticket, compared with lottery 2'), o = null;
       function show(q, b) {
         b.textContent = q + '%';
         var S10 = q * 6, sS = S10 / 1000, pS = S10 / 10;
@@ -119,7 +119,7 @@
         function row(y, t, parts) { text(s, 10, y + 27, t); bar(s, 170, y, 460, parts); }
         row(8, 'lottery 1', [[q / 100, SAND, 'H ' + q + '%'], [1 - q / 100, GREY, 'C ' + (100 - q) + '%']]);
         row(68, 'replace H', [[sS, GREEN, 'S ' + num(pS) + '%'], [q / 100 - sS, GREY, 'C ' + num(q - pS) + '%'], [1 - q / 100, GREY, 'C ' + (100 - q) + '%']]);
-        row(128, '= ticket', [[sS, GREEN, 'S ' + num(pS) + '%'], [1 - sS, GREY, 'C ' + num(100 - pS) + '%']]);
+        row(128, '= lottery ticket', [[sS, GREEN, 'S ' + num(pS) + '%'], [1 - sS, GREY, 'C ' + num(100 - pS) + '%']]);
         row(200, 'lottery 2', [[0.2, GREEN, 'S 20%'], [0.8, GREY, 'C 80%']]);
         if (o) o.textContent = S10 > 200 ? 'S: ' + num(pS) + '% > 20%, so lottery 1 ≻ lottery 2' : 'S: ' + num(pS) + '% < 20%, so lottery 2 ≻ lottery 1';
       }
@@ -128,14 +128,14 @@
     },
     three: function (box) {
       var L = [[0, 40, 60], [20, 0, 80], [20, 30, 50]], U = L.map(function (l) { return l[0] + l[1] * 0.6; });
-      var s = WIDE ? frame(box, 200, 'lotteries 1, 2 and 3 as tickets between S and C', 1000) : frame(box, 345, 'lotteries 1, 2 and 3 as tickets between S and C'), set, o;
+      var s = WIDE ? frame(box, 200, 'lotteries 1, 2 and 3 as lottery tickets between S and C', 1000) : frame(box, 345, 'lotteries 1, 2 and 3 as lottery tickets between S and C'), set, o;
       function show(i) {
         var l = L[i], x0 = WIDE ? 520 : 0, y0 = WIDE ? 36 : 164, bw = WIDE ? 360 : 480, bx = WIDE ? 118 : 150;
         function row(x, y, t, parts, on) { text(s, x + 4, y + 27, t, { bold: on, size: WIDE ? 22 : 20 }); bar(s, x + bx, y, bw, parts); }
         while (s.firstChild) s.removeChild(s.firstChild);
         row(0, WIDE ? 36 : 6, 'lottery ' + (i + 1), [[l[0] / 100, GREEN, 'S ' + l[0] + '%'], [l[1] / 100, SAND, 'H ' + l[1] + '%'], [l[2] / 100, GREY, 'C ' + l[2] + '%']], true);
         row(0, WIDE ? 92 : 62, l[1] ? 'replace H' : 'no H', [[l[0] / 100, GREEN, 'S ' + l[0] + '%'], [l[1] * 0.006, GREEN, 'S ' + num(l[1] * 0.6) + '%'], [l[1] * 0.004, GREY, 'C ' + num(l[1] * 0.4) + '%'], [l[2] / 100, GREY, 'C ' + l[2] + '%']]);
-        text(s, x0 + 4, WIDE ? 22 : 150, 'as tickets between S and C:', { fill: DIM, size: WIDE ? 22 : 20 });
+        text(s, x0 + 4, WIDE ? 22 : 150, 'as lottery tickets between S and C:', { fill: DIM, size: WIDE ? 22 : 20 });
         [2, 0, 1].forEach(function (k, r) { row(x0, y0 + r * 56, 'lottery ' + (k + 1), [[U[k] / 100, GREEN, 'S ' + num(U[k]) + '%'], [1 - U[k] / 100, GREY, 'C ' + num(100 - U[k]) + '%']], k === i); });
         set(i);
         o.textContent = 'lottery ' + (i + 1) + ' is a ' + num(U[i]) + '% chance of S. Order: lottery 3 ≻ lottery 1 ≻ lottery 2';

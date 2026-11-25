@@ -61,7 +61,7 @@
       o = out(box); show(-1);
     },
     cont: function (box) {
-      var s = frame(box, 190, 'the ticket with chance p of S against H for sure; the choice on the line from 0 to 100 percent'), set, o, r, v, mode = 0;
+      var s = frame(box, 190, 'the lottery ticket with chance p of S against H for sure; the choice on the line from 0 to 100 percent'), set, o, r, v, mode = 0;
       function X(p) { return 50 + 5.4 * p; }
       function show() {
         var p = +r.value, at = mode ? 100 : 60;
@@ -74,12 +74,12 @@
         s.appendChild(el('rect', { x: X(0), y: 104, width: 540 * at / 100 - (mode ? 4 : 0), height: 30, fill: SAND }));
         if (mode) s.appendChild(el('rect', { x: X(100) - 4, y: 104, width: 4, height: 30, fill: GREEN }));
         if (at < 100) s.appendChild(el('rect', { x: X(at), y: 104, width: 540 * (100 - at) / 100, height: 30, fill: GREEN }));
-        text(s, X(at / 2), 126, 'H', { anchor: 'middle', bold: true }); if (at < 100) text(s, X(80), 126, 'the ticket', { anchor: 'middle', fill: '#fff', bold: true });
+        text(s, X(at / 2), 126, 'H', { anchor: 'middle', bold: true }); if (at < 100) text(s, X(80), 126, 'the lottery ticket', { anchor: 'middle', fill: '#fff', bold: true });
         s.appendChild(el('line', { x1: X(p), y1: 98, x2: X(p), y2: 140, stroke: INK, 'stroke-width': 4 }));
         [0, 100].concat(at < 100 ? [60] : []).forEach(function (q) { text(s, X(q), 168, q + '%', { anchor: 'middle' }); });
         set(mode);
-        if (p < at) say(o, 'h', 'H ≻ the ticket', mode ? 'However small the chance of C: “I keep H.”' : '');
-        else if (p > at) say(o, 'k', 'the ticket ≻ H');
+        if (p < at) say(o, 'h', 'H ≻ the lottery ticket', mode ? 'However small the chance of C: “I keep H.”' : '');
+        else if (p > at) say(o, 'k', 'the lottery ticket ≻ H');
         else if (mode) say(o, 't', 'violation: no p is the point of indifference', 'At 100% it is S for sure, and S ≻ H. Below 100%: always H.');
         else say(o, 'k', 'indifferent: H ∼ (S 60%, C 40%)');
       }
@@ -104,11 +104,11 @@
       function show(i) {
         clear(s);
         var c = i >= 1;
-        tree(WIDE ? 20 : 10, 'choice A', 'H', [['H', '100%'], ['', '']], c); tree(WIDE ? 530 : 340, 'choice B', 'ticket', [['S', '50%'], ['C', '50%']], c);
+        tree(WIDE ? 20 : 10, 'choice A', 'H', [['H', '100%'], ['', '']], c); tree(WIDE ? 530 : 340, 'choice B', 'lottery ticket', [['S', '50%'], ['C', '50%']], c);
         set(i);
-        if (i === 0) say(o, '', 'the tails branch is the same in both', 'Without the coin you said: H ≻ the ticket.');
-        else if (i === 1) say(o, 'k', 'A ≻ B', 'Cover the same branch: what is left is H or the ticket, your first choice.');
-        else say(o, 't', 'violation: B ≻ A', 'Without the coin: H. With the coin: “I probably get a coffee anyway, so now the ticket.”');
+        if (i === 0) say(o, '', 'the tails branch is the same in both', 'Without the coin you said: H ≻ the lottery ticket.');
+        else if (i === 1) say(o, 'k', 'A ≻ B', 'Cover the same branch: what is left is H or the lottery ticket, your first choice.');
+        else say(o, 't', 'violation: B ≻ A', 'Without the coin: H. With the coin: “I probably get a coffee anyway, so now the lottery ticket.”');
       }
       set = buttons(box, ['both trees', 'cover the same branch', 'violation'], show);
       o = out(box); show(0);
