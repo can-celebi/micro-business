@@ -190,8 +190,8 @@ function scale(svg, h, showLottery) {
   });
   if (showLottery) {
     svg.appendChild(el("line", {x1:300, y1:y(5), x2:330, y2:y(5), stroke:ORANGE, "stroke-width":3}));
-    svg.appendChild(el("text", {x:340, y:y(5)+5, "font-size":15, fill:ORANGE}, "ticket: average 5"));
-    svg.appendChild(el("text", {x:340, y:y(5)+24, "class":"sm", "font-size":13, fill:DIM}, "50% · 10 + 50% · 0"));
+    svg.appendChild(el("text", {x:340, y:y(5)+5, "font-size":15, fill:ORANGE}, "the 50/50 ticket"));
+    svg.appendChild(el("text", {x:340, y:y(5)+24, "class":"sm", "font-size":13, fill:DIM}, ""));
   } else {
     svg.appendChild(el("text", {x:340, y:y(5)+5, "class":"sm", "font-size":16, fill:"#1d1d1f"}, "smartphone ≻ headphones ≻ coffee"));
     svg.appendChild(el("text", {x:340, y:y(5)+26, "font-size":12, fill:DIM}, "≻ means \"is strictly preferred to\""));
@@ -205,7 +205,7 @@ const s3r = document.getElementById("s3r");
 function d3() {
   const h = +s3r.value; scale(document.getElementById("s3"), h, true);
   const v = document.getElementById("s3v");
-  v.textContent = h < 5 ? "rule says: take the ticket" : h > 5 ? "rule says: keep the headphones" : "rule says: equally good";
+  v.textContent = h < 5 ? "take the ticket" : h > 5 ? "keep the headphones" : "equally good";
 }
 s3r.oninput = d3; d3();
 
@@ -343,7 +343,9 @@ s9r.oninput = d9; d9();
   var svg=document.getElementById('s'+n); if(!svg) return; var pic=svg.closest('.pic');
   document.body.innerHTML=''; document.body.appendChild(pic);
   document.body.style.cssText='margin:0;padding:6px 8px;max-width:none;background:#fcfcfa;font:16px/1.5 Inter,system-ui,sans-serif';
-  pic.style.margin='0'; pic.style.border='none'; var st=document.createElement('style'); st.textContent='input[type=range]{accent-color:#4f8a3c}'; document.head.appendChild(st);
+  pic.style.margin='0'; pic.style.border='none'; ['pointerup','change','touchend'].forEach(function(ev){document.addEventListener(ev,function(e){ if(e.target&&e.target.blur) e.target.blur(); try{ window.parent.focus(); }catch(_){} },true);});
+  document.addEventListener('click',function(e){ if(e.target&&e.target.tagName==='BUTTON'){ e.target.blur(); try{ window.parent.focus(); }catch(_){} } },true);
+  var st=document.createElement('style'); st.textContent='input[type=range]{accent-color:#4f8a3c}'; document.head.appendChild(st);
 })();
 </script>
 </body>
