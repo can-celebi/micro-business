@@ -165,7 +165,7 @@ html:root { --mono: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif; }
   .reveal section .poll .poll-results { max-width: 560px; font-size: 16px; margin-top: 0.6em; } .reveal section .poll .bar-row { font-size: 16px; line-height: 1.5; } .reveal section .poll .answered { font-size: 14px; }
   .reveal section .ans-wrap { margin-top: 1.2em; } .reveal .evg { margin: 0.6em 0 1.4em !important; } .reveal .evl3, .reveal .evl4 { margin-top: 0.6em !important; }
   .reveal .vnm-wrap, .reveal .sbpic { margin-top: 1em !important; }
-  .reveal section[data-sid^='L14-gam'] .sbpic img { height: 260px !important; } .reveal section .vnm-pic svg { max-height: 360px; } .reveal section .vnm-cond svg { max-height: 290px; } .reveal section[data-sid='L14-W1p'] .vnm-pic svg { max-height: 230px; } .reveal section[data-sid='L14-K3'] .vnm-cond svg { max-height: 230px; } .reveal section[data-sid='L14-A2'] .vnm-pic svg { max-height: 260px; } .reveal section[data-sid='L14-K4'] .vnm-cond svg { max-height: 220px; } .reveal section[data-sid='L14-U0b'] .sbpic img, .reveal section[data-sid='L14-M0'] .sbpic img { height: 250px !important; }
+  .reveal section[data-sid^='L14-gam'] .sbpic img { height: 260px !important; } .reveal section .vnm-pic svg { max-height: 360px; } .reveal section .vnm-cond svg { max-height: 290px; } .reveal section[data-sid='L14-W1p'] .vnm-pic svg { max-height: 230px; } .reveal section[data-sid='L14-K3'] .vnm-cond svg { max-height: 230px; } .reveal section[data-sid='L14-A2'] .vnm-pic svg { max-height: 260px; } .reveal section[data-sid='L14-K4'] .vnm-cond svg { max-height: 220px; } .reveal section[data-sid='L14-M0'] .sbpic img { height: 250px !important; } .reveal section[data-sid='L14-U0b'] .sbpic img { height: 290px !important; width: auto !important; }
   .reveal .evg .poll .bar-row:nth-of-type(n+3) { display: none !important; } .reveal .evg { row-gap: 0.6em !important; }
   .reveal .know-grid { display: grid; grid-template-columns: 1fr 1fr; column-gap: 2em; } .reveal .know-row { grid-template-columns: 12em 1fr !important; margin: 0.35em 0 !important; }
   .reveal section .rows + .vnm-wrap, .reveal section .rows + .sbpic, .reveal section .rows + .poll, .reveal section .lead-block + .vnm-wrap { margin-top: 1.2em !important; }
@@ -188,6 +188,7 @@ html:root { --mono: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif; }
   .reveal section[data-sid^='L14-MU'] .sbpic img { height: 380px !important; }
   .reveal section[data-sid='L14-X7p'] .vnm-pic svg, .reveal section[data-sid='L14-K2'] .vnm-cond svg, .reveal section[data-sid='L14-K4'] .vnm-cond svg { width: 100% !important; max-width: 100% !important; }
   .reveal section[data-sid='L14-X7p'] .vnm-pic svg { max-height: 460px !important; } .reveal section[data-sid='L14-K2'] .vnm-cond svg { max-height: 330px !important; } .reveal section[data-sid='L14-K4'] .vnm-cond svg { max-height: 265px !important; }
+  .reveal .poll .btn:disabled { opacity: 0.45; cursor: not-allowed; }
   .reveal .live-res iframe { width: 100%; height: 430px; border: 1.5px solid #ddd; background: #fff; }
   html.mobile .reveal .sbpic svg { height: auto; width: 100%; }
 
@@ -492,7 +493,11 @@ html:root { --mono: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif; }
     // the two poll sliders start at 50 with the thumb visible and the value shown (Celebi 25.11)
     function startSliders() { [['L14-T1-pay', 50], ['L14-p', 50]].forEach(function (d) {
         var r = document.querySelector('.poll[data-poll="' + d[0] + '"] input.slider');
-        if (r && r.classList.contains('untouched')) { r.value = d[1]; r.dispatchEvent(new Event('input', { bubbles: true })); } }); }
+        if (r && r.classList.contains('untouched')) { r.value = d[1]; r.dispatchEvent(new Event('input', { bubbles: true }));
+          var b = r.parentNode && r.parentNode.querySelector('.btn'); if (b) { b.disabled = true; b.title = 'move the slider first'; } } }); }
+    // submit only after a real move (so 50 is not the default answer)
+    document.addEventListener('input', function (e) { var t = e.target; if (!e.isTrusted || !t || t.type !== 'range' || !t.closest('.poll')) return;
+      var b = t.parentNode && t.parentNode.querySelector('.btn'); if (b) { b.disabled = false; b.title = ''; } }, true);
     Reveal.on('ready', startSliders); Reveal.on('slidechanged', startSliders); setTimeout(startSliders, 800);
     // X3: the ticket card follows the p slider (S with chance p, C with chance 1 − p)
     document.addEventListener('input', function (e) { var t = e.target; if (!t || t.type !== 'range') return;
