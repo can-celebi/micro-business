@@ -48,7 +48,7 @@
     function y(v) { return 225 - v * 19; }
     s.appendChild(el('line', { x1: 170, y1: y(0), x2: 170, y2: y(10), stroke: GREY, 'stroke-width': 4 }));
     [[10, 'S', GREEN], [hv, 'H', SAND], [0, 'C', GREY]].forEach(function (p) {
-      s.appendChild(el('circle', { cx: 170, cy: y(p[0]), r: 13, fill: p[2], stroke: INK, 'stroke-width': 1 }));
+      s.appendChild(el('circle', { cx: 170, cy: y(p[0]), r: 9, fill: p[2], stroke: INK, 'stroke-width': 1 }));
       text(s, 145, y(p[0]) + 7, num(p[0]), { anchor: 'end', bold: true });
       text(s, 195, y(p[0]) + 7, p[1], { bold: true });
     });
@@ -67,7 +67,7 @@
   var KINDS = {
     ranking: function (box) {
       var s = frame(box, 112, 'numbers for S, H and C on a line'), o = null;
-      slider(box, 'number for H', 2, 8, 1, 6, function (v, b) {
+      slider(box, 'number for H', 1, 9, 1, 6, function (v, b) {
         b.textContent = v;
         while (s.firstChild) s.removeChild(s.firstChild);
         s.appendChild(el('line', { x1: 60, y1: 56, x2: 580, y2: 56, stroke: GREY, 'stroke-width': 4 }));
@@ -82,7 +82,7 @@
     },
     rule: function (box) {
       var s = frame(box, 250, 'numbers for S, H and C; the lottery ticket is worth 5, halfway between C = 0 and S = 10'), o = null;
-      var r = slider(box, 'number for H', 2, 8, 1, 8, function (v, b) {
+      var r = slider(box, 'number for H', 1, 9, 1, 8, function (v, b) {
         b.textContent = v; ladder(s, v);
         if (!o) return;
         o.textContent = '';
