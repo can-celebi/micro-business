@@ -377,7 +377,7 @@
       if (phase === 0 || !cv) { res.innerHTML = phase === 0 ? '<p class="msg">Results open soon.</p>' : ''; $('rn').textContent = 'phase ' + phase + ' · ' + new Date().toLocaleTimeString(); if (phase === 0 && !T) return; if (!cv) return; }
       const C = cv.counts;
       $('rn').textContent = C.devices + ' devices · ' + C.records + ' records' + (C.again ? ' (' + C.again + ' again)' : '') + (C.invalid ? ' · not read: invalid, ' + C.invalid : '') +
-        (extra.early ? ' · ' + extra.early + ' before class, not counted' : '') + (extra.after ? ' · ' + extra.after + ' after Wednesday\'s class' : '') + ' · phase ' + phase + ' · ' + new Date().toLocaleTimeString();
+        (extra.early ? ' · ' + extra.early + ' before class, not counted' : '') + (extra.after ? ' · ' + extra.after + ' after Thursday\'s class' : '') + ' · phase ' + phase + ' · ' + new Date().toLocaleTimeString();
       if (phase === 0) return;
       const ok = cv._ok, n = ok.length, p2 = phase >= 2, p3 = phase >= 3;
       const fastTxt = (g, k) => k ? '<p class="meta">' + k + ' answered in under ' + FAST[g] + ' s</p>' : '';
