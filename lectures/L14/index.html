@@ -193,7 +193,7 @@ html:root { --mono: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif; }
   html.mobile .reveal .sbpic svg { height: auto; width: 100%; }
 
 /* Oyun calm block (26_fun/L14/l14-calm.css), last */
-  /* ── L14 calm block (Oyun, Game-feel designer, 25.11, v3) · STYLE ONLY: no text, ids, order or behaviour changes.
+  /* ── L14 calm block (Oyun, Game-feel designer, 25.11, v5) · STYLE ONLY: no text, ids, order or behaviour changes.
         Paste LAST in the deck's <style>. Ink #111, grey #666, hairline #d1d5db, one accent: the deck's green #4f8a3c. No blue. ── */
 
   /* 1 · range sliders (the poll slider and the picture sliders): 28 px thumb, 8 px track, the value large beside it */
@@ -253,9 +253,11 @@ html:root { --mono: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif; }
   .reveal .tk-card .tk-r { gap: 2.4em; font-weight: 600; font-variant-numeric: tabular-nums; }
   /* the big centred ticket card (.tk-big): its three lines no longer touch */
   .reveal .tk-big { line-height: 1.4; padding: 0.6em 1.2em 0.65em; border-width: 1.5px; border-radius: 6px; } .reveal .tk-big .tk-big-h { margin-bottom: 0.25em; }
-  /* "indifferent": bold on a pale ground, the same size as the text around it, no capitals */
+  /* "indifferent" (Can: "not very visible needs to be bigger for sure"): bold on a pale yellow ground, no capitals */
   .reveal .ind-legend { font-size: 25px; line-height: 1.5; margin: 0.3em 0 0.4em; color: #111; }
-  .reveal .ind-legend b, .reveal .hl { font-size: inherit; font-weight: 600; letter-spacing: 0; text-transform: none; background: #FFF4C2; padding: 0.05em 0.3em; border-radius: 3px; }
+  .reveal .ind-legend b, .reveal b.ind, .reveal .hl { font-size: inherit; font-weight: 600; letter-spacing: 0; text-transform: none; background: #FFF3B0; padding: 0.05em 0.3em; border-radius: 3px; }
+  /* only inside the <span class="sym">∼</span> definition box (X4): 1.35 em; in running sentences and questions it stays at text size (Celebi, 25.11) */
+  .reveal .ind-def b.ind, .reveal .ind-def b, .reveal .ind-legend b { font-size: 1.35em; line-height: 1; }
   /* picture text never under 16 px */
   .reveal .vnm-pic, .reveal .vnm-cond { font-size: 22px; } .reveal .vnm-out, .reveal .vc-out { min-height: 1.4em; }
 
