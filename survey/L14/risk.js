@@ -8,10 +8,14 @@
 //             The lecturer sets the phase in teacher mode; a phase is written as a tag only the teacher code can make.
 (function () {
   const POLL = 'L14-risk-games', PHASE_POLL = 'L14-risk-phase';
-  // THE SWITCH (Celebi 25.11, Risk.md Addition 12): true = students play the balloon; false = the balloon is only shown in
-  // class: the games start at the bomb box, the record has no b, and ?results has no balloon chart. Nothing else changes.
+  // THE SWITCHES (Risk.md Additions 12-13, Can 25.11: "we can cancel balloon", staircase only once the CE is taught).
+  // BALLOON false: the balloon is only shown in class: the games start at the bomb box, the record has no b, ?results has no
+  // balloon chart. STAIR false: no coin-flip screens, the record has no s, ?results has no staircase chart. Nothing else changes.
   const BALLOON = false;
+  const STAIR = false;
   const G = BALLOON ? 0 : 1;   // games are numbered from 1 either way
+  const NG = 2 + (BALLOON ? 1 : 0) + (STAIR ? 1 : 0), NW = ['', 'one', 'two', 'three', 'four'][NG];   // how many games
+  const MIN = 5 + (BALLOON ? 2 : 0) + (STAIR ? 1 : 0);   // minutes (Carpenter's timing: balloon 2, staircase 1, the rest 5)
   const P = window.MicroPoll, app = document.getElementById('app'), $ = id => document.getElementById(id);
   const PREVIEW = /[?&]preview\b/.test(location.search), RESULTS = /[?&]results\b/.test(location.search);
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -132,14 +136,14 @@
   app.addEventListener('click', e => { if (performance.now() - drawnAt < 400) { e.stopPropagation(); e.preventDefault(); } }, true);
   function frame(title, body) {
     fresh();
-    app.innerHTML = '<h1>Risk Games</h1><p class="s">Anonymous · about ' + (BALLOON ? 8 : 6) + ' minutes · Microeconomics · Lecture 14</p><h2>' + title + '</h2>' + body +
+    app.innerHTML = '<h1>Risk Games</h1><p class="s">Anonymous · about ' + MIN + ' minutes · Microeconomics · Lecture 14</p><h2>' + title + '</h2>' + body +
       '<div class="msg" id="msg">' + (PREVIEW ? 'Preview: nothing is sent.' : '') + '</div>';
     window.scrollTo(0, 0);
   }
   const say = h => { $('msg').innerHTML = h; if (/<button/.test(h)) fresh(); };
 
   function opening() {
-    frame('Before you start', '<p>' + (BALLOON ? 'Four' : 'Three') + ' short games about money and chance. The money is imaginary: nobody is paid. Choose what you would really choose. There are no right answers.</p>' +
+    frame('Before you start', '<p>' + NW[0].toUpperCase() + NW.slice(1) + ' short games about money and chance. The money is imaginary: nobody is paid. Choose what you would really choose. There are no right answers.</p>' +
       '<button class="go" id="nx" type="button">Start</button>');
     $('nx').onclick = () => { startClock(); if (BALLOON) balloonScreen(); else bombScreen(); };
   }
@@ -206,7 +210,7 @@
       const miss = []; ch.forEach((v, j) => { if (!v) miss.push(j + 1); });
       miss.forEach(r => $('hr' + r).classList.add('missing'));
       if (miss.length) { say('Please pick A or B in every row (' + miss.length + ' missing, marked in red).'); return; }
-      rec.h = ch.join(''); stopClock(2); startClock(); stairScreen();
+      rec.h = ch.join(''); stopClock(2); startClock(); if (STAIR) stairScreen(); else saveScreen();
     };
   }
 
@@ -219,11 +223,11 @@
   }
 
   function saveScreen() {
-    frame('Save', '<p>That was all ' + (BALLOON ? 'four' : 'three') + ' games. Tap save to send your answers (anonymous).</p><button class="go" id="save" type="button">save</button>');
+    frame('Save', '<p>That was ' + (NG === 2 ? 'both' : 'all ' + NW) + ' games. Tap save to send your answers (anonymous).</p><button class="go" id="save" type="button">save</button>');
     let busy = false;
     $('save').onclick = async () => {
       if (busy) return; busy = true; $('save').disabled = true;   // a double tap gives one record
-      const out = BALLOON ? { v: 1, b: rec.b.join('.'), x: rec.x, h: rec.h, s: rec.s, t: secs.join('.') } : { v: 1, x: rec.x, h: rec.h, s: rec.s, t: secs.join('.') };
+      const out = { v: 1 }; if (BALLOON) out.b = rec.b.join('.'); out.x = rec.x; out.h = rec.h; if (STAIR) out.s = rec.s; out.t = secs.join('.');
       let again = false; try { again = localStorage.getItem('micro-l14-risk-saved') === '1'; } catch (e) {}
       if (again) out.again = 1;
       if (PREVIEW) { say('Preview: nothing is sent. The record would be ' + esc(JSON.stringify(out))); return; }
@@ -240,8 +244,11 @@
   // balloon off: every record object gets the same placeholder b ('0c.0c.0c.0c.0c'), so Hande's valid() checks only x, h, s and t.
   // Whatever b a record carries (none, forged, or a real one from before the switch) is never read, and the balloon reading
   // (score, fast flag) is never shown. t stays 4 numbers, the balloon's 0. With the balloon on, records go to classView unchanged.
-  const adapt = rows => BALLOON ? rows : rows.map(([d, ts, r]) => [d, ts, r && typeof r === 'object' && !Array.isArray(r) ? Object.assign({}, r, { b: '0c.0c.0c.0c.0c' }) : r]);
-  window.L14Reading.adapt = adapt; window.L14Reading.BALLOON = BALLOON;   // for the tests
+  const adapt = rows => BALLOON && STAIR ? rows : rows.map(([d, ts, r]) => {
+    if (!r || typeof r !== 'object' || Array.isArray(r)) return [d, ts, r];
+    const f = Object.assign({}, r); if (!BALLOON) f.b = '0c.0c.0c.0c.0c'; if (!STAIR) f.s = 'FSS'; return [d, ts, f];
+  });
+  window.L14Reading.adapt = adapt; window.L14Reading.BALLOON = BALLOON; window.L14Reading.STAIR = STAIR;   // for the tests
   // ======================================================================================================
   // ?results: the phase (shared, set by the lecturer) and the charts
   // ======================================================================================================
@@ -327,7 +334,7 @@
     const LKEY = 'micro-l14-phase-' + (P && P.session);
     const LGET = () => { try { return Number(localStorage.getItem(LKEY)) || 0; } catch (e) { return 0; } };
     let phase = T && !DEMO ? LGET() : 0, shared = 0, armed = null;
-    const PH = ['0 · closed', '1 · counts', '2 · attitudes', '3 · staircase CE'];
+    const PH = ['0 · closed', '1 · counts', '2 · attitudes', STAIR ? '3 · staircase CE' : '3 · same person'];
     function phaseButtons() {
       if (!T) return;
       $('ph').innerHTML = PH.map((l, j) => '<button class="opt' + (j === phase ? ' on' : '') + '" type="button" data-p="' + j + '">' + l + '</button>').join('') +
@@ -409,7 +416,8 @@
           fastTxt('hl', cv.hl.fast) + (p2 ? '<p class="reading">' + esc(cv.hl.line) + '</p>' : '');
       }
       // staircase: 8 CE bins; line between €40–50 and €50–60; phase 3: risk-premium row, side labels, reading + median
-      if (n < 10) h += wait('Game ' + (4 - G) + ' · Coin flip', n);
+      if (!STAIR) { /* the staircase is its own survey on Thursday (L15): no chart */ }
+      else if (n < 10) h += wait('Game ' + (4 - G) + ' · Coin flip', n);
       else {
         const R = [[0, 10], [10, 20], [20, 30], [30, 40], [40, 50], [50, 60], [60, 70], [70, 100]], ss = ok.map(x => x.staircase);
         const bins = R.map(([lo, hi]) => ({ lab: '€' + lo + '–' + hi, n: ss.filter(s => s.ce[0] === lo && s.ce[1] === hi).length, rp: rpLab(50 - hi, 50 - lo) }));
