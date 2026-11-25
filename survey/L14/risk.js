@@ -8,6 +8,10 @@
 //             The lecturer sets the phase in teacher mode; a phase is written as a tag only the teacher code can make.
 (function () {
   const POLL = 'L14-risk-games', PHASE_POLL = 'L14-risk-phase';
+  // THE SWITCH (Celebi 25.11, Risk.md Addition 12): true = students play the balloon; false = the balloon is only shown in
+  // class: the games start at the bomb box, the record has no b, and ?results has no balloon chart. Nothing else changes.
+  const BALLOON = false;
+  const G = BALLOON ? 0 : 1;   // games are numbered from 1 either way
   const P = window.MicroPoll, app = document.getElementById('app'), $ = id => document.getElementById(id);
   const PREVIEW = /[?&]preview\b/.test(location.search), RESULTS = /[?&]results\b/.test(location.search);
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -128,16 +132,16 @@
   app.addEventListener('click', e => { if (performance.now() - drawnAt < 400) { e.stopPropagation(); e.preventDefault(); } }, true);
   function frame(title, body) {
     fresh();
-    app.innerHTML = '<h1>Risk Games</h1><p class="s">Anonymous · about 8 minutes · Microeconomics · Lecture 14</p><h2>' + title + '</h2>' + body +
+    app.innerHTML = '<h1>Risk Games</h1><p class="s">Anonymous · about ' + (BALLOON ? 8 : 6) + ' minutes · Microeconomics · Lecture 14</p><h2>' + title + '</h2>' + body +
       '<div class="msg" id="msg">' + (PREVIEW ? 'Preview: nothing is sent.' : '') + '</div>';
     window.scrollTo(0, 0);
   }
   const say = h => { $('msg').innerHTML = h; if (/<button/.test(h)) fresh(); };
 
   function opening() {
-    frame('Before you start', '<p>Four short games about money and chance. The money is imaginary: nobody is paid. Choose what you would really choose. There are no right answers.</p>' +
+    frame('Before you start', '<p>' + (BALLOON ? 'Four' : 'Three') + ' short games about money and chance. The money is imaginary: nobody is paid. Choose what you would really choose. There are no right answers.</p>' +
       '<button class="go" id="nx" type="button">Start</button>');
-    $('nx').onclick = () => { startClock(); balloonScreen(); };
+    $('nx').onclick = () => { startClock(); if (BALLOON) balloonScreen(); else bombScreen(); };
   }
 
   function balloonScreen() {
@@ -166,7 +170,7 @@
     let k = null;
     let boxes = ''; for (let j = 1; j <= 12; j++) boxes += '<div class="box" id="bx' + j + '">' + j + '</div>';
     let nums = ''; for (let j = 0; j <= 12; j++) nums += '<button class="num" type="button" data-k="' + j + '">' + j + '</button>';
-    frame('Game 2 · Bomb box', '<p>12 boxes. 11 hold €3 each, one holds a bomb. Choose how many boxes to open (0 to 12). If the bomb is in one of your boxes, you get €0. Otherwise you get €3 for each box.</p>' +
+    frame('Game ' + (2 - G) + ' · Bomb box', '<p>12 boxes. 11 hold €3 each, one holds a bomb. Choose how many boxes to open (0 to 12). If the bomb is in one of your boxes, you get €0. Otherwise you get €3 for each box.</p>' +
       '<div class="game"><div class="boxes">' + boxes + '</div><div class="nums">' + nums + '</div>' +
       '<button class="go" id="open" type="button">open</button></div>');
     app.querySelectorAll('.num').forEach(b => b.onclick = () => {
@@ -191,7 +195,7 @@
       const a = r === 10 ? '€40 for sure' : '€40 if ' + die + ', otherwise €32', b = r === 10 ? '€77 for sure' : '€77 if ' + die + ', otherwise €2';
       rows += '<tr id="hr' + r + '"><td>' + r + '</td><td><button class="opt" type="button" data-r="' + r + '" data-v="A">A: ' + a + '</button></td><td><button class="opt" type="button" data-r="' + r + '" data-v="B">B: ' + b + '</button></td></tr>';
     }
-    frame('Game 3 · Ten choices', '<p>Ten choices. In each row pick A or B. A ten-sided die decides the prize.</p>' +
+    frame('Game ' + (3 - G) + ' · Ten choices', '<p>Ten choices. In each row pick A or B. A ten-sided die decides the prize.</p>' +
       '<div class="game"><table class="hl">' + rows + '</table></div><button class="go" id="nx" type="button">next game</button>');
     const ch = Array(10).fill(null);
     app.querySelectorAll('.hl .opt').forEach(b => b.onclick = () => {
@@ -208,18 +212,18 @@
 
   function stairScreen() {
     const i = rec.s.length, X = offerAt(rec.s);
-    frame('Game 4 · Coin flip (' + (i + 1) + ' of 3)', '<p>A fair coin: heads €100, tails €0. Would you rather have the coin flip, or this sure amount?</p>' +
+    frame('Game ' + (4 - G) + ' · Coin flip (' + (i + 1) + ' of 3)', '<p>A fair coin: heads €100, tails €0. Would you rather have the coin flip, or this sure amount?</p>' +
       '<div class="game opts col"><button class="opt" id="ss" type="button">€' + X + ' for sure</button><button class="opt" id="sf" type="button">the coin flip</button></div>');
     const pick = a => { rec.s += a; if (rec.s.length < 3) stairScreen(); else { stopClock(3); saveScreen(); } };
     $('ss').onclick = () => pick('S'); $('sf').onclick = () => pick('F');
   }
 
   function saveScreen() {
-    frame('Save', '<p>That was all four games. Tap save to send your answers (anonymous).</p><button class="go" id="save" type="button">save</button>');
+    frame('Save', '<p>That was all ' + (BALLOON ? 'four' : 'three') + ' games. Tap save to send your answers (anonymous).</p><button class="go" id="save" type="button">save</button>');
     let busy = false;
     $('save').onclick = async () => {
       if (busy) return; busy = true; $('save').disabled = true;   // a double tap gives one record
-      const out = { v: 1, b: rec.b.join('.'), x: rec.x, h: rec.h, s: rec.s, t: secs.join('.') };
+      const out = BALLOON ? { v: 1, b: rec.b.join('.'), x: rec.x, h: rec.h, s: rec.s, t: secs.join('.') } : { v: 1, x: rec.x, h: rec.h, s: rec.s, t: secs.join('.') };
       let again = false; try { again = localStorage.getItem('micro-l14-risk-saved') === '1'; } catch (e) {}
       if (again) out.again = 1;
       if (PREVIEW) { say('Preview: nothing is sent. The record would be ' + esc(JSON.stringify(out))); return; }
@@ -233,6 +237,11 @@
     };
   }
 
+  // balloon off: every record object gets the same placeholder b ('0c.0c.0c.0c.0c'), so Hande's valid() checks only x, h, s and t.
+  // Whatever b a record carries (none, forged, or a real one from before the switch) is never read, and the balloon reading
+  // (score, fast flag) is never shown. t stays 4 numbers, the balloon's 0. With the balloon on, records go to classView unchanged.
+  const adapt = rows => BALLOON ? rows : rows.map(([d, ts, r]) => [d, ts, r && typeof r === 'object' && !Array.isArray(r) ? Object.assign({}, r, { b: '0c.0c.0c.0c.0c' }) : r]);
+  window.L14Reading.adapt = adapt; window.L14Reading.BALLOON = BALLOON;   // for the tests
   // ======================================================================================================
   // ?results: the phase (shared, set by the lecturer) and the charts
   // ======================================================================================================
@@ -340,8 +349,8 @@
     }
     let cv = null, extra = { early: 0, after: 0 }, lastData = 0, dataPhase = -1;
     async function loadData() {
-      if (DEMO) { cv = classView(demoRecords(Number((/[?&]demo=([0-9]+)/.exec(location.search) || [])[1] || 60))); draw(); return; }
-      const r = await loadRecords(); cv = classView(r.rows); extra = r; lastData = Date.now(); dataPhase = phase; draw();
+      if (DEMO) { cv = classView(adapt(demoRecords(Number((/[?&]demo=([0-9]+)/.exec(location.search) || [])[1] || 60)))); draw(); return; }
+      const r = await loadRecords(); cv = classView(adapt(r.rows)); extra = r; lastData = Date.now(); dataPhase = phase; draw();
     }
     // Utku B3 (one shared token, ~5000 calls an hour): a student's device reads only the phase, every 2 minutes, and downloads
     // the records only from phase 1 on, when the phase changes or on Refresh (at most once a minute). The lecturer's device
@@ -369,7 +378,8 @@
       let h = '';
       // balloon: bins 0–11 by whole part; grey "all 5 popped"
       const bs = ok.map(x => x.balloon), scored = bs.filter(b => !b.popped_all);
-      if (n < 10) h += wait('Game 1 · Balloon', n);
+      if (!BALLOON) { /* the balloon is only shown in class: no chart */ }
+      else if (n < 10) h += wait('Game 1 · Balloon', n);
       else {
         const bins = range(0, 11).map(k => {
           const inBin = scored.filter(b => Math.floor(b.score) === k), bin = { lab: k + '–' + k + '.9', n: inBin.length };
@@ -382,28 +392,28 @@
           '<p class="meta">n = ' + n + (md !== null ? ' · median ' + md + ' pumps' : '') + '</p>' + fastTxt('balloon', cv.balloon.fast) + (p2 ? '<p class="reading">' + esc(cv.balloon.line) + '</p>' : '');
       }
       // bomb box: 0–12
-      if (n < 10) h += wait('Game 2 · Bomb box', n);
+      if (n < 10) h += wait('Game ' + (2 - G) + ' · Bomb box', n);
       else {
         const xs = ok.map(x => x.bomb.score);
-        h += '<h2>Game 2 · Bomb box</h2>' + chart('cx', range(0, 12).map(k => ({ lab: String(k), n: xs.filter(v => v === k).length })), { total: n, at: 6, lineLab: p2 ? 'risk neutral (6)' : 'most expected money (6)',
+        h += '<h2>Game ' + (2 - G) + ' · Bomb box</h2>' + chart('cx', range(0, 12).map(k => ({ lab: String(k), n: xs.filter(v => v === k).length })), { total: n, at: 6, lineLab: p2 ? 'risk neutral (6)' : 'most expected money (6)',
           axis: 'boxes opened', sides: p2 ? ['risk averse', 'risk seeking'] : null }) +
           '<p class="meta">n = ' + n + ' · median ' + lowerMedian(xs) + ' boxes</p>' + fastTxt('bomb', cv.bomb.fast) + (p2 ? '<p class="reading">' + esc(cv.bomb.line) + '</p>' : '');
       }
       // Holt–Laury: 0–10 A's of single switchers; grey "switched more than once"; row-10 A counted next to the chart
-      if (n < 10) h += wait('Game 3 · Ten choices', n);
+      if (n < 10) h += wait('Game ' + (3 - G) + ' · Ten choices', n);
       else {
         const hs = ok.map(x => x.hl), one = hs.filter(x => !x.switches_back);
-        h += '<h2>Game 3 · Ten choices</h2>' + chart('ch', range(0, 10).map(k => ({ lab: String(k), n: one.filter(x => x.score === k).length })), { total: n, grey: { lab: 'switched more than once', n: hs.length - one.length }, at: 4,
+        h += '<h2>Game ' + (3 - G) + ' · Ten choices</h2>' + chart('ch', range(0, 10).map(k => ({ lab: String(k), n: one.filter(x => x.score === k).length })), { total: n, grey: { lab: 'switched more than once', n: hs.length - one.length }, at: 4,
           lineLab: p2 ? 'risk neutral (4)' : 'most expected money (4)', axis: 'times you chose A', sides: p2 ? ['risk seeking', 'risk averse'] : null }) +
           '<p class="meta">n = ' + n + (one.length ? ' · median ' + lowerMedian(one.map(x => x.score)) + ' A\'s' : '') + (cv.hl.row10_A ? ' · ' + cv.hl.row10_A + ' chose A in row 10' : '') + '</p>' +
           fastTxt('hl', cv.hl.fast) + (p2 ? '<p class="reading">' + esc(cv.hl.line) + '</p>' : '');
       }
       // staircase: 8 CE bins; line between €40–50 and €50–60; phase 3: risk-premium row, side labels, reading + median
-      if (n < 10) h += wait('Game 4 · Coin flip', n);
+      if (n < 10) h += wait('Game ' + (4 - G) + ' · Coin flip', n);
       else {
         const R = [[0, 10], [10, 20], [20, 30], [30, 40], [40, 50], [50, 60], [60, 70], [70, 100]], ss = ok.map(x => x.staircase);
         const bins = R.map(([lo, hi]) => ({ lab: '€' + lo + '–' + hi, n: ss.filter(s => s.ce[0] === lo && s.ce[1] === hi).length, rp: rpLab(50 - hi, 50 - lo) }));
-        h += '<h2>Game 4 · Coin flip</h2>' + chart('cs', bins, { total: n, at: 4.5, lineLab: p3 ? 'risk neutral (€50)' : 'most expected money (€50)', axis: 'your sure-amount range (€)', rp: p3,
+        h += '<h2>Game ' + (4 - G) + ' · Coin flip</h2>' + chart('cs', bins, { total: n, at: 4.5, lineLab: p3 ? 'risk neutral (€50)' : 'most expected money (€50)', axis: 'your sure-amount range (€)', rp: p3,
           sides: p3 ? ['risk averse', 'risk seeking'] : null }) + '<p class="meta">n = ' + n + '</p>' + fastTxt('staircase', cv.staircase.fast) + (p3 ? '<p class="reading">' + esc(cv.staircase.line) + '</p>' : '');
       }
       // phase 3, optional: same person, same answer? bomb-box label against Holt–Laury label, counts only, hidden under 10
