@@ -9,12 +9,13 @@
   function h(tag, cls, t) { var e = document.createElement(tag); if (cls) e.className = cls; if (t !== undefined) e.textContent = t; return e; }
   function text(s, x, y, t, o) { o = o || {}; s.appendChild(el('text', { x: x, y: y, 'font-size': o.size || 20, 'text-anchor': o.anchor || 'start', fill: o.fill || INK, 'font-weight': o.bold ? 600 : 400, opacity: o.op || 1 }, t)); }
   function clear(s) { while (s.firstChild) s.removeChild(s.firstChild); }
-  function frame(box, hgt, label) { var s = el('svg', { viewBox: '0 0 640 ' + hgt, role: 'img', 'aria-label': label }); s.style.cssText = 'display:block;width:100%;max-width:820px;margin:0 auto;font-family:inherit'; box.appendChild(s); return s; }
+  var WIDE = !(window.matchMedia && window.matchMedia('(max-width: 760px)').matches) && !document.documentElement.classList.contains('mobile');
+  function frame(box, hgt, label, w) { var s = el('svg', { viewBox: '0 0 ' + (w || 640) + ' ' + hgt, role: 'img', 'aria-label': label }); s.style.cssText = 'display:block;width:100%;max-width:' + (w ? 1240 : 880) + 'px;margin:0 auto;font-family:inherit'; box.appendChild(s); return s; }
   function card(s, x, y, w, title, rows, o) {
     o = o || {}; var hgt = 34 + rows.length * 30;
     s.appendChild(el('rect', { x: x, y: y, width: w, height: hgt, rx: 8, fill: o.fill || '#fff', stroke: o.stroke || INK, 'stroke-width': o.sw || 1.5, opacity: o.op || 1 }));
-    text(s, x + w / 2, y + 25, title, { anchor: 'middle', bold: true, op: o.op });
-    rows.forEach(function (r, i) { text(s, x + 14, y + 53 + i * 30, r[0], { op: o.op }); text(s, x + w - 14, y + 53 + i * 30, r[1], { anchor: 'end', op: o.op }); });
+    text(s, x + w / 2, y + 25, title, { anchor: 'middle', bold: true, op: o.op, size: o.size });
+    rows.forEach(function (r, i) { text(s, x + 14, y + 53 + i * 30, r[0], { op: o.op, size: o.size }); text(s, x + w - 14, y + 53 + i * 30, r[1], { anchor: 'end', op: o.op, size: o.size }); });
     return hgt;
   }
   function out(box) { var o = h('div', 'vc-out'); o.setAttribute('aria-live', 'polite'); box.appendChild(o); return o; }
@@ -42,14 +43,15 @@
       o = out(box); say(o, '', 'one of the first three is true for every two lotteries');
     },
     cycle: function (box) {
-      var s = frame(box, 330, 'three lotteries and the arrows between them'), set, o;
-      var T = [[235, 6, 'lottery 1', '€28', '40%'], [450, 190, 'lottery 2', '€24', '45%'], [20, 190, 'lottery 3', '€20', '50%']];
-      var A = [[385, 108, 480, 184], [444, 238, 200, 238], [160, 184, 255, 108]];
+      var s = WIDE ? frame(box, 236, 'three lotteries and the arrows between them', 1000) : frame(box, 292, 'three lotteries and the arrows between them'), set, o;
+      var T = WIDE ? [[390, 4, 'lottery 1', '€28', '40%'], [720, 136, 'lottery 2', '€24', '45%'], [60, 136, 'lottery 3', '€20', '50%']]
+        : [[235, 6, 'lottery 1', '€28', '40%'], [450, 190, 'lottery 2', '€24', '45%'], [20, 190, 'lottery 3', '€20', '50%']];
+      var A = WIDE ? [[618, 66, 760, 130], [712, 184, 290, 184], [240, 130, 382, 66]] : [[385, 108, 480, 184], [444, 238, 200, 238], [160, 184, 255, 108]];
       var R = ['1 ≻ 2: “almost the same chance, so the larger prize”', '2 ≻ 3: “almost the same chance, so the larger prize”', '3 ≻ 1: “50% against 40% is a real difference, so the safer one”'];
       function show(n) {
         clear(s);
         for (var i = 0; i <= n; i++) arrow(s, A[i][0], A[i][1], A[i][2], A[i][3], n === 2 ? ORANGE : GREEN);
-        T.forEach(function (c) { card(s, c[0], c[1], 170, c[2], [[c[3], c[4]], ['€0', (100 - parseInt(c[4], 10)) + '%']]); });
+        T.forEach(function (c) { card(s, c[0], c[1], WIDE ? 220 : 170, c[2], [[c[3], c[4]], ['€0', (100 - parseInt(c[4], 10)) + '%']], { size: WIDE ? 23 : 20 }); });
         set(n);
         if (n < 0) say(o, '', 'compare them two at a time');
         else if (n < 2) say(o, 'k', R[n]);
@@ -69,7 +71,8 @@
         if (p >= 16) text(s, X(p / 2), 39, 'S ' + p + '%', { anchor: 'middle', fill: '#fff' });
         if (p <= 84) text(s, X(50 + p / 2), 39, 'C ' + (100 - p) + '%', { anchor: 'middle' });
         text(s, X(0), 92, 'what you choose at each p:', { fill: DIM });
-        s.appendChild(el('rect', { x: X(0), y: 104, width: 540 * at / 100, height: 30, fill: SAND }));
+        s.appendChild(el('rect', { x: X(0), y: 104, width: 540 * at / 100 - (mode ? 4 : 0), height: 30, fill: SAND }));
+        if (mode) s.appendChild(el('rect', { x: X(100) - 4, y: 104, width: 4, height: 30, fill: GREEN }));
         if (at < 100) s.appendChild(el('rect', { x: X(at), y: 104, width: 540 * (100 - at) / 100, height: 30, fill: GREEN }));
         text(s, X(at / 2), 126, 'H', { anchor: 'middle', bold: true }); if (at < 100) text(s, X(80), 126, 'the ticket', { anchor: 'middle', fill: '#fff', bold: true });
         s.appendChild(el('line', { x1: X(p), y1: 98, x2: X(p), y2: 140, stroke: INK, 'stroke-width': 4 }));
@@ -82,25 +85,26 @@
       }
       set = buttons(box, ['continuity', 'violation'], function (i) { mode = i; show(); });
       var w = h('label', 'vc-ctl'); w.appendChild(h('span', '', 'chance p of S')); r = h('input'); r.type = 'range'; r.min = 0; r.max = 100; r.step = 1; r.value = 30; v = h('b'); w.appendChild(r); w.appendChild(v); box.appendChild(w);
-      r.addEventListener('input', show); r.addEventListener('change', function () { r.blur(); });
+      r.addEventListener('input', show); r.addEventListener('change', function () { r.blur(); }); r.addEventListener('pointerup', function () { r.blur(); });
       o = out(box); show();
     },
     indep: function (box) {
-      var s = frame(box, 270, 'two trees with the same coin; tails gives a coffee in both'), set, o;
+      var s = WIDE ? frame(box, 218, 'two trees with the same coin; tails gives a coffee in both', 1000) : frame(box, 270, 'two trees with the same coin; tails gives a coffee in both'), set, o;
+      var G = WIDE ? { cx: 38, cy: 112, r: 34, bx: 200, bw: 250, hy: 34, ty: 146, fs: 24, name: 325 } : { cx: 22, cy: 138, r: 21, bx: 124, bw: 150, hy: 44, ty: 186, fs: 18, name: 135 };
       function tree(x, name, title, rows, cover) {
-        var op = cover ? 0.15 : 1;
-        text(s, x + 135, 24, name, { anchor: 'middle', bold: true });
-        arrow(s, x + 38, 128, x + 112, 84, INK, 2.5);
-        s.appendChild(el('line', { x1: x + 38, y1: 148, x2: x + 118, y2: 208, stroke: INK, 'stroke-width': 2.5, opacity: op }));
-        s.appendChild(el('circle', { cx: x + 22, cy: 138, r: 21, fill: '#fff', stroke: INK, 'stroke-width': 1.5 })); text(s, x + 22, 144, 'coin', { anchor: 'middle', size: 17 });
-        text(s, x + 30, 92, 'heads', { size: 18 }); text(s, x + 28, 206, 'tails', { size: 18, op: op });
-        card(s, x + 124, 44, 150, title, rows);
-        card(s, x + 124, 186, 150, 'C', [['coffee', '']], { op: op, fill: '#f4f4f2' });
+        var op = cover ? 0.15 : 1, ex = x + G.bx - 8, sx = x + G.cx + G.r * 0.8;
+        text(s, x + G.name, 26, name, { anchor: 'middle', bold: true, size: G.fs });
+        arrow(s, sx, G.cy - G.r * 0.6, ex, G.hy + 46, INK, 2.5);
+        s.appendChild(el('line', { x1: sx, y1: G.cy + G.r * 0.6, x2: ex, y2: G.ty + 30, stroke: INK, 'stroke-width': 2.5, opacity: op }));
+        s.appendChild(el('circle', { cx: x + G.cx, cy: G.cy, r: G.r, fill: '#fff', stroke: INK, 'stroke-width': 1.5 })); text(s, x + G.cx, G.cy + 7, 'coin', { anchor: 'middle', size: WIDE ? 24 : 18 });
+        text(s, x + (WIDE ? 72 : 30), WIDE ? 70 : 92, 'heads', { size: G.fs }); text(s, x + (WIDE ? 72 : 28), WIDE ? 180 : 206, 'tails', { size: G.fs, op: op });
+        card(s, x + G.bx, G.hy, G.bw, title, rows, { size: WIDE ? 24 : 20 });
+        card(s, x + G.bx, G.ty, G.bw, 'C', [['coffee', '']], { op: op, fill: '#f4f4f2', size: WIDE ? 24 : 20 });
       }
       function show(i) {
         clear(s);
         var c = i >= 1;
-        tree(10, 'choice A', 'H', [['H', '100%'], ['', '']], c); tree(340, 'choice B', 'ticket', [['S', '50%'], ['C', '50%']], c);
+        tree(WIDE ? 20 : 10, 'choice A', 'H', [['H', '100%'], ['', '']], c); tree(WIDE ? 530 : 340, 'choice B', 'ticket', [['S', '50%'], ['C', '50%']], c);
         set(i);
         if (i === 0) say(o, '', 'the tails branch is the same in both', 'Without the coin you said: H ≻ the ticket.');
         else if (i === 1) say(o, 'k', 'A ≻ B', 'Cover the same branch: what is left is H or the ticket, your first choice.');
@@ -110,9 +114,16 @@
       o = out(box); show(0);
     }
   };
-  var CSS = '.vnm-cond{max-width:860px;margin:.3em auto;font-size:22px;line-height:1.35}' +
+  var CSS = '.vnm-cond{max-width:1240px;margin:.3em auto;font-size:22px;line-height:1.35}' +
     '.vc-ctl{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:center;margin:.35em 0}' +
-    '.vc-ctl input{flex:1 1 220px;max-width:420px;min-height:32px;accent-color:' + GREEN + '}.vc-ctl b{min-width:2.6em;text-align:left}' +
+    ':where(.vc-ctl) input[type=range]{-webkit-appearance:none;appearance:none;background:transparent;height:40px;flex:1 1 240px;max-width:460px;margin:0;cursor:pointer}' +
+    ':where(.vc-ctl) input[type=range]:focus{outline:none}:where(.vc-ctl) input[type=range]:focus-visible{outline:2px solid #8fb27f;outline-offset:2px;border-radius:20px}' +
+    ':where(.vc-ctl) input[type=range]::-webkit-slider-runnable-track{height:8px;border-radius:4px;background:#e3e3df}' +
+    ':where(.vc-ctl) input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:28px;height:28px;margin-top:-10px;border-radius:50%;background:' + GREEN + ';border:3px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.3)}' +
+    ':where(.vc-ctl) input[type=range]::-moz-range-track{height:8px;border-radius:4px;background:#e3e3df}' +
+    ':where(.vc-ctl) input[type=range]::-moz-range-progress{height:8px;border-radius:4px;background:#b7d0aa}' +
+    ':where(.vc-ctl) input[type=range]::-moz-range-thumb{box-sizing:border-box;width:28px;height:28px;border-radius:50%;background:' + GREEN + ';border:3px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.3)}' +
+    '.vc-ctl b{min-width:2.4em;text-align:left;font-size:1.25em}' +
     '.vc-btns{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin:.35em 0}' +
     '.vc-btns button{font:inherit;padding:.2em .8em;min-height:36px;border:1px solid #bdbdb9;border-radius:6px;background:#fff;color:' + INK + ';cursor:pointer}' +
     '.vc-btns button.on{border-color:' + GREEN + ';background:#eaf3e6;font-weight:600}' +

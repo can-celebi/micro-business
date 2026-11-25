@@ -189,6 +189,9 @@ html:root { --mono: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif; }
   .reveal section[data-sid='L14-X7p'] .vnm-pic svg, .reveal section[data-sid='L14-K2'] .vnm-cond svg, .reveal section[data-sid='L14-K4'] .vnm-cond svg { width: 100% !important; max-width: 100% !important; }
   .reveal section[data-sid='L14-X7p'] .vnm-pic svg { max-height: 460px !important; } .reveal section[data-sid='L14-K2'] .vnm-cond svg { max-height: 330px !important; } .reveal section[data-sid='L14-K4'] .vnm-cond svg { max-height: 220px !important; }
   .reveal .poll .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+  html.mobile .reveal .know-grid { grid-template-columns: 1fr !important; } html.mobile .reveal .know-row { grid-template-columns: 1fr !important; } html.mobile .reveal .know-row .poll-input .btn { min-width: 0 !important; padding: 0.3em 0.6em; }
+  html.mobile .reveal .evg { display: block !important; } html.mobile .reveal .evg-h { display: none; } html.mobile .reveal .evg-c { display: block; padding: 0.1em 0; }
+  html.mobile .reveal .tk-sc, html.mobile .reveal .tk-big, html.mobile .reveal .rows > .tk-sc { min-width: 0 !important; width: auto !important; max-width: 100% !important; }
   .reveal .live-res iframe { width: 100%; height: 430px; border: 1.5px solid #ddd; background: #fff; }
   html.mobile .reveal .sbpic svg { height: auto; width: 100%; }
 
@@ -344,7 +347,7 @@ html:root { --mono: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif; }
 
 <section data-sid="L14-X2"><h2>preferences over lotteries</h2><div class="lead-block"><div class="def">Now the prizes come with chances. You strictly prefer S to H to C.</div></div><div class="tk-big tk-sc"><div class="tk-big-h">the ticket</div><div class="tk-big-r">S with chance 50%</div><div class="tk-big-r">C with chance 50%</div></div><div class="big q" data-fragment-index="1">Choose: keep H for sure, or a ticket with S 50%, C 50%?</div><div class="poll" data-fragment-index="1" data-poll="L14-rank" data-type="choice" data-options="keep H for sure,the ticket: S 50%‚ C 50%"></div><div class="ans-wrap wait"><div class="ans-card" hidden><div class="ans-label">answer</div><div class="ans">If the class splits: same ranking, different choices.</div><div class="why">So the ranking alone doesn't say how much better S is than H.</div><div class="why">We need more than a ranking.</div></div></div><aside class="notes">Can (25.11): a real poll, then the class results, then the two lines (they open after the choice). No right answer.</aside></section>
 
-<section data-sid="L14-X2p"><h2>ordinal utility is not enough</h2><div class="lead-block"><div class="def">Move H's number: with the same ranking, the choice between H and the 50–50 ticket flips. The ticket (S 50%, C 50%) counts as 5: half of 10 plus half of 0.</div></div><div class="fragment vnm-wrap"><div class="vnm-pic" data-vnm="rule"></div></div><aside class="notes">Picture slide (Can 25.11: fewer things per slide).</aside></section>
+<section data-sid="L14-X2p"><h2>ordinal utility is not enough</h2><div class="lead-block"><div class="def">Move H's number: with the same ranking, the choice between H and the 50–50 ticket flips.</div></div><div class="fragment vnm-wrap"><div class="vnm-pic" data-vnm="rule"></div></div><aside class="notes">Picture slide (Can 25.11: fewer things per slide).</aside></section>
 
 <section data-sid="L14-X3"><h2>the indifference probability</h2><div class="lead-block"><div class="def">S is the best outcome, C is the worst.</div></div><div class="tk-big tk-sc x3card fragment" data-fragment-index="2"><div class="tk-big-h">the ticket</div><div class="tk-big-r">S with chance <span class="x3p">p</span></div><div class="tk-big-r">C with chance <span class="x3q">1 − p</span></div></div><div class="pl fragment" data-fragment-index="3" style="font-size:25px;color:#111;margin-top:0.4em">The slider sets p, the chance of S.</div><div class="pl fragment" data-fragment-index="4" style="font-size:25px;font-weight:600;color:#111;margin-top:0.4em">Move p until you are <b class="ind">indifferent</b> between H for sure and this ticket. Then press submit.</div><div class="poll fragment" data-fragment-index="4" data-poll="L14-p" data-type="slider" data-min="0" data-max="100" data-step="5" data-unit="%" data-noidea="off"></div><div class="pl fragment" data-fragment-index="5" style="font-size:25px;color:#111;margin-top:0.6em">You are indifferent: H for sure <span class="sym"><span class="sym">∼</span></span> the ticket (S with chance p, C with chance 1 − p).</div><aside class="notes">Can (Addition 22): the slider L14-p, the class distribution on the lecturer's screen, then 'at your p, H <span class="sym">∼</span> (p% S, rest C)'.</aside></section>
 
@@ -415,8 +418,8 @@ html:root { --mono: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif; }
 </div></div>
 
 <script src="../../vendor/reveal/reveal.js"></script>
-<script src="vnm-pictures.js?v=d89e43dd"></script>
-<script src="vnm-conditions.js?v=c681ddb3"></script>
+<script src="vnm-pictures.js?v=8ee1ff44"></script>
+<script src="vnm-conditions.js?v=213e5bf6"></script>
 <script src="../../vendor/reveal/plugin/notes/notes.js"></script>
 <script src="../../assets/js/config.js?v=20261124a"></script>
 <script src="../../assets/js/interactive.js?v=20261105a"></script>

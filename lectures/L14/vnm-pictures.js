@@ -21,9 +21,10 @@
     });
     s.appendChild(el('rect', { x: x, y: y, width: w, height: 40, fill: 'none', stroke: INK, 'stroke-width': 1 }));
   }
-  function frame(box, hgt, label) {
-    var s = el('svg', { viewBox: '0 0 640 ' + hgt, role: 'img', 'aria-label': label });
-    s.style.cssText = 'display:block;width:100%;max-width:820px;margin:0 auto;font-family:inherit';
+  var WIDE = !(window.matchMedia && window.matchMedia('(max-width: 760px)').matches) && !document.documentElement.classList.contains('mobile');
+  function frame(box, hgt, label, w) {
+    var s = el('svg', { viewBox: '0 0 ' + (w || 640) + ' ' + hgt, role: 'img', 'aria-label': label });
+    s.style.cssText = 'display:block;width:100%;max-width:' + (w ? 1240 : 880) + 'px;margin:0 auto;font-family:inherit';
     box.appendChild(s); return s;
   }
   function out(box) { var o = h('div', 'vnm-out'); o.setAttribute('aria-live', 'polite'); box.appendChild(o); return o; }
@@ -33,7 +34,7 @@
     var v = h('b'); w.appendChild(t); w.appendChild(r); w.appendChild(v); box.appendChild(w);
     function go() { fn(+r.value, v); }
     r.addEventListener('input', go);
-    r.addEventListener('change', function () { r.blur(); });          // reveal ignores the arrow keys while an input has the focus
+    r.addEventListener('change', function () { r.blur(); }); r.addEventListener('pointerup', function () { r.blur(); });          // reveal ignores the arrow keys while an input has the focus
     go(); return r;
   }
   function buttons(box, list, pick) {
@@ -42,7 +43,7 @@
     box.appendChild(w);
     return function (i) { bs.forEach(function (b, k) { b.className = k === i ? 'on' : ''; b.setAttribute('aria-pressed', k === i); }); };
   }
-  function ladder(s, hv, ticket) {
+  function ladder(s, hv) {
     while (s.firstChild) s.removeChild(s.firstChild);
     function y(v) { return 225 - v * 19; }
     s.appendChild(el('line', { x1: 170, y1: y(0), x2: 170, y2: y(10), stroke: GREY, 'stroke-width': 4 }));
@@ -51,28 +52,44 @@
       text(s, 145, y(p[0]) + 7, num(p[0]), { anchor: 'end', bold: true });
       text(s, 195, y(p[0]) + 7, p[1], { bold: true });
     });
-    if (ticket) {
-      s.appendChild(el('line', { x1: 130, y1: y(5), x2: 600, y2: y(5), stroke: ORANGE, 'stroke-width': 3, 'stroke-dasharray': '8 6' }));
-      text(s, 420, y(5) - 10, 'the ticket: 5', { fill: ORANGE, bold: true });
+    {
+      var B = 250, a = { stroke: ORANGE, 'stroke-width': 3, fill: 'none' };
+      function line(x1, y1, x2, y2) { s.appendChild(el('line', { x1: x1, y1: y1, x2: x2, y2: y2, stroke: a.stroke, 'stroke-width': a['stroke-width'] })); }
+      line(B, y(10), B, y(0)); line(B - 10, y(10), B, y(10)); line(B - 10, y(0), B, y(0)); line(B, y(5), 345, y(5));
+      s.appendChild(el('circle', { cx: B, cy: y(5), r: 9, fill: ORANGE }));
+      text(s, B + 22, y(5) - 12, '5', { fill: ORANGE, bold: true, size: 26 });
+      s.appendChild(el('rect', { x: 345, y: y(5) - 64, width: 285, height: 128, rx: 8, fill: '#fff', stroke: ORANGE, 'stroke-width': 2 }));
+      text(s, 487, y(5) - 36, 'the ticket', { anchor: 'middle', bold: true });
+      text(s, 487, y(5) - 4, 'S 50%, C 50%', { anchor: 'middle' });
+      text(s, 487, y(5) + 42, '½ · 10 + ½ · 0 = 5', { anchor: 'middle', fill: ORANGE, bold: true });
     }
   }
   var KINDS = {
     ranking: function (box) {
-      var s = frame(box, 250, 'numbers for S, H and C on a scale'), o;
-      slider(box, 'number for H', 1, 9, 1, 6, function (v, b) { b.textContent = v; ladder(s, v, false); if (o) o.textContent = 'S ≻ H ≻ C: the same ranking'; });
+      var s = frame(box, 112, 'numbers for S, H and C on a line'), o = null;
+      slider(box, 'number for H', 2, 8, 1, 6, function (v, b) {
+        b.textContent = v;
+        while (s.firstChild) s.removeChild(s.firstChild);
+        s.appendChild(el('line', { x1: 60, y1: 56, x2: 580, y2: 56, stroke: GREY, 'stroke-width': 4 }));
+        [[0, 'C', GREY], [v, 'H', SAND], [10, 'S', GREEN]].forEach(function (p) {
+          var x = 60 + 52 * p[0];
+          s.appendChild(el('circle', { cx: x, cy: 56, r: 13, fill: p[2], stroke: INK, 'stroke-width': 1 }));
+          text(s, x, 30, p[1], { anchor: 'middle', bold: true, size: 22 }); text(s, x, 98, num(p[0]), { anchor: 'middle', bold: true, size: 22 });
+        });
+        if (o) o.textContent = 'S ≻ H ≻ C: the same ranking';
+      });
       o = out(box); o.textContent = 'S ≻ H ≻ C: the same ranking';
     },
     rule: function (box) {
-      var s = frame(box, 250, 'numbers for S, H and C and the ticket at 5'), o = null, set = null, r;
-      function show(v, b) {
-        if (b) b.textContent = v;
-        ladder(s, v, true);
-        if (set) set(v === 8 ? 0 : v === 3 ? 1 : -1);
-        if (o) { o.innerHTML = ''; o.appendChild(h('div', '', 'ranking: S ≻ H ≻ C, always')); o.appendChild(h('div', 'big ' + (v > 5 ? 'k' : v < 5 ? 't' : ''), v > 5 ? 'H: ' + v + ' > 5 → keep H' : v < 5 ? 'H: ' + v + ' < 5 → take the ticket' : 'H: 5 = 5 → indifferent')); }
-      }
-      set = buttons(box, ['H = 8', 'H = 3'], function (i) { r.value = i === 0 ? 8 : 3; r.dispatchEvent(new Event('input')); });
-      r = slider(box, 'number for H', 1, 9, 1, 8, show);
-      o = out(box); show(+r.value, null);
+      var s = frame(box, 250, 'numbers for S, H and C; the ticket is worth 5, halfway between C = 0 and S = 10'), o = null;
+      var r = slider(box, 'number for H', 2, 8, 1, 8, function (v, b) {
+        b.textContent = v; ladder(s, v);
+        if (!o) return;
+        o.textContent = '';
+        o.appendChild(h('div', '', 'the ranking stays S ≻ H ≻ C'));
+        o.appendChild(h('div', 'big ' + (v > 5 ? 'k' : v < 5 ? 't' : ''), v > 5 ? 'H: ' + v + ' > 5 → keep H' : v < 5 ? 'H: ' + v + ' < 5 → take the ticket' : 'H: 5 = 5 → indifferent'));
+      });
+      o = out(box); r.dispatchEvent(new Event('input'));
     },
     dial: function (box) {
       var s = frame(box, 235, 'the ticket with chance p of S, and H on the scale from 0 to 1'), o = null;
@@ -111,15 +128,15 @@
     },
     three: function (box) {
       var L = [[0, 40, 60], [20, 0, 80], [20, 30, 50]], U = L.map(function (l) { return l[0] + l[1] * 0.6; });
-      var s = frame(box, 345, 'lotteries 1, 2 and 3 as tickets between S and C'), set, o;
+      var s = WIDE ? frame(box, 200, 'lotteries 1, 2 and 3 as tickets between S and C', 1000) : frame(box, 345, 'lotteries 1, 2 and 3 as tickets between S and C'), set, o;
       function show(i) {
-        var l = L[i];
-        function row(y, t, parts, on) { text(s, 10, y + 27, t, { bold: on }); bar(s, 150, y, 480, parts); }
+        var l = L[i], x0 = WIDE ? 520 : 0, y0 = WIDE ? 36 : 164, bw = WIDE ? 360 : 480, bx = WIDE ? 118 : 150;
+        function row(x, y, t, parts, on) { text(s, x + 4, y + 27, t, { bold: on, size: WIDE ? 22 : 20 }); bar(s, x + bx, y, bw, parts); }
         while (s.firstChild) s.removeChild(s.firstChild);
-        row(6, 'lottery ' + (i + 1), [[l[0] / 100, GREEN, 'S ' + l[0] + '%'], [l[1] / 100, SAND, 'H ' + l[1] + '%'], [l[2] / 100, GREY, 'C ' + l[2] + '%']], true);
-        row(62, l[1] ? 'replace H' : 'no H', [[l[0] / 100, GREEN, 'S ' + l[0] + '%'], [l[1] * 0.006, GREEN, 'S ' + num(l[1] * 0.6) + '%'], [l[1] * 0.004, GREY, 'C ' + num(l[1] * 0.4) + '%'], [l[2] / 100, GREY, 'C ' + l[2] + '%']]);
-        text(s, 10, 150, 'as tickets between S and C:', { fill: DIM });
-        [2, 0, 1].forEach(function (k, r) { row(164 + r * 58, 'lottery ' + (k + 1), [[U[k] / 100, GREEN, 'S ' + num(U[k]) + '%'], [1 - U[k] / 100, GREY, 'C ' + num(100 - U[k]) + '%']], k === i); });
+        row(0, WIDE ? 36 : 6, 'lottery ' + (i + 1), [[l[0] / 100, GREEN, 'S ' + l[0] + '%'], [l[1] / 100, SAND, 'H ' + l[1] + '%'], [l[2] / 100, GREY, 'C ' + l[2] + '%']], true);
+        row(0, WIDE ? 92 : 62, l[1] ? 'replace H' : 'no H', [[l[0] / 100, GREEN, 'S ' + l[0] + '%'], [l[1] * 0.006, GREEN, 'S ' + num(l[1] * 0.6) + '%'], [l[1] * 0.004, GREY, 'C ' + num(l[1] * 0.4) + '%'], [l[2] / 100, GREY, 'C ' + l[2] + '%']]);
+        text(s, x0 + 4, WIDE ? 22 : 150, 'as tickets between S and C:', { fill: DIM, size: WIDE ? 22 : 20 });
+        [2, 0, 1].forEach(function (k, r) { row(x0, y0 + r * 56, 'lottery ' + (k + 1), [[U[k] / 100, GREEN, 'S ' + num(U[k]) + '%'], [1 - U[k] / 100, GREY, 'C ' + num(100 - U[k]) + '%']], k === i); });
         set(i);
         o.textContent = 'lottery ' + (i + 1) + ' is a ' + num(U[i]) + '% chance of S. Order: lottery 3 ≻ lottery 1 ≻ lottery 2';
       }
@@ -146,11 +163,17 @@
       o = out(box); show(0);
     }
   };
-  var CSS = '.vnm-pic{max-width:860px;margin:.3em auto;font-size:22px;line-height:1.35}' +
+  var CSS = '.vnm-pic{max-width:1240px;margin:.3em auto;font-size:22px;line-height:1.35}' +
     '.vnm-pic svg text{font-family:inherit}' +
     '.vnm-ctl{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:center;margin:.35em 0}' +
-    '.vnm-ctl input{flex:1 1 220px;max-width:420px;min-height:32px;accent-color:' + GREEN + '}' +
-    '.vnm-ctl b{min-width:2.6em;text-align:left}' +
+    ':where(.vnm-ctl) input[type=range]{-webkit-appearance:none;appearance:none;background:transparent;height:40px;flex:1 1 240px;max-width:460px;margin:0;cursor:pointer}' +
+    ':where(.vnm-ctl) input[type=range]:focus{outline:none}:where(.vnm-ctl) input[type=range]:focus-visible{outline:2px solid #8fb27f;outline-offset:2px;border-radius:20px}' +
+    ':where(.vnm-ctl) input[type=range]::-webkit-slider-runnable-track{height:8px;border-radius:4px;background:#e3e3df}' +
+    ':where(.vnm-ctl) input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:28px;height:28px;margin-top:-10px;border-radius:50%;background:' + GREEN + ';border:3px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.3)}' +
+    ':where(.vnm-ctl) input[type=range]::-moz-range-track{height:8px;border-radius:4px;background:#e3e3df}' +
+    ':where(.vnm-ctl) input[type=range]::-moz-range-progress{height:8px;border-radius:4px;background:#b7d0aa}' +
+    ':where(.vnm-ctl) input[type=range]::-moz-range-thumb{box-sizing:border-box;width:28px;height:28px;border-radius:50%;background:' + GREEN + ';border:3px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.3)}' +
+    '.vnm-ctl b{min-width:2.4em;text-align:left;font-size:1.25em}' +
     '.vnm-btns{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin:.35em 0}' +
     '.vnm-btns button{font:inherit;padding:.2em .8em;min-height:36px;border:1px solid #bdbdb9;border-radius:6px;background:#fff;color:' + INK + ';cursor:pointer}' +
     '.vnm-btns button.on{border-color:' + GREEN + ';background:#eaf3e6;font-weight:600}' +
