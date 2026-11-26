@@ -298,7 +298,22 @@
     const m = /^(L\d\d)-/.exec(poll), w = m && classWindow(m[1]);
     return !!w && ts < w[0] - 30 * 60000;
   }
+  // ?demo (Celebi 26.11): every poll's results with made-up answers (31 per poll), on any device, without the teacher
+  // code and without any API call; nothing is saved. For checking how results look.
+  const DEMO_Q = /[?&]demo\b/.test(location.search), DEMO_NODES = {};
+  function demoData(poll) {
+    const node = DEMO_NODES[poll], ds = (node && node.dataset) || {}, type = ds.type || 'choice', v = [];
+    if (type === 'number' || type === 'slider') {
+      const mn = Number(ds.min || 0), mx = Number(ds.max || 100), st = Number(ds.step || 1) || 1, span = Math.round((mx - mn) / st);
+      for (let k = 0; k < 31; k++) v.push(mn + st * Math.round(span * (0.15 + 0.7 * ((k * 37) % 31) / 31)));
+    } else {
+      const o = (ds.options || 'a,b,c').split(',').map(x => safe(x.trim())).filter(Boolean);
+      for (let k = 0; k < 31; k++) v.push(o[(k * k + 3) % o.length]);
+    }
+    return { poll: poll, mode: 'demo', n: v.length, responses: v.map((x, i) => ({ value: x, client: 'demo' + i, time: '' })) };
+  }
   async function results(poll) {
+    if (DEMO_Q) return demoData(poll);
     if (!TOKEN) {
       const all = JSON.parse(load('micro-poll-' + poll) || '{}');
       const responses = Object.values(all);
@@ -420,18 +435,30 @@
       bins[k].n++;
     });
     const top = Math.max(1, ...bins.map(bn => bn.n));
+    // what the bars mean (Can 26.11: "no numbers ... what do they mean how many people in each bin"): a caption above,
+    // a count on EVERY bar (0 in grey), an x-axis title (data-xlabel, else the unit), and the data-mark as a labelled line
+    box.appendChild(el('div', 'big-cap', 'number of students per answer'));
     const hist = el('div', 'big-hist');
     bins.forEach(bn => {
       const c = el('div', 'big-col');
-      c.appendChild(el('span', 'big-cnt', bn.n ? String(bn.n) : ''));
+      c.appendChild(el('span', 'big-cnt' + (bn.n ? '' : ' zero'), String(bn.n)));
       const b = el('span', 'big-bar'); b.style.height = (100 * bn.n / top) + '%'; c.appendChild(b);
       c.appendChild(el('span', 'big-lab', bn.lab));
       hist.appendChild(c);
     });
+    if (mark !== null && isFinite(mark) && bins.length) {
+      let k = 0, frac = 0.5;
+      if (exact) bins.forEach((bn, j) => { if (Math.abs(mark - bn.a) < Math.abs(mark - bins[k].a)) k = j; });
+      else { k = bins.findIndex(bn => mark < bn.b); if (k < 0) k = bins.length - 1; frac = bins[k].b > bins[k].a ? Math.min(1, Math.max(0, (mark - bins[k].a) / (bins[k].b - bins[k].a))) : 0.5; }
+      const m = el('div', 'big-mark'); m.style.left = (100 * (k + frac) / bins.length) + '%';
+      m.appendChild(el('span', null, (ds.marklabel || 'risk neutral') + ' (' + fmt(mark) + ')'));
+      hist.appendChild(m);
+    }
     box.appendChild(hist);
+    box.appendChild(el('div', 'big-xtitle', ds.xlabel || unit || ''));
     if (!vals.length) { box.appendChild(el('div', 'big-stats', 'no answers in range · ' + out + ' out of range')); return; }
     const n = vals.length, med = n % 2 ? vals[(n - 1) / 2] : (vals[n / 2 - 1] + vals[n / 2]) / 2, mean = vals.reduce((a, b) => a + b, 0) / n;
-    let line = 'n = ' + n + ' · median ' + fmt(med) + ' · mean ' + fmt(mean);
+    let line = 'n = ' + n + ' student' + (n === 1 ? '' : 's') + ' · median ' + fmt(med) + ' · mean ' + fmt(mean);
     if (mark !== null) line += ' · ≥ ' + fmt(mark) + ': ' + vals.filter(v => v >= mark).length;
     if (noIdea) line += ' · no idea: ' + noIdea;
     if (out) line += ' · ' + out + (setMin || setMax ? ' out of range' : ' outside the chart');
@@ -468,6 +495,7 @@
 
   function initPoll(node) {
     const poll = node.dataset.poll;
+    if (DEMO_Q && !DEMO_NODES[poll]) DEMO_NODES[poll] = node;
     const type = node.dataset.type || 'choice';
     const unit = node.dataset.unit || '';
     const mark = node.dataset.mark !== undefined ? Number(node.dataset.mark) : null;
@@ -605,8 +633,8 @@
       if (!quiet) { out.innerHTML = ''; out.appendChild(el('div', 'dim', 'loading…')); }
       try {
         const viz = el('div', 'viz');
-        if (type === 'slider' && !TEACHER) { out.innerHTML = ''; viz.appendChild(el('div', 'dim small-line', sliderVal === null ? '' : 'your answer: ' + sliderVal + unit + ' · saved')); out.appendChild(viz); busy = false; return; }
-        const wmap = await whereMap(lecOf(poll)).catch(() => ({}));
+        if (type === 'slider' && !TEACHER && !DEMO_Q) { out.innerHTML = ''; viz.appendChild(el('div', 'dim small-line', sliderVal === null ? '' : 'your answer: ' + sliderVal + unit + ' · saved')); out.appendChild(viz); busy = false; return; }
+        const wmap = DEMO_Q ? {} : await whereMap(lecOf(poll)).catch(() => ({}));
         if (type === 'text') { const c = await textCount(poll); out.innerHTML = ''; viz.appendChild(answeredLine(c.clients || [], wmap)); viz.appendChild(el('div', 'dim small-line', 'the texts are read after class')); out.appendChild(viz); busy = false; return; }
         const data = await results(poll);
         out.innerHTML = '';
@@ -650,7 +678,7 @@
       setTimeout(() => node.dispatchEvent(new CustomEvent('micropoll:saved', { bubbles: true, detail: { poll: poll, restored: true } })), 0);
     }
     const FIRST = cfg.resultsFirst !== false && type !== 'slider';
-    if (prev || FIRST || TEACHER) {
+    if (prev || FIRST || TEACHER || DEMO_Q) {   // ?demo: every results box opens, as on the lecturer screen
       out.classList.add('open'); refresh.style.display = type === 'slider' && !TEACHER ? 'none' : '';
       // results are loaded only when the slide is on screen (one call, not one per poll at page load)
       const here = () => { const cur = window.Reveal && Reveal.getCurrentSlide && Reveal.getCurrentSlide(), sec = node.closest('section'); return !!(cur && sec && (cur === sec || cur.contains(node) || sec.contains(cur))); };

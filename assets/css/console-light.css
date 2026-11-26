@@ -504,3 +504,10 @@ body[data-results="big"] .poll-results { max-width: none !important; }
 .big-stats { font-size: 32px; font-weight: 700; margin: 6px 0; color: #111; }
 .big-chips { display: flex; flex-wrap: wrap; gap: 4px 6px; }
 .big-chip { font-size: 20px; border: 1px solid #bbb; border-radius: 3px; padding: 1px 6px; background: #fff; color: #111; }
+/* big view, what the bars mean (Can 26.11): caption, a count on every bar (0 in grey), the data-mark line, the x-axis title */
+.big-cap { font-size: 24px; color: #333; margin: 6px 0 0; }
+.big-hist { position: relative; margin-top: 40px; }
+.big-cnt.zero { color: #aaa; font-weight: 400; }
+.big-mark { position: absolute; top: -8px; bottom: 0; border-left: 3px dashed #111; pointer-events: none; }
+.big-mark span { position: absolute; top: -34px; left: 6px; white-space: nowrap; font-size: 24px; font-weight: 700; color: #111; background: rgba(255,255,255,.85); padding: 0 4px; }
+.big-xtitle { font-size: 24px; color: #111; text-align: center; margin: -6px 0 6px; font-weight: 600; }
