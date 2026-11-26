@@ -381,14 +381,20 @@
   // then every answer, sorted, as a chip
   function renderNumberBig(box, data, unit, mark, wmap, node) {
     box.appendChild(answeredLine(data.responses.map(r => r.client), wmap));
-    const vals = data.responses.map(r => Number(r.value)).filter(v => isFinite(v)).sort((a, b) => a - b);
+    const all = data.responses.map(r => Number(r.value)).filter(v => isFinite(v)).sort((a, b) => a - b);
     const noIdea = data.responses.filter(r => String(r.value) === safe(NOIDEA)).length;
-    if (!vals.length) { box.appendChild(el('div', 'big-stats', 'no answers yet' + (noIdea ? ' · no idea: ' + noIdea : ''))); return; }
+    if (!all.length) { box.appendChild(el('div', 'big-stats', 'no answers yet' + (noIdea ? ' · no idea: ' + noIdea : ''))); return; }
     const ds = (node && node.dataset) || {}, fmtN = v => String(Math.round(v * 10) / 10);
     const fmt = v => /^[€$£]$/.test(unit) ? unit + fmtN(v) : fmtN(v) + unit;
-    let lo = ds.min !== undefined && isFinite(Number(ds.min)) ? Number(ds.min) : vals[0];
-    let hi = ds.max !== undefined && isFinite(Number(ds.max)) ? Number(ds.max) : vals[vals.length - 1];
-    if (vals[0] < lo) lo = vals[0]; if (vals[vals.length - 1] > hi) hi = vals[vals.length - 1];
+    // expect forged answers (Utku 26.11: one 1e9 vote must not wreck the view): with a set range (data-min/max) the answers
+    // outside it are left out and counted; without one, answers far from the median are left out and counted
+    const setMin = ds.min !== undefined && isFinite(Number(ds.min)), setMax = ds.max !== undefined && isFinite(Number(ds.max));
+    // no set range: keep the answers within 25 median absolute deviations of the median (robust also for a few answers)
+    const midOf = xs => { const t = xs.slice().sort((a, b) => a - b), m = t.length; return m % 2 ? t[(m - 1) / 2] : (t[m / 2 - 1] + t[m / 2]) / 2; };
+    const m0 = midOf(all), fence = 25 * (midOf(all.map(v => Math.abs(v - m0))) || Math.abs(m0) || 1), core = all.filter(v => Math.abs(v - m0) <= fence);
+    let lo = setMin ? Number(ds.min) : core[0], hi = setMax ? Number(ds.max) : core[core.length - 1];
+    if (hi < lo) hi = lo;
+    const vals = all.filter(v => v >= lo && v <= hi), out = all.length - vals.length;
     const step = Number(ds.step), bins = [];
     if (hi === lo) bins.push({ a: lo, b: hi, lab: fmt(lo) });
     else if (step > 0 && (hi - lo) / step + 1 <= 11 && Number.isInteger(Math.round((hi - lo) / step * 1e6) / 1e6)) {
@@ -398,7 +404,12 @@
       const raw = (hi - lo) / 10, e = Math.pow(10, Math.floor(Math.log10(raw))), w = [1, 2, 5, 10].map(m => m * e).find(x => x >= raw - 1e-9);
       if (ds.min === undefined) lo = Math.floor(lo / w) * w;
       const nb = Math.max(1, Math.ceil((hi - lo) / w - 1e-9));
-      for (let k = 0; k < nb; k++) bins.push({ a: lo + k * w, b: Math.min(hi, lo + (k + 1) * w), lab: fmtN(lo + k * w) + '–' + fmtN(Math.min(hi, lo + (k + 1) * w)) });
+      // whole-number answers in whole-number bins read "0–9", "10–19", …, the top bin "90–100" (Utku's note)
+      const whole = Number.isInteger(w) && Number.isInteger(lo) && vals.every(v => Number.isInteger(v));
+      for (let k = 0; k < nb; k++) {
+        const a = lo + k * w, b = Math.min(hi, lo + (k + 1) * w), last = k === nb - 1;
+        bins.push({ a, b, lab: whole ? fmtN(a) + '–' + fmtN(last ? b : b - 1) : fmtN(a) + '–' + fmtN(b) });
+      }
     }
     const exact = bins.length && bins[0].a === bins[0].b;
     bins.forEach(bn => { bn.n = 0; });
@@ -418,14 +429,19 @@
       hist.appendChild(c);
     });
     box.appendChild(hist);
+    if (!vals.length) { box.appendChild(el('div', 'big-stats', 'no answers in range · ' + out + ' out of range')); return; }
     const n = vals.length, med = n % 2 ? vals[(n - 1) / 2] : (vals[n / 2 - 1] + vals[n / 2]) / 2, mean = vals.reduce((a, b) => a + b, 0) / n;
     let line = 'n = ' + n + ' · median ' + fmt(med) + ' · mean ' + fmt(mean);
     if (mark !== null) line += ' · ≥ ' + fmt(mark) + ': ' + vals.filter(v => v >= mark).length;
     if (noIdea) line += ' · no idea: ' + noIdea;
+    if (out) line += ' · ' + out + (setMin || setMax ? ' out of range' : ' outside the chart');
     box.appendChild(el('div', 'big-stats', line));
-    const chips = el('div', 'big-chips');
-    vals.forEach(v => chips.appendChild(el('span', 'big-chip', fmt(v))));
-    box.appendChild(chips);
+    // the answers themselves, sorted, as chips: only up to 20 answers (more do not fit on a slide, Utku 26.11)
+    if (vals.length && vals.length <= 20) {
+      const chips = el('div', 'big-chips');
+      vals.forEach(v => chips.appendChild(el('span', 'big-chip', fmt(v))));
+      box.appendChild(chips);
+    }
   }
 
   function renderNumber(box, data, unit, mark, wmap, node) {

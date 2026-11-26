@@ -291,7 +291,9 @@
   // one vertical bar chart: bins [{lab, n, rp?}], an optional grey off-scale bar, a dashed line at bin index `at` (+.5 = between two bins)
   function chart(id, bins, opt) {
     const grey = opt.grey, all = bins.map(b => b.n).concat(grey ? [grey.n] : []), max = Math.max(1, ...all), tot = opt.total;
-    const col = (b, cls) => '<div class="col' + (cls || '') + '" data-tip="' + esc(b.lab) + ': ' + esc(b.tip || (b.n + ' student' + (b.n === 1 ? '' : 's') + ' · ' + (tot ? Math.round(100 * b.n / tot) : 0) + '%')) + '"><div class="bb" style="height:' + (100 * b.n / max).toFixed(1) + '%"></div></div>';
+    const col = (b, cls) => '<div class="col' + (cls || '') + '" data-tip="' + esc(b.lab) + ': ' + esc(b.tip || (b.n + ' student' + (b.n === 1 ? '' : 's') + ' · ' + (tot ? Math.round(100 * b.n / tot) : 0) + '%')) + '">' +
+      (BIGV && b.n ? '<span class="cn" style="bottom:calc(' + (100 * b.n / max).toFixed(1) + '% + 2px)">' + b.n + (tot ? '<small>' + Math.round(100 * b.n / tot) + '%</small>' : '') + '</span>' : '') +
+      '<div class="bb" style="height:' + (100 * b.n / max).toFixed(1) + '%"></div></div>';
     const xlab = l => esc(l).replace(/–/g, '–<wbr>');   // a range label may wrap after its dash at 390 px
     // the dashed line is placed after drawing, on the real bar positions (placeLines): at a bar's centre, or between two bars (.5)
     let h = '<div class="chart" id="' + id + '" data-at="' + opt.at + '"><div class="plot">' + bins.map(b => col(b)).join('') + (grey ? '<div class="gap"></div>' + col(grey, ' grey') : '') +
@@ -326,7 +328,25 @@
     });
   }
   window.addEventListener('resize', () => { const r = $('res'); if (r) placeLines(r); });
+  // ?results&big=1 (Can 26.11): the lecturer frame in the deck. The count (and %) above every bar, large type, and with
+  // only=bomb|list|stair|balloon|same just that one chart. Opt-in: without big=1 nothing here runs.
+  const BIGV = /[?&]big=1(&|$)/.test(location.search), ONLY = (/[?&]only=(bomb|list|stair|balloon|same)(&|$)/.exec(location.search) || [])[1] || null;
+  const BIG_CSS = 'main{max-width:none;padding:2px 14px 6px}h1{display:none}#rn{font-size:18px;margin:0}' +
+    '.phases{margin:2px 0}.phases .opt,.opts .opt{font-size:16px;padding:2px 8px}.opts{display:inline-flex;margin:0}#res h2{font-size:30px;margin:.2rem 0 0;border-top:0;padding-top:0}' +
+    '.chart{margin:0}.plot{height:120px;margin-top:54px;gap:6px}.col{position:relative}.col .cn{position:absolute;left:-6px;right:-6px;text-align:center;font-size:30px;font-weight:700;line-height:1;color:#111}' +
+    '.col .cn small{display:block;font-size:20px;font-weight:600;color:#444}.xl{font-size:26px;color:#111;gap:6px;margin-top:0}.xl .gap,.plot .gap{width:16px}' +
+    '.vline span{font-size:24px;top:-56px;font-weight:600}.axis{font-size:22px;color:#333;margin:0}.sides{font-size:26px;font-weight:600;margin:0}' +
+    '.meta{font-size:32px;color:#111;font-weight:600;margin:.1rem 0}.reading{font-size:32px;line-height:1.22;border-left-width:6px;margin:.2rem 0 .4rem}.tip{font-size:24px;min-height:0}' +
+    '.same th,.same td{font-size:26px;padding:6px 14px}.msg{font-size:28px}';
+  // only=…: after drawing, hide every element that belongs to another game (a game starts at its <h2>)
+  function onlyOne(res) {
+    if (!ONLY) return;
+    const KEY = { bomb: 'Bomb box', list: 'Ten choices', stair: 'Coin flip', balloon: 'Balloon', same: 'Same person' };
+    let keep = true;   // anything before the first game heading (e.g. 'Results open soon') stays
+    [...res.children].forEach(e => { if (e.tagName === 'H2') keep = e.textContent.indexOf(KEY[ONLY]) >= 0; e.style.display = keep ? '' : 'none'; });
+  }
   async function resultsView() {
+    if (BIGV) { const st = document.createElement('style'); st.textContent = BIG_CSS; document.head.appendChild(st); }
     const T = DEMO || !!(P && P.teacher);
     app.innerHTML = '<h1>Risk Games · class results</h1><p class="meta" id="rn">loading…</p>' +
       (T ? '<div class="phases" id="ph"></div>' : '') + '<div class="opts"><button class="opt" id="rf" type="button">Refresh</button></div><div id="res"></div>';
@@ -435,6 +455,11 @@
         }
       }
       res.innerHTML = h;
+      onlyOne(res);
+      if (BIGV) res.querySelectorAll('.chart').forEach(c => {   // big: the dashed line's label goes into the axis caption, off the counts
+        const sp = c.querySelector('.vline span'), ax = c.querySelector('.axis:last-of-type');
+        if (sp && ax) { ax.textContent += ' · dashed line: ' + sp.textContent; sp.remove(); }
+      });
       placeLines(res);
       res.querySelectorAll('.col').forEach(c => { const show = () => { const t = $(c.closest('.chart').id + '-tip'); if (t) t.textContent = c.dataset.tip; }; c.onclick = show; c.onmouseenter = show; });
     }
