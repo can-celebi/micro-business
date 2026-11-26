@@ -483,3 +483,23 @@ html.mobile .qr-slide img.qr-small { width: 40vw !important; height: 40vw !impor
 .wh-tag { font-size: 10px; font-weight: 600; }
 /* the right option, after your own answer (Can, 14.10) */
 .bar-row.correct .bar-label { color: #1B7F3B; font-weight: 700; }
+
+/* big lecturer result view (Can 26.11): opt-in per deck with <body data-results="big">; other decks are unchanged */
+body[data-results="big"] .poll-results .viz { display: block; font-size: 22px; max-width: 100%; }
+body[data-results="big"] .poll-results .viz .answered { font-size: 20px; margin: 0 0 10px; }
+body[data-results="big"] .poll-results .viz .bar-row { display: grid; grid-template-columns: minmax(6em, 42%) 1fr 6.2em; gap: 14px; align-items: center; font-size: 22px; margin: 8px 0; }
+body[data-results="big"] .poll-results .viz .bar-label { white-space: normal; overflow: visible; text-overflow: clip; line-height: 1.2; }
+body[data-results="big"] .poll-results .viz .bar-track { height: 24px; }
+body[data-results="big"] .poll-results .viz .bar-fill.wh-un { background: #6C757D; }
+body[data-results="big"] .poll-results .viz .bar-n { font-size: 26px; font-weight: 700; color: var(--ink); }
+body[data-results="big"] .poll-results .viz .small-line { font-size: 18px; }
+body[data-results="big"] .poll-results .dim { font-size: 18px; }
+.big-hist { display: flex; align-items: flex-end; gap: 6px; height: 200px; border-bottom: 2px solid var(--line); margin: 4px 0 0; }
+.big-col { flex: 1 1 0; min-width: 0; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: stretch; position: relative; }
+.big-cnt { font-size: 20px; font-weight: 700; text-align: center; line-height: 1.1; min-height: 1.1em; }
+.big-bar { display: block; background: #7A3DB8; border-radius: 3px 3px 0 0; min-height: 0; }
+.big-lab { position: absolute; top: 100%; left: 0; right: 0; text-align: center; font-size: 16px; color: var(--ink); padding-top: 4px; white-space: nowrap; }
+.big-hist { margin-bottom: 30px; }
+.big-stats { font-size: 24px; font-weight: 700; margin: 6px 0 6px; }
+.big-chips { display: flex; flex-wrap: wrap; gap: 4px 6px; }
+.big-chip { font-size: 15px; border: 1px solid #ccc; border-radius: 3px; padding: 1px 6px; background: #fff; }

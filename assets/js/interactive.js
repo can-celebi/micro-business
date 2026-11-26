@@ -326,7 +326,11 @@
     return e;
   }
 
-  // bar length = share of all answers (n); label "57% (32)"
+  // the big lecturer result view (Can 26.11: "no numbers are present and cant read anythign"): opt-in per deck with
+  // <body data-results="big">. Choice: "70% · 21" in bold; number/slider: a labelled histogram, n · median · mean and the
+  // values themselves. Same data, same API calls. Without the flag nothing changes.
+  const BIG = () => !!(document.body && document.body.dataset.results === 'big');
+  // bar length = share of all answers (n); label "57% (32)" ("57% · 32" in the big view)
   // segs (optional): [[count, class], …] = the bar split by in class / online / not signed in
   function bar(label, value, total, cls, segs, ok) {
     const row = el('div', 'bar-row' + (ok ? ' correct' : ''));
@@ -336,7 +340,7 @@
     if (segs) segs.forEach(([c, k]) => { if (!c) return; const f = el('span', 'bar-fill ' + k); f.style.width = (100 * c / total) + '%'; track.appendChild(f); });
     else { const fill = el('span', 'bar-fill ' + (cls || '')); fill.style.width = pct + '%'; track.appendChild(fill); }
     row.appendChild(track);
-    row.appendChild(el('span', 'bar-n', Math.round(pct) + '% (' + value + ')'));
+    row.appendChild(el('span', 'bar-n', Math.round(pct) + (BIG() ? '% · ' + value : '% (' + value + ')')));
     return row;
   }
 
@@ -372,7 +376,60 @@
     box.appendChild(el('div', 'dim small-line', 'n = ' + n + ' · bars = share who ticked it' + (ni ? ' · no idea: ' + ni : '')));
   }
 
-  function renderNumber(box, data, unit, mark, wmap) {
+  // the big view of a number/slider poll: a histogram over the slider's range (data-min/data-max, else the answers' range),
+  // one bin per step when that gives at most 11 bins, else 10 equal bins; the count on each bar; then n · median · mean;
+  // then every answer, sorted, as a chip
+  function renderNumberBig(box, data, unit, mark, wmap, node) {
+    box.appendChild(answeredLine(data.responses.map(r => r.client), wmap));
+    const vals = data.responses.map(r => Number(r.value)).filter(v => isFinite(v)).sort((a, b) => a - b);
+    const noIdea = data.responses.filter(r => String(r.value) === safe(NOIDEA)).length;
+    if (!vals.length) { box.appendChild(el('div', 'big-stats', 'no answers yet' + (noIdea ? ' · no idea: ' + noIdea : ''))); return; }
+    const ds = (node && node.dataset) || {}, fmtN = v => String(Math.round(v * 10) / 10);
+    const fmt = v => /^[€$£]$/.test(unit) ? unit + fmtN(v) : fmtN(v) + unit;
+    let lo = ds.min !== undefined && isFinite(Number(ds.min)) ? Number(ds.min) : vals[0];
+    let hi = ds.max !== undefined && isFinite(Number(ds.max)) ? Number(ds.max) : vals[vals.length - 1];
+    if (vals[0] < lo) lo = vals[0]; if (vals[vals.length - 1] > hi) hi = vals[vals.length - 1];
+    const step = Number(ds.step), bins = [];
+    if (hi === lo) bins.push({ a: lo, b: hi, lab: fmt(lo) });
+    else if (step > 0 && (hi - lo) / step + 1 <= 11 && Number.isInteger(Math.round((hi - lo) / step * 1e6) / 1e6)) {
+      for (let v = lo; v <= hi + 1e-9; v += step) bins.push({ a: v, b: v, lab: fmt(v) });
+    } else {
+      // round bin widths (1, 2, 5 × 10^k), about 10 bins; a set range (data-min/max) keeps its ends
+      const raw = (hi - lo) / 10, e = Math.pow(10, Math.floor(Math.log10(raw))), w = [1, 2, 5, 10].map(m => m * e).find(x => x >= raw - 1e-9);
+      if (ds.min === undefined) lo = Math.floor(lo / w) * w;
+      const nb = Math.max(1, Math.ceil((hi - lo) / w - 1e-9));
+      for (let k = 0; k < nb; k++) bins.push({ a: lo + k * w, b: Math.min(hi, lo + (k + 1) * w), lab: fmtN(lo + k * w) + '–' + fmtN(Math.min(hi, lo + (k + 1) * w)) });
+    }
+    const exact = bins.length && bins[0].a === bins[0].b;
+    bins.forEach(bn => { bn.n = 0; });
+    vals.forEach(v => {
+      let k = 0;
+      if (exact) bins.forEach((bn, j) => { if (Math.abs(v - bn.a) < Math.abs(v - bins[k].a)) k = j; });   // nearest step value
+      else { k = bins.findIndex(bn => v < bn.b); if (k < 0) k = bins.length - 1; }                   // [a, b), the top bin closed
+      bins[k].n++;
+    });
+    const top = Math.max(1, ...bins.map(bn => bn.n));
+    const hist = el('div', 'big-hist');
+    bins.forEach(bn => {
+      const c = el('div', 'big-col');
+      c.appendChild(el('span', 'big-cnt', bn.n ? String(bn.n) : ''));
+      const b = el('span', 'big-bar'); b.style.height = (100 * bn.n / top) + '%'; c.appendChild(b);
+      c.appendChild(el('span', 'big-lab', bn.lab));
+      hist.appendChild(c);
+    });
+    box.appendChild(hist);
+    const n = vals.length, med = n % 2 ? vals[(n - 1) / 2] : (vals[n / 2 - 1] + vals[n / 2]) / 2, mean = vals.reduce((a, b) => a + b, 0) / n;
+    let line = 'n = ' + n + ' · median ' + fmt(med) + ' · mean ' + fmt(mean);
+    if (mark !== null) line += ' · ≥ ' + fmt(mark) + ': ' + vals.filter(v => v >= mark).length;
+    if (noIdea) line += ' · no idea: ' + noIdea;
+    box.appendChild(el('div', 'big-stats', line));
+    const chips = el('div', 'big-chips');
+    vals.forEach(v => chips.appendChild(el('span', 'big-chip', fmt(v))));
+    box.appendChild(chips);
+  }
+
+  function renderNumber(box, data, unit, mark, wmap, node) {
+    if (BIG()) return renderNumberBig(box, data, unit, mark, wmap, node);
     box.appendChild(answeredLine(data.responses.map(r => r.client), wmap));
     const vals = data.responses.map(r => Number(r.value)).filter(v => isFinite(v)).sort((a, b) => b - a);
     const noIdea = data.responses.filter(r => String(r.value) === safe(NOIDEA)).length;
@@ -537,7 +594,7 @@
         if (type === 'text') { const c = await textCount(poll); out.innerHTML = ''; viz.appendChild(answeredLine(c.clients || [], wmap)); viz.appendChild(el('div', 'dim small-line', 'the texts are read after class')); out.appendChild(viz); busy = false; return; }
         const data = await results(poll);
         out.innerHTML = '';
-        if (type === 'number' || type === 'slider') renderNumber(viz, data, unit, mark, wmap);
+        if (type === 'number' || type === 'slider') renderNumber(viz, data, unit, mark, wmap, node);
         else if (type === 'multi') renderMulti(viz, data, options, wmap);
         else renderChoice(viz, data, withNoIdea && options.indexOf(NOIDEA) < 0 ? options.concat([NOIDEA]) : options, wmap, node.dataset.correct != null && load(VK) ? node.dataset.correct.trim() : null);
         out.appendChild(viz);
