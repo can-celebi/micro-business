@@ -377,7 +377,7 @@
   }
 
   // the big view of a number/slider poll: a histogram over the slider's range (data-min/data-max, else the answers' range),
-  // one bin per step when that gives at most 11 bins, else 10 equal bins; the count on each bar; then n · median · mean;
+  // one bin per step when that gives at most 13 bins (the bomb box: 0–12), else 10 equal bins; the count on each bar; then n · median · mean;
   // then every answer, sorted, as a chip
   function renderNumberBig(box, data, unit, mark, wmap, node) {
     box.appendChild(answeredLine(data.responses.map(r => r.client), wmap));
@@ -397,7 +397,7 @@
     const vals = all.filter(v => v >= lo && v <= hi), out = all.length - vals.length;
     const step = Number(ds.step), bins = [];
     if (hi === lo) bins.push({ a: lo, b: hi, lab: fmt(lo) });
-    else if (step > 0 && (hi - lo) / step + 1 <= 11 && Number.isInteger(Math.round((hi - lo) / step * 1e6) / 1e6)) {
+    else if (step > 0 && (hi - lo) / step + 1 <= 13 && Number.isInteger(Math.round((hi - lo) / step * 1e6) / 1e6)) {
       for (let v = lo; v <= hi + 1e-9; v += step) bins.push({ a: v, b: v, lab: fmt(v) });
     } else {
       // round bin widths (1, 2, 5 × 10^k), about 10 bins; a set range (data-min/max) keeps its ends
