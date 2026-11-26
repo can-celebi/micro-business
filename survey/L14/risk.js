@@ -457,7 +457,7 @@
       res.innerHTML = h;
       onlyOne(res);
       if (BIGV) res.querySelectorAll('.chart').forEach(c => {   // big: the dashed line's label goes into the axis caption, off the counts
-        const sp = c.querySelector('.vline span'), ax = c.querySelector('.axis:last-of-type');
+        const sp = c.querySelector('.vline span'), axs = c.querySelectorAll('.axis'), ax = axs[axs.length - 1];
         if (sp && ax) { ax.textContent += ' · dashed line: ' + sp.textContent; sp.remove(); }
       });
       placeLines(res);
