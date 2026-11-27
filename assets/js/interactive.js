@@ -532,10 +532,11 @@
       }
     } else if (type === 'slider') {
       // slider (Cevdet, 08.10): starts with no value (no thumb), so an untouched slider is never read as an answer;
-      // [save] stores the number (same ref format as number polls). Students see no class results.
+      // [submit] stores the number (same ref format as number polls). Students see no class results.
+      // Button label 'submit' as on number and multi polls (Can 25.11: "submit", not "save").
       const mn = Number(node.dataset.min || 0), mx = Number(node.dataset.max || 100), st = Number(node.dataset.step || 10);
       const f = el('input', 'slider untouched'); f.type = 'range'; f.min = mn; f.max = mx; f.step = st; f.value = mn;
-      const shown = el('span', 'slider-val', '–'), go = el('button', 'btn', 'save');
+      const shown = el('span', 'slider-val', '–'), go = el('button', 'btn', 'submit');
       setSlider = v => { f.value = v; f.classList.remove('untouched'); shown.textContent = f.value + unit; sliderVal = Number(f.value); };
       f.oninput = () => setSlider(f.value);
       f.addEventListener('keydown', ev => ev.stopPropagation());
@@ -642,7 +643,9 @@
         else if (type === 'multi') renderMulti(viz, data, options, wmap);
         else renderChoice(viz, data, withNoIdea && options.indexOf(NOIDEA) < 0 ? options.concat([NOIDEA]) : options, wmap, node.dataset.correct != null && load(VK) ? node.dataset.correct.trim() : null);
         out.appendChild(viz);
-        if (TEACHER) {
+        // the raw-JSON box (Can 25.11: no raw json box): the lecturer's screen is projected, so it shows only in teacher
+        // mode AND with ?json in the URL
+        if (TEACHER && /[?&]json\b/.test(location.search)) {
           const raw = el('details', 'raw');
           raw.appendChild(el('summary', null, 'json'));
           raw.appendChild(el('pre', null, JSON.stringify(data, null, 2)));
