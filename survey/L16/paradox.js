@@ -2,7 +2,7 @@
 // Spec: Carpenter, 10_experiments/frozen/280ff033bf0c/L16-L17_games_proposal.md (Ulutin PASS a590e0d10859).
 // Hypothetical money: nobody is paid. No names, no IDs, no keys in this file. Same engine and house rules as /S14.
 //   student:  opening, then one tap per screen in this order: Allais 1, Ellsberg 1, Allais 2, Ellsberg 2 (no going back,
-//             no default answer); the record {v,a1,e1,a2,e2,t[,again]} is saved right after the 4th tap (poll L16-paradox).
+//             no default answer; urn K/U button order random per device); the record {v,a1,e1,a2,e2,eo,t[,again]} is saved right after the 4th tap (poll L16-paradox).
 //   ?preview: the full game, nothing is sent.
 //   ?results: the class tables in the phase the lecturer has set (0 closed, 1 Allais, 2 + Ellsberg). Teacher mode sets the phase.
 //   ?results&big=1[&only=allais|ellsberg]: the lecturer frame in the deck (large type, one table).
@@ -19,7 +19,7 @@
   function valid(r) {
     try {
       if (!r || typeof r !== 'object' || Array.isArray(r)) return false;
-      if (r.v !== 1) return false;
+      if (r.v !== 1 || !/^(KU|UK)$/.test(r.eo)) return false;
       if (!/^[AB]$/.test(r.a1) || !/^[CD]$/.test(r.a2) || !/^[KUN]$/.test(r.e1) || !/^[KUN]$/.test(r.e2)) return false;
       if (r.t !== undefined && r.t !== null && r.t !== '' && !/^[0-9]{1,5}(\.[0-9]{1,5}){3}$/.test(String(r.t))) return false;
       return true;
@@ -60,7 +60,17 @@
 
   // the four screens, in the order of the spec; each option is one button, tapping it answers and moves on
   const URNS = '<p>Urn K has 50 red and 50 black balls. Urn U has 100 red and black balls, mix unknown. You win €100 if you draw the colour named.</p>';
-  const WHICH = [['K', 'urn K'], ['U', 'urn U'], ['N', 'no preference']];
+  // Carpenter 28.11: a top-button habit must not look like K + K. The K/U order is drawn once per device (kept on the device,
+  // the same for both bets; 'no preference' stays last) and saved in the record as eo.
+  function urnOrder() {
+    let o = null; try { o = localStorage.getItem('micro-l16-urn-order'); } catch (e) {}
+    if (o === 'KU' || o === 'UK') return o;
+    const a = new Uint8Array(1); crypto.getRandomValues(a); o = a[0] & 1 ? 'UK' : 'KU';
+    try { localStorage.setItem('micro-l16-urn-order', o); } catch (e) {}
+    return o;
+  }
+  const EO = urnOrder(), URN = { K: ['K', 'urn K'], U: ['U', 'urn U'] };
+  const WHICH = [URN[EO[0]], URN[EO[1]], ['N', 'no preference']];
   const SCREENS = [
     { key: 'a1', title: 'Choice 1 of 4', body: '<p>Which lottery do you choose?</p>', opts: [['A', 'A: €3,000 for sure'], ['B', 'B: 8% €5,000, 90% €3,000, 2% €0']] },
     { key: 'e1', title: 'Choice 2 of 4', body: URNS + '<p><b>Bet 1: red.</b> Which urn do you draw from?</p>', opts: WHICH },
@@ -85,7 +95,7 @@
   }
   async function save() {
     frame('Thank you', '<p>That was all four choices.</p>');
-    const out = { v: 1, a1: rec.a1, e1: rec.e1, a2: rec.a2, e2: rec.e2, t: secs.join('.') };
+    const out = { v: 1, a1: rec.a1, e1: rec.e1, a2: rec.a2, e2: rec.e2, eo: EO, t: secs.join('.') };
     let again = false; try { again = localStorage.getItem('micro-l16-paradox-saved') === '1'; } catch (e) {}
     if (again) out.again = 1;
     if (PREVIEW) { say('Preview: nothing is sent. The record would be ' + esc(JSON.stringify(out))); return; }
@@ -146,9 +156,9 @@
     for (let i = 0; i < n; i++) {
       const a1 = rn(10) < 7 ? 'A' : 'B', a2 = rn(10) < (a1 === 'A' ? 6 : 3) ? 'D' : 'C';
       const e1 = 'KKKKUN'[rn(6)], e2 = rn(10) < 7 ? e1 : 'KUN'[rn(3)];
-      rows.push(['dev' + i, 1000 + i, { v: 1, a1, e1, a2, e2, t: [3 + rn(20), 3 + rn(20), 3 + rn(20), 2 + rn(10)].join('.') }]);
+      rows.push(['dev' + i, 1000 + i, { v: 1, a1, e1, a2, e2, eo: rn(2) ? 'UK' : 'KU', t: [3 + rn(20), 3 + rn(20), 3 + rn(20), 2 + rn(10)].join('.') }]);
     }
-    rows.push(['dev0', 5, { a1: 'junk' }], ['devX', 9, { v: 1, a1: 'A', e1: 'K', a2: 'X', e2: 'K' }]);
+    rows.push(['dev0', 5, { a1: 'junk' }], ['devX', 9, { v: 1, a1: 'A', e1: 'K', a2: 'X', e2: 'K', eo: 'KU' }]);
     return rows;
   }
 
